@@ -1,5 +1,3 @@
-library hosteday_flutter;
-
 export 'src/auth/hosteday_token_provider.dart';
 export 'src/config/hosteday_config.dart';
 export 'src/exceptions/hosteday_exception.dart';

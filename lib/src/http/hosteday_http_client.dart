@@ -61,10 +61,7 @@ class HosteDayHttpClient {
 
       switch (normalizedMethod) {
         case 'GET':
-          response = await _client.get(
-            uri,
-            headers: requestHeaders,
-          );
+          response = await _client.get(uri, headers: requestHeaders);
           break;
 
         case 'POST':
@@ -117,10 +114,7 @@ class HosteDayHttpClient {
     } catch (e) {
       if (e is HosteDayException) rethrow;
 
-      throw HosteDayException(
-        'HosteDay request error.',
-        error: e,
-      );
+      throw HosteDayException('HosteDay request error.', error: e);
     }
   }
 
@@ -139,9 +133,7 @@ class HosteDayHttpClient {
       return Map<String, dynamic>.from(decoded);
     }
 
-    return <String, dynamic>{
-      'data': decoded,
-    };
+    return <String, dynamic>{'data': decoded};
   }
 
   void close() {

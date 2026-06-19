@@ -17,12 +17,9 @@ class HosteDayRealtimeClient {
 
   final List<Channel> _channels = <Channel>[];
   final List<StreamSubscription<dynamic>> _subscriptions =
-  <StreamSubscription<dynamic>>[];
+      <StreamSubscription<dynamic>>[];
 
-  HosteDayRealtimeClient({
-    required this.config,
-    this.tokenProvider,
-  });
+  HosteDayRealtimeClient({required this.config, this.tokenProvider});
 
   PusherChannelsClient get client {
     final value = _client;
@@ -79,14 +76,13 @@ class HosteDayRealtimeClient {
     final channel = client.privateChannel(
       normalizedChannel,
       authorizationDelegate:
-      EndpointAuthorizableChannelTokenAuthorizationDelegate
-          .forPrivateChannel(
-        authorizationEndpoint: config.uri(config.broadcastingAuthPath),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ),
+          EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
+            authorizationEndpoint: config.uri(config.broadcastingAuthPath),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ),
     );
 
     _channels.add(channel);

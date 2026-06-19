@@ -50,19 +50,13 @@ class HosteDayRealtimeEvent {
           return Map<String, dynamic>.from(decoded);
         }
 
-        return <String, dynamic>{
-          'data': decoded,
-        };
+        return <String, dynamic>{'data': decoded};
       } catch (_) {
-        return <String, dynamic>{
-          'message': data,
-        };
+        return <String, dynamic>{'message': data};
       }
     }
 
-    return <String, dynamic>{
-      'data': data,
-    };
+    return <String, dynamic>{'data': data};
   }
 
   String? get message => payload['message']?.toString();

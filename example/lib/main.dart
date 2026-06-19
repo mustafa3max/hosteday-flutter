@@ -7,9 +7,7 @@ late final HosteDayClient hosteday;
 
 void main() {
   hosteday = HosteDayClient(
-    config: const HosteDayConfig(
-      baseUrl: 'https://enterprise.hosteday.com',
-    ),
+    config: const HosteDayConfig(baseUrl: 'https://enterprise.hosteday.com'),
   );
 
   runApp(const App());
@@ -70,10 +68,7 @@ class App extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: BrandColors.accent,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: BrandColors.accent, width: 1.5),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -86,19 +81,14 @@ class App extends StatelessWidget {
             foregroundColor: BrandColors.textAccent,
             disabledBackgroundColor: BrandColors.border,
             disabledForegroundColor: BrandColors.textMuted,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 14,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
           ),
         ),
         iconButtonTheme: IconButtonThemeData(
-          style: IconButton.styleFrom(
-            foregroundColor: BrandColors.textMain,
-          ),
+          style: IconButton.styleFrom(foregroundColor: BrandColors.textMain),
         ),
         textTheme: const TextTheme(
           headlineMedium: TextStyle(
@@ -113,12 +103,8 @@ class App extends StatelessWidget {
             color: BrandColors.textMain,
             fontWeight: FontWeight.w700,
           ),
-          bodyMedium: TextStyle(
-            color: BrandColors.textMuted,
-          ),
-          bodySmall: TextStyle(
-            color: BrandColors.textMuted,
-          ),
+          bodyMedium: TextStyle(color: BrandColors.textMuted),
+          bodySmall: TextStyle(color: BrandColors.textMuted),
         ),
       ),
       home: const HosteDayApiExamplePage(),
@@ -130,8 +116,7 @@ class HosteDayApiExamplePage extends StatefulWidget {
   const HosteDayApiExamplePage({super.key});
 
   @override
-  State<HosteDayApiExamplePage> createState() =>
-      _HosteDayApiExamplePageState();
+  State<HosteDayApiExamplePage> createState() => _HosteDayApiExamplePageState();
 }
 
 class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
@@ -207,7 +192,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
 
         if (extractToken && (token == null || token.isEmpty)) {
           _statusMessage =
-          '$successMessage لكن لم يتم العثور على token في الاستجابة.';
+              '$successMessage لكن لم يتم العثور على token في الاستجابة.';
         } else {
           _statusMessage = successMessage;
         }
@@ -257,13 +242,8 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
       request: () {
         return hosteday.post(
           hosteday.config.loginPathPost,
-          body: {
-            'email': email,
-            'password': password,
-          },
-          headers: _headers(
-            withApiToken: true,
-          ),
+          body: {'email': email, 'password': password},
+          headers: _headers(withApiToken: true),
         );
       },
     );
@@ -296,14 +276,8 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
       request: () {
         return hosteday.post(
           hosteday.config.registerPathPost,
-          body: {
-            'name': name,
-            'email': email,
-            'password': password,
-          },
-          headers: _headers(
-            withApiToken: true,
-          ),
+          body: {'name': name, 'email': email, 'password': password},
+          headers: _headers(withApiToken: true),
         );
       },
     );
@@ -316,10 +290,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
       request: () {
         return hosteday.get(
           hosteday.config.userShowPathGet,
-          headers: _headers(
-            withBearerToken: true,
-            withApiToken: true,
-          ),
+          headers: _headers(withBearerToken: true, withApiToken: true),
         );
       },
     );
@@ -341,10 +312,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
             if (email.isNotEmpty) 'email': email,
             if (password.isNotEmpty) 'password': password,
           },
-          headers: _headers(
-            withBearerToken: true,
-            withApiToken: true,
-          ),
+          headers: _headers(withBearerToken: true, withApiToken: true),
         );
       },
     );
@@ -357,10 +325,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
       request: () {
         return hosteday.post(
           hosteday.config.logoutPathPost,
-          headers: _headers(
-            withBearerToken: true,
-            withApiToken: true,
-          ),
+          headers: _headers(withBearerToken: true, withApiToken: true),
         );
       },
     );
@@ -373,10 +338,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
       request: () {
         return hosteday.get(
           '/api/posts',
-          headers: _headers(
-            withBearerToken: true,
-            withApiToken: true,
-          ),
+          headers: _headers(withBearerToken: true, withApiToken: true),
         );
       },
     );
@@ -446,9 +408,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          color: BrandColors.primary,
-        ),
+        decoration: const BoxDecoration(color: BrandColors.primary),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 680),
@@ -496,10 +456,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
                 ],
                 if (_rawResponse != null) ...[
                   const SizedBox(height: 20),
-                  _CodeBlock(
-                    title: 'API Response',
-                    content: _rawResponse!,
-                  ),
+                  _CodeBlock(title: 'API Response', content: _rawResponse!),
                 ],
               ],
             ),
@@ -513,9 +470,7 @@ class _HosteDayApiExamplePageState extends State<HosteDayApiExamplePage> {
 class _HeaderSection extends StatelessWidget {
   final String baseUrl;
 
-  const _HeaderSection({
-    required this.baseUrl,
-  });
+  const _HeaderSection({required this.baseUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -524,9 +479,7 @@ class _HeaderSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: BrandColors.secondary,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: BrandColors.border,
-        ),
+        border: Border.all(color: BrandColors.border),
       ),
       child: Column(
         children: [
@@ -557,10 +510,7 @@ class _HeaderSection extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: BrandColors.primary,
               borderRadius: BorderRadius.circular(100),
@@ -777,22 +727,14 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: BrandColors.secondary,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: BrandColors.border,
-        ),
+        border: Border.all(color: BrandColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 18),
           child,
         ],
@@ -828,10 +770,7 @@ class _StatusCard extends StatelessWidget {
   final String message;
   final bool isSuccess;
 
-  const _StatusCard({
-    required this.message,
-    required this.isSuccess,
-  });
+  const _StatusCard({required this.message, required this.isSuccess});
 
   @override
   Widget build(BuildContext context) {
@@ -854,10 +793,7 @@ class _StatusCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -870,10 +806,7 @@ class _CodeBlock extends StatelessWidget {
   final String title;
   final String content;
 
-  const _CodeBlock({
-    required this.title,
-    required this.content,
-  });
+  const _CodeBlock({required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {

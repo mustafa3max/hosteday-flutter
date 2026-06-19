@@ -10,14 +10,8 @@ class HosteDayClient {
   late final HosteDayHttpClient http;
   late final HosteDayRealtimeClient realtime;
 
-  HosteDayClient({
-    required this.config,
-    this.tokenProvider,
-  }) {
-    http = HosteDayHttpClient(
-      config: config,
-      tokenProvider: tokenProvider,
-    );
+  HosteDayClient({required this.config, this.tokenProvider}) {
+    http = HosteDayHttpClient(config: config, tokenProvider: tokenProvider);
 
     realtime = HosteDayRealtimeClient(
       config: config,
@@ -42,10 +36,10 @@ class HosteDayClient {
   }
 
   Future<Map<String, dynamic>> get(
-      String path, {
-        bool withAuth = false,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    bool withAuth = false,
+    Map<String, String>? headers,
+  }) {
     return request(
       method: 'GET',
       path: path,
@@ -55,11 +49,11 @@ class HosteDayClient {
   }
 
   Future<Map<String, dynamic>> post(
-      String path, {
-        Map<String, dynamic>? body,
-        bool withAuth = false,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    bool withAuth = false,
+    Map<String, String>? headers,
+  }) {
     return request(
       method: 'POST',
       path: path,
@@ -70,11 +64,11 @@ class HosteDayClient {
   }
 
   Future<Map<String, dynamic>> put(
-      String path, {
-        Map<String, dynamic>? body,
-        bool withAuth = false,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    bool withAuth = false,
+    Map<String, String>? headers,
+  }) {
     return request(
       method: 'PUT',
       path: path,
@@ -85,11 +79,11 @@ class HosteDayClient {
   }
 
   Future<Map<String, dynamic>> patch(
-      String path, {
-        Map<String, dynamic>? body,
-        bool withAuth = false,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    bool withAuth = false,
+    Map<String, String>? headers,
+  }) {
     return request(
       method: 'PATCH',
       path: path,
@@ -100,11 +94,11 @@ class HosteDayClient {
   }
 
   Future<Map<String, dynamic>> delete(
-      String path, {
-        Map<String, dynamic>? body,
-        bool withAuth = false,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    bool withAuth = false,
+    Map<String, String>? headers,
+  }) {
     return request(
       method: 'DELETE',
       path: path,

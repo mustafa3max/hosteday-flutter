@@ -3,11 +3,7 @@ class HosteDayException implements Exception {
   final int? statusCode;
   final Object? error;
 
-  const HosteDayException(
-      this.message, {
-        this.statusCode,
-        this.error,
-      });
+  const HosteDayException(this.message, {this.statusCode, this.error});
 
   @override
   String toString() {
