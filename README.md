@@ -4,7 +4,7 @@ A simple Flutter package for connecting your app with HosteDay APIs.
 
 Use it to send requests to your HosteDay backend such as login, registration, profile update, user data, logout, email verification, and custom API endpoints.
 
-![Flutter Example App](assets/flutter-example.png)
+![Flutter Example App](https://raw.githubusercontent.com/mustafa3max/hosteday-flutter/master/assets/flutter-example.png)
 
 ## Installation
 
