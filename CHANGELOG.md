@@ -1,5 +1,5 @@
-# 0.0.1
-
+## 0.0.2
+- Updated README documentation.
 - Initial release.
 - Added `HosteDayClient`.
 - Added `HosteDayConfig`.
