@@ -1,14 +1,26 @@
-/// Defines the base URL, API paths, and real-time connection settings used by
-/// HosteDay clients.
-///
-/// Create one configuration instance and pass it to [HosteDayClient],
-/// [HosteDayHttpClient], or [HosteDayRealtimeClient] to keep endpoint and
-/// connection settings consistent across the package.
+import 'hosteday_option_keys.dart';
+
+/// Defines the base URL, API paths, project credentials, and real-time
+/// connection settings used by HosteDay clients.
 class HosteDayConfig {
+  /// The project domain supplied during SDK initialization.
+  ///
+  /// Example: `example.hosteday.com`
+  final String projectDomain;
+
   /// The base URL of the HosteDay API.
   ///
-  /// Example: `https://api.example.com`
+  /// Example: `https://example.hosteday.com`
   final String baseUrl;
+
+  /// Optional project-level API token.
+  ///
+  /// This token is sent automatically with every HTTP request using
+  /// [apiTokenHeader].
+  final String? apiToken;
+
+  /// The header name used for the project API token.
+  final String apiTokenHeader;
 
   /// The application key used by the Pusher-compatible real-time service.
   final String pusherKey;
@@ -16,77 +28,195 @@ class HosteDayConfig {
   /// The host name used for real-time connections.
   final String realtimeHost;
 
-  /// The port used for real-time connections.
-  final int realtimePort;
-
-  /// The endpoint path used to submit login requests.
   final String loginPathPost;
-
-  /// The endpoint path used to submit user registration requests.
   final String registerPathPost;
-
-  /// The endpoint path used to request a password reset link or code.
   final String forgotPasswordPathPost;
-
-  /// The endpoint path used to submit a new password after reset verification.
   final String resetPasswordPathPost;
-
-  /// The endpoint path used to retrieve the authenticated user's profile.
   final String userShowPathGet;
-
-  /// The endpoint path used to update the authenticated user's profile.
   final String userUpdatePathPut;
-
-  /// The endpoint path used to upload or update the authenticated user's avatar.
   final String userUpdateAvatarPathPost;
-
-  /// The endpoint path used to delete the authenticated user's account.
   final String userDeletePathDelete;
-
-  /// The endpoint path used to end the current authenticated session.
   final String logoutPathPost;
-
-  /// The endpoint path used to verify the authenticated user's email address.
   final String emailVerifyPathPost;
-
-  /// The endpoint path used to publish events to public real-time channels.
   final String publicEventsPath;
-
-  /// The endpoint path used to publish events to private real-time channels.
   final String privateEventsPath;
-
-  /// The endpoint path used to authorize private real-time channel subscriptions.
+  final String presenceEventsPath;
   final String broadcastingAuthPath;
 
-  /// Creates a configuration instance for HosteDay API and real-time services.
-  ///
-  /// The [baseUrl] is required and is used as the base for all API paths.
-  /// Remaining values provide default endpoint paths and optional real-time
-  /// connection settings that can be overridden when needed.
   const HosteDayConfig({
     required this.baseUrl,
+    this.projectDomain = '',
+    this.apiToken,
+    this.apiTokenHeader = 'X-Api-Token',
     this.pusherKey = '',
     this.realtimeHost = '',
-    this.realtimePort = 443,
+    //
     this.loginPathPost = '/api/auth/login',
     this.registerPathPost = '/api/auth/register',
     this.forgotPasswordPathPost = '/api/auth/forgot-password',
     this.resetPasswordPathPost = '/api/auth/reset-password',
+    //
     this.userShowPathGet = '/api/user',
     this.userUpdatePathPut = '/api/user',
     this.userUpdateAvatarPathPost = '/api/user/avatar',
     this.userDeletePathDelete = '/api/user',
     this.logoutPathPost = '/api/logout',
     this.emailVerifyPathPost = '/api/email/verify',
-    this.publicEventsPath = '/api/realtime/events',
-    this.privateEventsPath = '/api/realtime/private-events',
+    //
+    this.publicEventsPath = '/api/realtime/events/public',
+    this.privateEventsPath = '/api/realtime/events/private',
+    this.presenceEventsPath = '/api/realtime/events/presence',
     this.broadcastingAuthPath = '/api/broadcasting/auth-manual',
   });
 
-  /// Builds a complete URI by combining [baseUrl] with the provided [path].
+  /// Creates a typed configuration from Firebase-style initialization options.
+  factory HosteDayConfig.fromOptions(Map<String, Object?> options) {
+    final projectDomain = _requiredOption(options, 'project_domain');
+
+    final baseUrl = _stringOption(
+          options,
+          const ['api_base_url', 'base_url'],
+        ) ??
+        _baseUrlFromProjectDomain(projectDomain);
+
+    final baseUri = Uri.tryParse(baseUrl);
+
+    if (baseUri == null || baseUri.scheme.isEmpty || baseUri.host.isEmpty) {
+      throw ArgumentError.value(
+        baseUrl,
+        'api_base_url',
+        'A valid HTTP or HTTPS URL is required.',
+      );
+    }
+
+    final realtimeScheme = (_stringOption(
+              options,
+              const ['realtime_scheme'],
+            ) ??
+            'wss')
+        .toLowerCase();
+
+    if (realtimeScheme != 'ws' && realtimeScheme != 'wss') {
+      throw ArgumentError.value(
+        realtimeScheme,
+        'realtime_scheme',
+        'Only ws or wss are supported.',
+      );
+    }
+
+    return HosteDayConfig(
+      projectDomain: projectDomain,
+      baseUrl: baseUrl,
+      apiToken: _stringOption(
+        options,
+        const [HosteDayOptionKeys.apiToken],
+      ),
+      apiTokenHeader: 'X-Api-Token',
+      pusherKey: _stringOption(
+            options,
+            const [HosteDayOptionKeys.pusherKey],
+          ) ??
+          '',
+      realtimeHost: _stringOption(
+            options,
+            const [HosteDayOptionKeys.realtimeHost],
+          ) ??
+          baseUri.host,
+      loginPathPost: _stringOption(
+            options,
+            const ['login_path_post'],
+          ) ??
+          '/api/auth/login',
+      registerPathPost: _stringOption(
+            options,
+            const ['register_path_post'],
+          ) ??
+          '/api/auth/register',
+      forgotPasswordPathPost: _stringOption(
+            options,
+            const ['forgot_password_path_post'],
+          ) ??
+          '/api/auth/forgot-password',
+      resetPasswordPathPost: _stringOption(
+            options,
+            const ['reset_password_path_post'],
+          ) ??
+          '/api/auth/reset-password',
+      userShowPathGet: _stringOption(
+            options,
+            const ['user_show_path_get'],
+          ) ??
+          '/api/user',
+      userUpdatePathPut: _stringOption(
+            options,
+            const ['user_update_path_put'],
+          ) ??
+          '/api/user',
+      userUpdateAvatarPathPost: _stringOption(
+            options,
+            const ['user_update_avatar_path_post'],
+          ) ??
+          '/api/user/avatar',
+      userDeletePathDelete: _stringOption(
+            options,
+            const ['user_delete_path_delete'],
+          ) ??
+          '/api/user',
+      logoutPathPost: _stringOption(
+            options,
+            const ['logout_path_post'],
+          ) ??
+          '/api/logout',
+      emailVerifyPathPost: _stringOption(
+            options,
+            const ['email_verify_path_post'],
+          ) ??
+          '/api/email/verify',
+      publicEventsPath: _stringOption(
+            options,
+            const [HosteDayOptionKeys.publicEventsPath],
+          ) ??
+          '/api/realtime/events/public',
+      privateEventsPath: _stringOption(
+            options,
+            const [HosteDayOptionKeys.privateEventsPath],
+          ) ??
+          '/api/realtime/events/private',
+      presenceEventsPath: _stringOption(
+            options,
+            const [HosteDayOptionKeys.presenceEventsPath],
+          ) ??
+          '/api/realtime/events/presence',
+      broadcastingAuthPath: _stringOption(
+            options,
+            const [HosteDayOptionKeys.broadcastingAuthPath],
+          ) ??
+          '/api/broadcasting/auth-manual',
+    );
+  }
+
+  /// The complete Pusher-compatible WebSocket application URL.
   ///
-  /// Leading and trailing slashes are normalized to ensure the resulting URI
-  /// contains exactly one slash between the base URL and endpoint path.
+  /// Example:
+  /// wss://ws3.hosteday.com:443/app/YOUR_PUSHER_KEY
+  String get realtimeUrl {
+    return 'wss://$realtimeHost:443/app/$pusherKey';
+  }
+
+  /// Headers sent automatically with all HosteDay HTTP requests.
+  Map<String, String> get defaultHeaders {
+    final token = apiToken?.trim();
+
+    if (token == null || token.isEmpty) {
+      return const <String, String>{};
+    }
+
+    return <String, String>{
+      apiTokenHeader: token,
+    };
+  }
+
+  /// Builds a complete URI by combining [baseUrl] with [path].
   Uri uri(String path) {
     final cleanBase = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
@@ -95,5 +225,52 @@ class HosteDayConfig {
     final cleanPath = path.startsWith('/') ? path : '/$path';
 
     return Uri.parse('$cleanBase$cleanPath');
+  }
+
+  static String _requiredOption(
+    Map<String, Object?> options,
+    String key,
+  ) {
+    final value = _stringOption(options, <String>[key]);
+
+    if (value == null) {
+      throw ArgumentError.value(
+        options,
+        key,
+        'The "$key" option is required.',
+      );
+    }
+
+    return value;
+  }
+
+  static String? _stringOption(
+    Map<String, Object?> options,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = options[key];
+
+      if (value == null) {
+        continue;
+      }
+
+      final text = value.toString().trim();
+
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return null;
+  }
+
+  static String _baseUrlFromProjectDomain(String projectDomain) {
+    final normalized = projectDomain
+        .trim()
+        .replaceFirst(RegExp(r'^https?://'), '')
+        .replaceFirst(RegExp(r'/$'), '');
+
+    return 'https://$normalized';
   }
 }
