@@ -5,6 +5,34 @@ All notable changes to `hosteday_flutter` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows Semantic Versioning.
 
+## [1.0.6] - 2026-07-01
+
+### Added
+
+* Added a runnable Flutter example application in `example/lib/main.dart`.
+* Added a simple authentication interface for:
+
+    * Sign in with email and password.
+    * Create a new account.
+    * Automatic navigation based on `authStateChanges()`.
+    * Sign out.
+* Added support for passing example configuration through Dart environment variables:
+
+    * `HOSTEDAY_PROJECT_DOMAIN`
+    * `HOSTEDAY_API_TOKEN`
+
+### Changed
+
+* Updated the example application to use `HosteDay.initializeApp(...)`.
+* Updated the example to use `HosteDay.auth.signInWithEmailAndPassword(...)`.
+* Updated the example to use `HosteDay.auth.createUserWithEmailAndPassword(...)`.
+* Removed hard-coded project API tokens from the published example source code.
+
+### Security
+
+* Project API tokens should now be provided through `--dart-define` when running the example.
+* Do not commit production API tokens or user access tokens to public repositories.
+
 ## [1.0.5] - 2026-06-22
 
 ### Added

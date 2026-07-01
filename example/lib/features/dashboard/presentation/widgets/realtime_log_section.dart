@@ -5,10 +5,7 @@ import '../../data/models/realtime_log.dart';
 import '../controllers/dashboard_controller.dart';
 
 class RealtimeLogSection extends StatelessWidget {
-  const RealtimeLogSection({
-    super.key,
-    required this.controller,
-  });
+  const RealtimeLogSection({super.key, required this.controller});
 
   final DashboardController controller;
 
@@ -41,10 +38,7 @@ class RealtimeLogSection extends StatelessWidget {
 }
 
 class RealtimeLogCard extends StatelessWidget {
-  const RealtimeLogCard({
-    super.key,
-    required this.log,
-  });
+  const RealtimeLogCard({super.key, required this.log});
 
   final RealtimeLog log;
 

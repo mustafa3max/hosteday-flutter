@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({
-    super.key,
-    required this.label,
-    required this.active,
-  });
+  const StatusChip({super.key, required this.label, required this.active});
 
   final String label;
   final bool active;

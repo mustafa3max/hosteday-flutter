@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppLoadingPage extends StatelessWidget {
-  const AppLoadingPage({
-    super.key,
-    required this.message,
-  });
+  const AppLoadingPage({super.key, required this.message});
 
   final String message;
 

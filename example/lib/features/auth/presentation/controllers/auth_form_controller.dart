@@ -5,9 +5,9 @@ import '../../../../core/models/action_feedback.dart';
 
 class AuthFormController extends ChangeNotifier {
   AuthFormController()
-      : nameController = TextEditingController(text: 'Mustafa'),
-        emailController = TextEditingController(text: 'user@example.com'),
-        passwordController = TextEditingController();
+    : nameController = TextEditingController(text: 'Mustafa'),
+      emailController = TextEditingController(text: 'user@example.com'),
+      passwordController = TextEditingController();
 
   final TextEditingController nameController;
   final TextEditingController emailController;
@@ -127,7 +127,8 @@ class AuthFormController extends ChangeNotifier {
       await HosteDay.auth.sendPasswordResetEmail(email: email);
 
       return const ActionFeedback(
-        message: 'تم إرسال تعليمات إعادة تعيين كلمة المرور إلى البريد الإلكتروني.',
+        message:
+            'تم إرسال تعليمات إعادة تعيين كلمة المرور إلى البريد الإلكتروني.',
       );
     } on HosteDayAuthException catch (error) {
       return ActionFeedback(

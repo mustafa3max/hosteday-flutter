@@ -11,10 +11,7 @@ import '../widgets/realtime_log_section.dart';
 import '../widgets/realtime_section.dart';
 
 class HosteDayHomePage extends StatefulWidget {
-  const HosteDayHomePage({
-    super.key,
-    required this.user,
-  });
+  const HosteDayHomePage({super.key, required this.user});
 
   final HosteDayUser user;
 
@@ -96,12 +93,10 @@ class _HosteDayHomePageState extends State<HosteDayHomePage> {
                     controller: _controller,
                     onConnect: () => _run(_controller.connectRealtime()),
                     onSubscribe: () => _run(_controller.subscribeRealtime()),
-                    onPublish: () =>
-                        _run(_controller.publishRealtimeEvent()),
+                    onPublish: () => _run(_controller.publishRealtimeEvent()),
                     onUnsubscribe: () =>
                         _run(_controller.unsubscribeRealtime()),
-                    onDisconnect: () =>
-                        _run(_controller.disconnectRealtime()),
+                    onDisconnect: () => _run(_controller.disconnectRealtime()),
                   ),
                   const SizedBox(height: 18),
                   RealtimeLogSection(controller: _controller),

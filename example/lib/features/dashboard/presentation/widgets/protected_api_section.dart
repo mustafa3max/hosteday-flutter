@@ -43,10 +43,7 @@ class ProtectedApiSection extends StatelessWidget {
 }
 
 class ApiResultSection extends StatelessWidget {
-  const ApiResultSection({
-    super.key,
-    required this.controller,
-  });
+  const ApiResultSection({super.key, required this.controller});
 
   final DashboardController controller;
 

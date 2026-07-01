@@ -1,6 +1,6 @@
 name: hosteday_flutter
 description: A lightweight Flutter SDK for connecting apps with HosteDay APIs, including authentication, user requests, custom endpoints, and realtime support.
-version: 1.0.5
+version: 1.0.6
 homepage: https://hosteday.com
 
 environment:

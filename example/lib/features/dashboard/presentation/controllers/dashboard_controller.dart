@@ -11,18 +11,16 @@ import '../../data/models/realtime_log.dart';
 
 class DashboardController extends ChangeNotifier {
   DashboardController({required HosteDayUser user})
-      : _user = user,
-        nameController = TextEditingController(text: user.displayName ?? ''),
-        emailController = TextEditingController(text: user.email ?? ''),
-        channelController = TextEditingController(text: 'tenant.chat.room.1'),
-        eventController = TextEditingController(text: 'message.sent'),
-        payloadController = TextEditingController(
-          text: const JsonEncoder.withIndent(
-            '  ',
-          ).convert(<String, dynamic>{
-            'message': 'Welcome from HosteDay Flutter',
-          }),
-        );
+    : _user = user,
+      nameController = TextEditingController(text: user.displayName ?? ''),
+      emailController = TextEditingController(text: user.email ?? ''),
+      channelController = TextEditingController(text: 'tenant.chat.room.1'),
+      eventController = TextEditingController(text: 'message.sent'),
+      payloadController = TextEditingController(
+        text: const JsonEncoder.withIndent('  ').convert(<String, dynamic>{
+          'message': 'Welcome from HosteDay Flutter',
+        }),
+      );
 
   HosteDayUser _user;
   HosteDayUser get user => _user;
@@ -64,7 +62,8 @@ class DashboardController extends ChangeNotifier {
   bool get apiResultIsError => _apiResultIsError;
 
   final List<RealtimeLog> _realtimeLogs = <RealtimeLog>[];
-  List<RealtimeLog> get realtimeLogs => List<RealtimeLog>.unmodifiable(_realtimeLogs);
+  List<RealtimeLog> get realtimeLogs =>
+      List<RealtimeLog>.unmodifiable(_realtimeLogs);
 
   bool _isDisposed = false;
 
@@ -163,12 +162,14 @@ class DashboardController extends ChangeNotifier {
       return null;
     } on HosteDayAuthException catch (error) {
       return ActionFeedback(
-        message: 'تم حذف الجلسة المحلية، لكن Logout في السيرفر فشل: ${error.message}',
+        message:
+            'تم حذف الجلسة المحلية، لكن Logout في السيرفر فشل: ${error.message}',
         isError: true,
       );
     } on HosteDayException catch (error) {
       return ActionFeedback(
-        message: 'تم حذف الجلسة المحلية، لكن Logout في السيرفر فشل: ${error.message}',
+        message:
+            'تم حذف الجلسة المحلية، لكن Logout في السيرفر فشل: ${error.message}',
         isError: true,
       );
     } catch (error) {
@@ -305,10 +306,7 @@ class DashboardController extends ChangeNotifier {
         isError: true,
       );
 
-      return ActionFeedback(
-        message: 'فشل الاشتراك: $error',
-        isError: true,
-      );
+      return ActionFeedback(message: 'فشل الاشتراك: $error', isError: true);
     } finally {
       _setRealtimeLoading(false);
     }
@@ -443,10 +441,7 @@ class DashboardController extends ChangeNotifier {
         isError: true,
       );
 
-      return ActionFeedback(
-        message: 'فشل إرسال الحدث: $error',
-        isError: true,
-      );
+      return ActionFeedback(message: 'فشل إرسال الحدث: $error', isError: true);
     } finally {
       _setRealtimeLoading(false);
     }

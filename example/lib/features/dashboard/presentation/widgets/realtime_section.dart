@@ -55,7 +55,7 @@ class RealtimeSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<HosteDayChannelType>(
-            value: controller.channelType,
+            initialValue: controller.channelType,
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'نوع القناة',

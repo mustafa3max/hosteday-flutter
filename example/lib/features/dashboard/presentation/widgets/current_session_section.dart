@@ -20,7 +20,9 @@ class CurrentSessionSection extends StatelessWidget {
     final user = controller.user;
     final isLoading = controller.isBusy;
     final identity = user.displayName ?? user.email ?? user.id;
-    final initial = identity.isEmpty ? '?' : identity.substring(0, 1).toUpperCase();
+    final initial = identity.isEmpty
+        ? '?'
+        : identity.substring(0, 1).toUpperCase();
 
     return SectionCard(
       title: 'الجلسة الحالية',
@@ -34,14 +36,8 @@ class CurrentSessionSection extends StatelessWidget {
             title: Text(user.displayName ?? 'بدون اسم'),
             subtitle: Text(user.email ?? user.id),
             trailing: user.emailVerified
-                ? const Icon(
-                    Icons.verified_outlined,
-                    color: Colors.tealAccent,
-                  )
-                : const Icon(
-                    Icons.warning_amber_outlined,
-                    color: Colors.amber,
-                  ),
+                ? const Icon(Icons.verified_outlined, color: Colors.tealAccent)
+                : const Icon(Icons.warning_amber_outlined, color: Colors.amber),
           ),
           const SizedBox(height: 12),
           Wrap(
