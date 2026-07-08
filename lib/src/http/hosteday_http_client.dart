@@ -214,7 +214,6 @@ class HosteDayHttpClient {
         error: error,
       );
     } catch (error) {
-      print("DDD: $error");
       throw HosteDayException(
         'HosteDay request error.',
         error: error,
