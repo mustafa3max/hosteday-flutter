@@ -1,21 +1,14 @@
-export 'src/hosteday.dart';
-export 'src/hosteday_client.dart';
-
 export 'src/auth/hosteday_auth.dart';
-export 'src/auth/hosteday_auth_credential.dart';
-export 'src/auth/hosteday_auth_session.dart';
 export 'src/auth/hosteday_auth_storage.dart';
 export 'src/auth/hosteday_shared_preferences_auth_storage.dart';
 export 'src/auth/hosteday_token_provider.dart';
 export 'src/auth/hosteday_user.dart';
-
 export 'src/config/hosteday_config.dart';
 export 'src/config/hosteday_option_keys.dart';
-
 export 'src/exceptions/hosteday_exception.dart';
-
+export 'src/hosteday.dart';
+export 'src/hosteday_client.dart';
 export 'src/http/hosteday_http_client.dart';
-
 export 'src/realtime/hosteday_channel_type.dart';
 export 'src/realtime/hosteday_realtime_client.dart';
 export 'src/realtime/hosteday_realtime_event.dart';
