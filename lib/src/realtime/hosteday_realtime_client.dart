@@ -8,10 +8,12 @@ import '../exceptions/hosteday_exception.dart';
 import 'hosteday_channel_type.dart';
 import 'hosteday_realtime_event.dart';
 
-/// A callback invoked when a HosteDay real-time event is received.
-typedef HosteDayRealtimeCallback = void Function(HosteDayRealtimeEvent event);
+/// A callback invoked when a HosteDay realtime event is received.
+typedef HosteDayRealtimeCallback = void Function(
+  HosteDayRealtimeEvent event,
+);
 
-/// Manages HosteDay real-time connections, channels, and event subscriptions.
+/// Manages HosteDay realtime connections, channels, and event subscriptions.
 ///
 /// Supported channel types:
 /// - Public
@@ -19,7 +21,7 @@ typedef HosteDayRealtimeCallback = void Function(HosteDayRealtimeEvent event);
 /// - Presence
 /// - Private encrypted
 class HosteDayRealtimeClient {
-  /// The configuration used to establish the real-time connection.
+  /// The configuration used to establish the realtime connection.
   final HosteDayConfig config;
 
   /// The provider used to retrieve the authenticated user's token.
@@ -32,9 +34,9 @@ class HosteDayRealtimeClient {
   /// Stores channels by their normalized Pusher channel names.
   ///
   /// Examples:
-  /// - tenant.chat.room.1
-  /// - private-tenant.orders.1
-  /// - presence-tenant.chat.room.1
+  /// - `tenant.chat.room.1`
+  /// - `private-tenant.orders.1`
+  /// - `presence-tenant.chat.room.1`
   final Map<String, Channel> _channels = <String, Channel>{};
 
   /// Stores event listeners by normalized channel name.
@@ -46,7 +48,7 @@ class HosteDayRealtimeClient {
 
   StreamSubscription<dynamic>? _connectionSubscription;
 
-  /// Creates a real-time client using the specified [config].
+  /// Creates a realtime client using the specified [config].
   HosteDayRealtimeClient({
     required this.config,
     this.tokenProvider,
@@ -68,13 +70,16 @@ class HosteDayRealtimeClient {
     return value;
   }
 
-  /// Returns whether the real-time client has been initialized.
+  /// Returns whether the realtime client has been initialized.
+  ///
+  /// This means the WebSocket client object exists. It does not necessarily
+  /// guarantee that the socket is currently connected at this exact moment.
   bool get isConnected => _client != null;
 
   /// Connects to the configured HosteDay Pusher-compatible WebSocket server.
   ///
   /// Example generated URL:
-  /// wss://ws3.hosteday.com:443/app/YOUR_PUSHER_KEY
+  /// `wss://ws3.hosteday.com:443/app/YOUR_PUSHER_KEY`
   ///
   /// The package adds the `/app/{pusherKey}` path automatically when
   /// [PusherChannelsOptions.fromHost] is used.
@@ -83,28 +88,31 @@ class HosteDayRealtimeClient {
       return;
     }
 
-    if (config.realtimeHost.trim().isEmpty) {
+    final realtimeHost = config.realtimeHost.trim();
+    final pusherKey = config.pusherKey.trim();
+
+    if (realtimeHost.isEmpty) {
       throw const HosteDayException(
         'Missing realtime host. Configure realtime_host or project_domain.',
       );
     }
 
-    if (config.pusherKey.trim().isEmpty) {
+    if (pusherKey.isEmpty) {
       throw const HosteDayException(
         'Missing Pusher key. Configure pusher_key before connecting realtime.',
       );
     }
 
     final options = PusherChannelsOptions.fromHost(
-      host: config.realtimeHost,
-      key: config.pusherKey,
-      port: 443,
-      scheme: "wss",
+      host: realtimeHost,
+      key: pusherKey,
+      port: config.realtimePort,
+      scheme: config.realtimeScheme,
       shouldSupplyMetadataQueries: true,
       metadata: PusherChannelsOptionsMetadata.byDefault(),
     );
 
-    _client = PusherChannelsClient.websocket(
+    final realtimeClient = PusherChannelsClient.websocket(
       options: options,
       connectionErrorHandler: (exception, trace, refresh) {
         refresh();
@@ -114,14 +122,17 @@ class HosteDayRealtimeClient {
       waitForPongDuration: const Duration(seconds: 30),
     );
 
+    _client = realtimeClient;
+
     /// Re-subscribes tracked channels after a reconnect.
-    _connectionSubscription = client.onConnectionEstablished.listen((_) {
+    _connectionSubscription =
+        realtimeClient.onConnectionEstablished.listen((_) {
       for (final channel in _channels.values) {
         channel.subscribeIfNotUnsubscribed();
       }
     });
 
-    client.connect();
+    realtimeClient.connect();
   }
 
   /// Creates or returns a tracked public channel.
@@ -492,14 +503,16 @@ class HosteDayRealtimeClient {
     required String channelType,
   }) async {
     final token = await tokenProvider?.getToken();
+    final cleanToken = token?.trim();
 
-    if (token == null || token.trim().isEmpty) {
+    if (cleanToken == null || cleanToken.isEmpty) {
       throw HosteDayException(
         'Missing authentication token for $channelType.',
+        statusCode: 401,
       );
     }
 
-    return token.trim();
+    return cleanToken;
   }
 
   Map<String, String> _authorizationHeaders(String token) {
@@ -533,11 +546,13 @@ class HosteDayRealtimeClient {
     final normalized = _requiredChannelName(channel);
 
     if (normalized.startsWith('private-') ||
-        normalized.startsWith('presence-')) {
+        normalized.startsWith('presence-') ||
+        normalized.startsWith('private-encrypted-')) {
       throw ArgumentError.value(
         channel,
         'channel',
-        'A public channel cannot start with private- or presence-.',
+        'A public channel cannot start with private-, presence-, or '
+            'private-encrypted-.',
       );
     }
 
@@ -573,7 +588,8 @@ class HosteDayRealtimeClient {
   String _normalizePresenceChannelName(String channel) {
     final normalized = _requiredChannelName(channel);
 
-    if (normalized.startsWith('private-')) {
+    if (normalized.startsWith('private-') ||
+        normalized.startsWith('private-encrypted-')) {
       throw ArgumentError.value(
         channel,
         'channel',

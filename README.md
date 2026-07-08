@@ -4,54 +4,96 @@
 [![platform](https://img.shields.io/badge/platform-Flutter-blue.svg)](https://flutter.dev)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A Flutter and Dart SDK for connecting applications to HosteDay APIs, authentication, and
-Pusher-compatible real-time services.
+A Flutter SDK for connecting applications to HosteDay APIs, authentication, session storage, user
+management, custom backend endpoints, and realtime services.
 
-`hosteday_flutter` provides a single SDK entry point for:
+`hosteday_flutter` gives Flutter developers a simple Firebase-inspired API for:
 
-* Firebase-inspired authentication and session management.
-* Automatic access-token handling for protected API requests.
-* User profile management and password reset flows.
-* Custom HTTP requests through `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`.
-* Public, private, presence, and private encrypted Realtime channels.
-* Automatic authenticated channel authorization after sign-in.
-* Configurable API endpoints and project-level request protection.
+* Initializing a HosteDay project.
+* Signing users in and out.
+* Creating accounts.
+* Persisting authenticated sessions.
+* Sending password reset emails.
+* Sending email verification emails.
+* Reading and updating the current user.
+* Calling custom backend APIs.
+* Sending authenticated API requests.
+* Connecting to HosteDay realtime channels.
+* Listening to public, private, presence, and encrypted realtime events.
+* Publishing realtime events through HosteDay.
 
 ![Flutter Example App](https://raw.githubusercontent.com/mustafa3max/hosteday-flutter/master/assets/flutter-example.png)
 
 ---
 
-## Features
+## HosteDay platform
 
-* Global SDK initialization through `HosteDay.initializeApp(...)`.
-* Firebase-style authentication API through `HosteDay.auth`.
-* Persistent or temporary user sessions through `HosteDayAuthStorage`.
-* Automatic session restoration during application startup.
-* Automatic access-token usage for requests with `withAuth: true`.
-* Automatic token usage for private, presence, and private encrypted Realtime channels.
-* Authentication state streams:
+This package is designed to work with the HosteDay platform.
 
-    * `authStateChanges()`
-    * `idTokenChanges()`
-    * `userChanges()`
-* Built-in authentication operations:
+HosteDay is a backend and API platform that lets developers create isolated APIs for their projects
+without manually configuring Docker, databases, routing, HTTPS, authentication, or infrastructure.
+Each project can get its own generated API, isolated runtime environment, database, HTTPS-enabled
+subdomain, and ready-to-use backend endpoints.
 
-    * Sign in
-    * Register
-    * Sign out
-    * Password reset
-    * Profile reload
-    * Profile update
-    * Email verification request
-* Structured errors through:
+To use this Flutter SDK, you first need to create a project from the HosteDay dashboard. After
+creating the project, HosteDay provides the values required by the Flutter app:
 
-    * `HosteDayException`
-    * `HosteDayAuthException`
-* Realtime defaults:
+* Project domain, such as `your-project.hosteday.com`.
+* Project API key, used by the SDK as `HosteDayOptionKeys.projectApiKey`.
+* Realtime app key, used by the SDK as `HosteDayOptionKeys.realtimeAppKey`.
+* Realtime host, used by the SDK as `HosteDayOptionKeys.realtimeHost`.
 
-    * Scheme: `wss`
-    * Port: `443`
-* Complete WebSocket endpoint through `HosteDay.config.realtimeUrl`.
+A typical workflow is:
+
+1. Create a new project from the HosteDay dashboard.
+2. Define your database tables and fields, such as `posts`, `orders`, or `products`.
+3. Let HosteDay generate the API endpoints for your project.
+4. Copy the project domain and project API key from the dashboard.
+5. Enable realtime for the project when needed, then copy the realtime app key and realtime host.
+6. Use those values when initializing `hosteday_flutter`.
+
+Example:
+
+```dart
+await
+HosteDay.initializeApp
+(
+options: const <String, Object?>{
+HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
+
+// Required only when using HosteDay realtime.
+HosteDayOptionKeys.realtimeAppKey: 'YOUR_REALTIME_APP_KEY',
+HosteDayOptionKeys.realtimeHost: 'ws3.hosteday.com',
+},
+authStorage
+:
+HosteDaySharedPreferencesAuthStorage
+(
+)
+,
+);
+```
+
+The project API key identifies your HosteDay project. It is not the signed-in user's access token.
+
+After a user signs in, HosteDay Auth manages the user access token automatically. You only need to
+set `withAuth: true` when calling protected project endpoints:
+
+```dart
+
+final response = await
+HosteDay.client.get
+('/api/posts
+'
+,withAuth:
+true
+,
+);
+```
+
+Realtime also uses the authenticated user token automatically when subscribing to private or
+presence channels.
 
 ---
 
@@ -63,7 +105,7 @@ Add the package to your Flutter project:
 flutter pub add hosteday_flutter
 ```
 
-Then import it:
+Import it:
 
 ```dart
 import 'package:hosteday_flutter/hosteday_flutter.dart';
@@ -71,9 +113,9 @@ import 'package:hosteday_flutter/hosteday_flutter.dart';
 
 ---
 
-## Quick Start
+## Quick start
 
-Initialize HosteDay once before running the application:
+Initialize HosteDay before running your Flutter app.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -86,31 +128,244 @@ Future<void> main() async {
     options: const <String, Object?>{
       HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
 
-      // Required only when using Realtime.
-      HosteDayOptionKeys.realtimeHost: 'ws3.hosteday.com',
-      HosteDayOptionKeys.pusherKey: 'YOUR_PUSHER_KEY',
+      // Project API key.
+      //
+      // This is not the signed-in user's access token.
+      HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
     },
+
+    // Stores the user session locally using shared_preferences.
+    authStorage: HosteDaySharedPreferencesAuthStorage(),
   );
 
   runApp(const App());
 }
 ```
 
-`project_domain` is required.
+---
 
-`realtime_host` is optional when Realtime uses the same domain as the API project. If omitted,
-HosteDay uses the host from `project_domain` or `api_base_url`.
+## Important naming notes
 
-You do not need to pass these values unless your server requires different settings:
+### Project API key
 
-```text
-realtime_scheme = wss
-realtime_port   = 443
+Use:
+
+```dart
+HosteDayOptionKeys.projectApiKey
+```
+
+This identifies the HosteDay project.
+
+It is not the authenticated user's access token.
+
+The SDK sends it automatically as:
+
+```http
+X-Api-Token: YOUR_PROJECT_API_KEY
 ```
 
 ---
 
-## Core API
+### User access token
+
+The user access token is created after sign in.
+
+You do not pass it manually.
+
+The SDK stores it and uses it automatically when you call:
+
+```dart
+withAuth: true
+```
+
+Example:
+
+```dart
+
+final response = await
+HosteDay.client.get
+('/api/posts
+'
+,withAuth:
+true
+,
+);
+```
+
+---
+
+### Realtime app key
+
+Use:
+
+```dart
+HosteDayOptionKeys.realtimeAppKey
+```
+
+This key is provided by HosteDay for realtime connections.
+
+It does not mean the developer needs a Pusher account.
+
+HosteDay uses a Pusher-compatible realtime protocol internally.
+
+---
+
+## Basic initialization
+
+```dart
+await
+HosteDay.initializeApp
+(
+options: const <String, Object?>{
+HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
+},
+authStorage
+:
+HosteDaySharedPreferencesAuthStorage
+(
+)
+,
+);
+```
+
+---
+
+## Initialization with realtime
+
+```dart
+await
+HosteDay.initializeApp
+(
+options: const <String, Object?>{
+HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
+
+HosteDayOptionKeys.realtimeAppKey: 'YOUR_REALTIME_APP_KEY',
+HosteDayOptionKeys.realtimeHost: 'ws3.hosteday.com',
+HosteDayOptionKeys.realtimeScheme: 'wss',
+HosteDayOptionKeys.realtimePort: 443,
+},
+authStorage
+:
+HosteDaySharedPreferencesAuthStorage
+(
+)
+,
+);
+```
+
+Realtime is not connected automatically unless you request it:
+
+```dart
+await
+HosteDay.connectRealtime
+();
+```
+
+Or initialize and connect immediately:
+
+```dart
+await
+HosteDay.initializeApp
+(
+options: const <String, Object?>{
+HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
+HosteDayOptionKeys.realtimeAppKey: 'YOUR_REALTIME_APP_KEY',
+HosteDayOptionKeys.realtimeHost: 'ws3.hosteday.com',
+},
+authStorage: HosteDaySharedPreferencesAuthStorage(),
+connectRealtime: true,
+);
+```
+
+---
+
+## Using environment variables
+
+Recommended for examples and local development:
+
+```dart
+abstract final class ExampleEnvironment {
+  const ExampleEnvironment._();
+
+  static const String projectDomain = String.fromEnvironment(
+    'HOSTEDAY_PROJECT_DOMAIN',
+    defaultValue: 'project.hosteday.com',
+  );
+
+  static const String projectApiKey = String.fromEnvironment(
+    'HOSTEDAY_PROJECT_API_KEY',
+    defaultValue: 'YOUR_PROJECT_API_KEY',
+  );
+
+  static const String realtimeAppKey = String.fromEnvironment(
+    'HOSTEDAY_REALTIME_APP_KEY',
+    defaultValue: 'YOUR_REALTIME_APP_KEY',
+  );
+
+  static const String realtimeHost = String.fromEnvironment(
+    'HOSTEDAY_REALTIME_HOST',
+    defaultValue: 'ws3.hosteday.com',
+  );
+
+  static const String realtimeScheme = String.fromEnvironment(
+    'HOSTEDAY_REALTIME_SCHEME',
+    defaultValue: 'wss',
+  );
+
+  static const int realtimePort = int.fromEnvironment(
+    'HOSTEDAY_REALTIME_PORT',
+    defaultValue: 443,
+  );
+}
+```
+
+Run the app:
+
+```bash
+flutter run \
+  --dart-define=HOSTEDAY_PROJECT_DOMAIN=your-project.hosteday.com \
+  --dart-define=HOSTEDAY_PROJECT_API_KEY=your_project_api_key \
+  --dart-define=HOSTEDAY_REALTIME_APP_KEY=your_realtime_app_key \
+  --dart-define=HOSTEDAY_REALTIME_HOST=ws3.hosteday.com
+```
+
+The first argument of `String.fromEnvironment` must be the environment variable name, not the actual
+value.
+
+Correct:
+
+```dart
+String.fromEnvironment
+('HOSTEDAY_PROJECT_DOMAIN
+'
+,defaultValue:
+'
+your-project.hosteday.com
+'
+,
+);
+```
+
+Incorrect:
+
+```dart
+String.fromEnvironment
+('https://your-project.hosteday.com
+'
+,defaultValue:
+'
+project.hosteday.com
+'
+,
+);
+```
+
+---
+
+## Main SDK entry point
 
 The official SDK entry point is:
 
@@ -118,13 +373,11 @@ The official SDK entry point is:
 HosteDay
 ```
 
-Use these accessors after initialization:
+Available global accessors:
 
 ```dart
-HosteDay.instance
-HosteDay.client
-HosteDay.config
-HosteDay.auth
+HosteDay.client;HosteDay.auth;HosteDay.config;HosteDay.http;HosteDay.realtime;HosteDay
+    .isInitialized;
 ```
 
 Example:
@@ -136,42 +389,9 @@ final auth = HosteDay.auth;
 final config = HosteDay.config;
 ```
 
-> `Hosteday` remains available as a deprecated compatibility alias. Use `HosteDay` in all new
-> projects.
-
 ---
 
-## Authentication
-
-`HosteDayAuth` provides a Firebase-inspired authentication API.
-
-```dart
-HosteDay.auth
-```
-
-Available accessors:
-
-```dart
-HosteDay.auth.currentUser
-HosteDay.auth.currentSession
-HosteDay.auth.getAccessToken
-()
-```
-
-Available state streams:
-
-```dart
-HosteDay.auth.authStateChanges
-()
-HosteDay.auth.idTokenChanges
-()
-HosteDay.auth.userChanges
-()
-```
-
----
-
-## Authentication Gate
+## Auth state gate
 
 Use `authStateChanges()` to switch between signed-in and signed-out screens.
 
@@ -183,19 +403,12 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<HosteDayUser?>(
       stream: HosteDay.auth.authStateChanges(),
+      initialData: HosteDay.auth.currentUser,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
         final user = snapshot.data;
 
         if (user == null) {
-          return const LoginPage();
+          return const SignInPage();
         }
 
         return HomePage(user: user);
@@ -205,19 +418,17 @@ class AuthGate extends StatelessWidget {
 }
 ```
 
-The stream emits the current user immediately, then emits future sign-in and sign-out changes.
-
 ---
 
-## Sign In
+# Authentication
+
+## Sign in with email and password
 
 ```dart
-
-final credential = await
-HosteDay.auth.signInWithEmailAndPassword
-(
+try {
+final credential = await HosteDay.auth.signInWithEmailAndPassword(
 email: 'user@example.com',
-password: 'password',
+password: 'password123',
 );
 
 final user = credential.user;
@@ -225,64 +436,64 @@ final session = credential.session;
 
 print(user.id);
 print(user.email);
-print
-(
-session
-.
-accessToken
-);
+print(session.accessToken);
+} on HosteDayException catch (error) {
+print(error.displayMessage);
+}
 ```
 
-After successful sign-in, HosteDay automatically:
+After successful sign in, HosteDay automatically:
 
-1. Stores the authenticated session.
-2. Stores the access token.
-3. Updates `currentUser`.
-4. Emits authentication state changes.
-5. Uses the new token for protected requests.
-6. Uses the new token when authorizing private Realtime channels.
+* Saves the session.
+* Saves the access token.
+* Updates `currentUser`.
+* Emits auth state changes.
+* Uses the token for protected API requests.
+* Uses the token for private and presence realtime channel authorization.
 
 ---
 
-## Register
+## Register a new user
 
 ```dart
-
-final credential = await
-HosteDay.auth.createUserWithEmailAndPassword
-(
+try {
+final credential = await HosteDay.auth.createUserWithEmailAndPassword(
 email: 'new-user@example.com',
-password: 'password',
+password: 'password123',
 additionalData: <String, dynamic>{
 'name': 'Mustafa',
 },
 );
 
+print(credential.user.id);
 print(credential.user.displayName);
-```
-
-`additionalData` can include backend-specific fields such as:
-
-```dart
-additionalData: <
-String, dynamic>{
-'name': 'Mustafa',
-'phone': '+964...',
-'tenant_id': 1,
+} on HosteDayException catch (error) {
+print(error.displayMessage);
 }
 ```
 
-The SDK automatically adds:
+You can pass extra fields through `additionalData`:
 
-```text
-email
-password
-password_confirmation
+```dart
+await
+HosteDay.auth.createUserWithEmailAndPassword
+(
+email: 'new-user@example.com',
+password: 'password123',
+additionalData: <String, dynamic>{
+'name': 'Mustafa',
+'phone': '+9647700000000',
+},
+);
 ```
+
+The SDK sends the registration request to HosteDay's default auth endpoint.
+
+Auth and user endpoints are owned by HosteDay and are not intended to be changed by app developers.
 
 ---
 
-## Current User
+## Current user
 
 ```dart
 
@@ -302,122 +513,107 @@ print(user.photoUrl);
 
 ---
 
-## Reload User Data
-
-Reload the current user from the configured user endpoint:
+## Listen to user changes
 
 ```dart
 
-final user = await
-HosteDay.auth.reload
-();
+final subscription = HosteDay.auth.userChanges().listen((user) {
+  if (user == null) {
+    print('User signed out.');
+    return;
+  }
 
-print
-(
-user.displayName);
-print(user.emailVerified);
+  print('Current user: ${user.email}');
+});
 ```
 
-The default endpoint is:
+Cancel when not needed:
 
-```text
-GET /api/user
+```dart
+await
+subscription.cancel
+();
 ```
 
 ---
 
-## Update Profile
+## Reload user from the server
+
+Use this after updating the profile, verifying email from a web link, or when you need fresh user
+data.
 
 ```dart
+try {
+final user = await HosteDay.auth.reload();
 
-final user = await
-HosteDay.auth.updateProfile
-(<String, dynamic>{
+print(user.displayName);
+print(user.emailVerified);
+} on HosteDayException catch (error) {
+print(error.displayMessage);
+}
+```
+
+---
+
+## Update user profile
+
+```dart
+try {
+final user = await HosteDay.auth.updateProfile(
+<String, dynamic>{
 'name': 'Mustafa Max',
-'email': 'mustafa@example.com',
 },
 );
 
 print(user.displayName);
+} on HosteDayException catch (error) {
+print(error.displayMessage);
+}
 ```
 
-The default endpoint is:
-
-```text
-PUT /api/user
-```
-
-The supported fields depend on your Laravel backend.
+The accepted fields depend on your HosteDay project backend.
 
 ---
 
-## Email Verification
-
-Request an email verification message for the signed-in user:
+## Send email verification
 
 ```dart
-await
-HosteDay.auth.sendEmailVerification
-();
+try {
+await HosteDay.auth.sendEmailVerification();
+
+print('Verification email sent.');
+} on HosteDayException catch (error) {
+print(error.displayMessage);
+}
 ```
 
-The default endpoint is:
+The Flutter app only requests the verification email.
 
-```text
-POST /api/email/verify
-```
+The actual email verification is completed through the web link sent to the user.
 
 ---
 
-## Password Reset
-
-### Send Password Reset Email
+## Send password reset email
 
 ```dart
-await
-HosteDay.auth.sendPasswordResetEmail
-(
-email
-:
-'
-user@example.com
-'
-,
-);
-```
-
-The default endpoint is:
-
-```text
-POST /api/auth/forgot-password
-```
-
-### Confirm Password Reset
-
-```dart
-await
-HosteDay.auth.confirmPasswordReset
-(
+try {
+await HosteDay.auth.sendPasswordResetEmail(
 email: 'user@example.com',
-token: 'RESET_TOKEN',
-newPassword
-:
-'
-new-password
-'
-,
 );
+
+print('Password reset email sent.');
+} on HosteDayException catch (error) {
+print(error.displayMessage);
+}
 ```
 
-The default endpoint is:
+The Flutter app only requests the password reset email.
 
-```text
-POST /api/auth/reset-password
-```
+The actual password reset is completed through the web link sent to the user.
 
 ---
 
-## Sign Out
+## Sign out
 
 ```dart
 await
@@ -427,67 +623,59 @@ HosteDay.auth.signOut
 
 When signing out, HosteDay:
 
-1. Attempts to call the configured logout endpoint.
-2. Removes the local session and access token.
-3. Sets `currentUser` to `null`.
-4. Emits `null` through authentication streams.
-5. Disconnects Realtime to prevent private subscriptions from remaining active.
+* Attempts to call the remote logout endpoint.
+* Clears the local session.
+* Clears the local access token.
+* Sets `currentUser` to `null`.
+* Emits `null` through auth streams.
+* Disconnects realtime.
 
-The default endpoint is:
-
-```text
-POST /api/logout
-```
-
-The local session is removed even if the remote logout endpoint fails.
+The local session is cleared even if the remote logout endpoint fails.
 
 ---
 
-## Session Storage
+# Session storage
 
-By default, HosteDay uses `MemoryHosteDayAuthStorage`.
+## Default recommended storage
 
-This is useful for tests and quick examples, but the session will be lost when the application
-closes.
-
-For production applications, provide a persistent secure implementation of `HosteDayAuthStorage`.
-
-Example using `flutter_secure_storage` in your Flutter application:
-
-```bash
-flutter pub add flutter_secure_storage
-```
+Use:
 
 ```dart
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hosteday_flutter/hosteday_flutter.dart';
-
-class SecureHosteDayAuthStorage implements HosteDayAuthStorage {
-  const SecureHosteDayAuthStorage(this._storage);
-
-  final FlutterSecureStorage _storage;
-
-  @override
-  Future<String?> read(String key) {
-    return _storage.read(key: key);
-  }
-
-  @override
-  Future<void> write(String key, String value) {
-    return _storage.write(
-      key: key,
-      value: value,
-    );
-  }
-
-  @override
-  Future<void> delete(String key) {
-    return _storage.delete(key: key);
-  }
-}
+HosteDaySharedPreferencesAuthStorage
+()
 ```
 
-Use it during initialization:
+Example:
+
+```dart
+await
+HosteDay.initializeApp
+(
+options: const <String, Object?>{
+HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
+},
+authStorage
+:
+HosteDaySharedPreferencesAuthStorage
+(
+)
+,
+);
+```
+
+This stores the authenticated session using `shared_preferences`.
+
+The user remains signed in after closing and reopening the app.
+
+The package already depends on `shared_preferences`, so app developers do not need to install it
+separately just to use HosteDay session storage.
+
+---
+
+## Memory storage
+
+For tests or temporary sessions:
 
 ```dart
 await
@@ -496,19 +684,86 @@ HosteDay.initializeApp
 options: const <String, Object?>{
 HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
 },
-authStorage: SecureHosteDayAuthStorage(
-FlutterSecureStorage(),
-),
+authStorage
+:
+MemoryHosteDayAuthStorage
+(
+)
+,
 );
 ```
 
-> Never store production access tokens in plain text storage.
+Memory storage is cleared when the app process restarts.
 
 ---
 
-## Protected API Requests
+## Custom storage
 
-After sign-in, use `withAuth: true` for protected requests.
+You can implement your own storage:
+
+```dart
+class CustomAuthStorage implements HosteDayAuthStorage {
+  final Map<String, String> _values = <String, String>{};
+
+  @override
+  Future<String?> read(String key) async {
+    return _values[key];
+  }
+
+  @override
+  Future<void> write(String key, String value) async {
+    _values[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    _values.remove(key);
+  }
+}
+```
+
+Use it:
+
+```dart
+await
+HosteDay.initializeApp
+(
+options: const <String, Object?>{
+HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+},
+authStorage
+:
+CustomAuthStorage
+(
+)
+,
+);
+```
+
+---
+
+# HTTP requests
+
+Use `HosteDay.client` for custom backend API requests.
+
+## Public GET request
+
+```dart
+
+final response = await
+HosteDay.client.get
+('/api/posts
+'
+);
+
+print(
+response
+);
+```
+
+---
+
+## Authenticated GET request
 
 ```dart
 
@@ -522,107 +777,141 @@ HosteDay.client.get
 print(response);
 ```
 
-The active access token is automatically added as:
+This automatically sends:
 
 ```http
-Authorization: Bearer YOUR_ACCESS_TOKEN
+Authorization: Bearer USER_ACCESS_TOKEN
 ```
-
-You do not need to extract, store, or pass the user token manually after calling
-`HosteDay.auth.signInWithEmailAndPassword(...)`.
 
 ---
 
-## HTTP Requests
-
-Use `HosteDay.client` for custom API requests.
+## GET with query parameters
 
 ```dart
 
 final response = await
-HosteDay.client.get
-('/api/items
+HosteDay.client.http.get
+('/api/posts
 '
+,withAuth: true,
+queryParameters: <String, Object?>{
+'page': 1,
+'search': 'flutter',
+},
 );
 
-print(
+print
+(
 response
 );
 ```
 
-All successful requests return decoded JSON as:
+---
 
-```dart
-Map<String, dynamic>
-```
-
-### GET
+## Get one post
 
 ```dart
 
 final response = await
 HosteDay.client.get
-('/api/items
+('/api/posts/1
 '
-,withAuth:
-true
-,
+,withAuth: true,
 );
+
+final post = response['data'];
+
+print(post);
 ```
 
-### POST
+Example expected response:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "First post",
+    "body": "Post body"
+  }
+}
+```
+
+---
+
+## Create a post
 
 ```dart
 
 final response = await
 HosteDay.client.post
-('/api/items
+('/api/posts
 '
 ,withAuth: true,
 body: <String, dynamic>{
-'title': 'New item',
-'description': 'Item description',
+'title': 'New post',
+'body': 'Created from Flutter.',
 },
+);
+
+print
+(
+response
 );
 ```
 
-### PUT
+---
+
+## Update a post with PUT
 
 ```dart
 
 final response = await
 HosteDay.client.put
-('/api/items/1
+('/api/posts/1
 '
 ,withAuth: true,
 body: <String, dynamic>{
-'title': 'Updated item',
+'title': 'Updated post title',
+'body': 'Updated post body.',
 },
+);
+
+print
+(
+response
 );
 ```
 
-### PATCH
+---
+
+## Partially update a post with PATCH
 
 ```dart
 
 final response = await
 HosteDay.client.patch
-('/api/items/1
+('/api/posts/1
 '
 ,withAuth: true,
 body: <String, dynamic>{
 'status': 'published',
 },
 );
+
+print
+(
+response
+);
 ```
 
-### DELETE
+---
+
+## Delete a post
 
 ```dart
-
-final response = await
+await
 HosteDay.client.delete
-('/api/items/1
+('/api/posts/1
 '
 ,withAuth:
 true
@@ -632,52 +921,134 @@ true
 
 ---
 
-## Project API Token
-
-Some HosteDay projects may require a project-level API token through the `X-Api-Token` header.
-
-Configure it during initialization:
+## Raw request
 
 ```dart
-await
-HosteDay.initializeApp
+
+final response = await
+HosteDay.client.request
 (
-options: const <String, Object?>{
-HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
-HosteDayOptionKeys.apiToken: 'PROJECT_API_TOKEN',
+method: 'POST',
+path: '/api/posts',
+withAuth: true,
+body: <String, dynamic>{
+'title': 'Created with raw request',
 },
 );
+
+print
+(
+response
+);
 ```
-
-The SDK includes this header automatically in all HTTP requests:
-
-```http
-X-Api-Token: PROJECT_API_TOKEN
-```
-
-A project API token and a user bearer token can be used together.
 
 ---
 
-## Realtime
+## Request timeout
 
-HosteDay supports Pusher-compatible Realtime services through `HosteDay.client.realtime`.
-
-Initialize Realtime settings once:
+If using the lower-level HTTP client:
 
 ```dart
-await
-HosteDay.initializeApp
-(
-options: const <String, Object?>{
-HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
-HosteDayOptionKeys.realtimeHost: 'ws3.hosteday.com',
-HosteDayOptionKeys.pusherKey: 'YOUR_PUSHER_KEY',
-},
+
+final response = await
+HosteDay.client.http.get
+('/api/posts
+'
+,withAuth: true,
+timeout: const Duration(seconds: 10
+)
+,
 );
 ```
 
-Connect when Realtime is needed:
+---
+
+# Custom model example
+
+You can convert API responses into your own models.
+
+```dart
+class Post {
+  final int id;
+  final String title;
+  final String? body;
+
+  const Post({
+    required this.id,
+    required this.title,
+    this.body,
+  });
+
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      id: int.parse(json['id'].toString()),
+      title: json['title'].toString(),
+      body: json['body']?.toString(),
+    );
+  }
+}
+```
+
+Load posts:
+
+```dart
+
+final response = await
+HosteDay.client.get
+('/api/posts
+'
+,withAuth: true,
+);
+
+final data = response['data'];
+
+final posts = data is List
+? data
+    .whereType<Map>()
+    .map((item) => Post.fromJson(Map<String, dynamic>.from(item)))
+    .toList()
+    : <Post>[];
+
+print(posts.length);
+```
+
+Load one post:
+
+```dart
+
+final response = await
+HosteDay.client.get
+('/api/posts/1
+'
+,withAuth: true,
+);
+
+final post = Post.fromJson(
+Map<String, dynamic>.from(response['data'] as Map),
+);
+
+print(post.title);
+```
+
+---
+
+# Realtime
+
+HosteDay realtime is available through:
+
+```dart
+HosteDay.realtime
+```
+
+or:
+
+```dart
+HosteDay.client.realtime
+```
+
+---
+
+## Connect realtime
 
 ```dart
 await
@@ -685,7 +1056,30 @@ HosteDay.connectRealtime
 ();
 ```
 
-You can inspect the generated endpoint:
+---
+
+## Disconnect realtime
+
+```dart
+await
+HosteDay.disconnectRealtime
+();
+```
+
+---
+
+## Check realtime status
+
+```dart
+
+final initialized = HosteDay.realtime.isConnected;
+
+print(initialized);
+```
+
+---
+
+## Inspect realtime URL
 
 ```dart
 print
@@ -701,14 +1095,14 @@ realtimeUrl
 Example:
 
 ```text
-wss://ws3.hosteday.com:443/app/YOUR_PUSHER_KEY
+wss://ws3.hosteday.com:443/app/YOUR_REALTIME_APP_KEY
 ```
 
 ---
 
-## Public Channel
+## Listen to a public channel
 
-Public channels do not require user authentication.
+Public channels do not require a signed-in user.
 
 ```dart
 await
@@ -716,37 +1110,47 @@ HosteDay.connectRealtime
 ();
 
 final subscription = await
-HosteDay.client.realtime.listenPublic
+HosteDay.realtime.listenPublic
 (
-channel: 'tenant.chat.room.1',
-event: 'message.sent',
+channel: 'posts',
+event: 'PostCreated',
 onEvent: (event) {
 print(event.name);
 print(event.channelName);
 print(event.payload);
-print(event.message);
 },
 );
 ```
 
+Cancel when not needed:
+
+```dart
+await
+subscription.cancel
+();
+```
+
 ---
 
-## Private Channel
+## Listen to a private channel
 
 Private channels require a signed-in user.
 
 ```dart
 await
-HosteDay.connectRealtime
-();
-
-final subscription = await
-HosteDay.client.realtime.listenPrivate
+HosteDay.auth.signInWithEmailAndPassword
 (
-channel: 'tenant.chat.room.1',
-event: 'message.sent',
+email: 'user@example.com',
+password: 'password123',
+);
+
+await HosteDay.connectRealtime();
+
+final subscription = await HosteDay.realtime.listenPrivate(
+channel: 'orders.1',
+event: 'OrderUpdated',
 onEvent: (event) {
-print(event.message);
+print(event.payload);
 print(event.userId);
 print(event.userName);
 print(event.userEmail);
@@ -754,15 +1158,26 @@ print(event.userEmail);
 );
 ```
 
-The SDK automatically adds the `private-` prefix when it is missing.
+The SDK automatically adds the `private-` prefix when needed.
 
-The current HosteDay authentication token is automatically included while authorizing the channel.
+Example:
+
+```dart
+channel: '
+orders.1'
+```
+
+becomes:
+
+```text
+private-orders.1
+```
 
 ---
 
-## Presence Channel
+## Listen to a presence channel
 
-Presence channels require a signed-in user and can track connected members.
+Presence channels require a signed-in user.
 
 ```dart
 await
@@ -770,45 +1185,85 @@ HosteDay.connectRealtime
 ();
 
 await
-HosteDay.client.realtime.listenPresence
+HosteDay.realtime.listenPresence
 (
-channel: 'tenant.chat.room.1',
-event: 'message.sent',
+channel: 'chat.room.1',
+event: 'MessageSent',
 onEvent: (event) {
 print(event.payload);
 },
 );
+```
 
-await HosteDay.client.realtime.listenPresenceMemberAdded(
-channel: 'tenant.chat.room.1',
-onEvent: (event) {
-print('Member joined: ${event.payload}');
-},
-);
+The SDK automatically adds the `presence-` prefix when needed.
 
-await HosteDay.client.realtime.listenPresenceMemberRemoved(
-channel: 'tenant.chat.room.1',
+---
+
+## Listen for presence members joining
+
+```dart
+await
+HosteDay.realtime.listenPresenceMemberAdded
+(
+channel: 'chat.room.1',
 onEvent: (event) {
-print('Member left: ${event.payload}');
+print('Member joined');
+print(event.payload);
 },
 );
 ```
 
-The SDK automatically adds the `presence-` prefix when it is missing.
+---
+
+## Listen for presence members leaving
+
+```dart
+await
+HosteDay.realtime.listenPresenceMemberRemoved
+(
+channel: 'chat.room.1',
+onEvent: (event) {
+print('Member left');
+print(event.payload);
+},
+);
+```
 
 ---
 
-## Unified Realtime Listener
+## Listen to a private encrypted channel
 
-Use the unified `listen(...)` method when you need to select the channel type dynamically.
+Private encrypted channels require backend support.
+
+```dart
+await
+HosteDay.connectRealtime
+();
+
+await
+HosteDay.realtime.listenPrivateEncrypted
+(
+channel: 'secure.orders.1',
+event: 'SecureOrderUpdated',
+onEvent: (event) {
+print(event.payload);
+},
+);
+```
+
+---
+
+## Unified realtime listener
+
+Use `listen(...)` when the channel type is dynamic.
 
 ```dart
 
 final subscription = await
-HosteDay.client.realtime.listen
+HosteDay.realtime.listen
 (
-channel: 'tenant.chat.room.1',
-event: 'message.sent',
+channel: 'orders.1',
+event: 'OrderUpdated',
 type: HosteDayChannelType.private,
 onEvent: (event) {
 print(event.payload);
@@ -816,7 +1271,7 @@ print(event.payload);
 );
 ```
 
-Supported channel types:
+Supported types:
 
 ```dart
 HosteDayChannelType.public
@@ -827,19 +1282,39 @@ HosteDayChannelType.privateEncrypted
 
 ---
 
-## Publish Realtime Events
+## Unsubscribe from one channel
 
-### Public Event
+```dart
+await
+HosteDay.realtime.unsubscribe
+('orders.1
+'
+,type:
+HosteDayChannelType
+.
+private
+,
+);
+```
+
+---
+
+# Publishing realtime events
+
+## Publish a public event
 
 ```dart
 
 final response = await
 HosteDay.client.publishPublicEvent
 (
-channel: 'tenant.chat.room.1',
-event: 'message.sent',
+channel: 'posts',
+event: 'PostCreated',
 payload: <String, dynamic>{
-'message': 'Hello from Flutter',
+'post': {
+'id': 1,
+'title': 'New realtime post',
+},
 },
 );
 
@@ -849,19 +1324,22 @@ response
 );
 ```
 
-### Private Event
+---
 
-Private event publishing requires an authenticated user.
+## Publish a private event
+
+Requires a signed-in user.
 
 ```dart
 
 final response = await
 HosteDay.client.publishPrivateEvent
 (
-channel: 'private-tenant.chat.room.1',
-event: 'message.sent',
+channel: 'orders.1',
+event: 'OrderUpdated',
 payload: <String, dynamic>{
-'message': 'Private message',
+'order_id': 1,
+'status': 'paid',
 },
 );
 
@@ -871,15 +1349,21 @@ response
 );
 ```
 
-### Presence Event
+The SDK automatically adds the `private-` prefix when needed.
+
+---
+
+## Publish a presence event
+
+Requires a signed-in user.
 
 ```dart
 
 final response = await
 HosteDay.client.publishPresenceEvent
 (
-channel: 'tenant.chat.room.1',
-event: 'member.typing',
+channel: 'chat.room.1',
+event: 'MemberTyping',
 payload: <String, dynamic>{
 'typing': true,
 },
@@ -891,114 +1375,191 @@ response
 );
 ```
 
-`publishPresenceEvent(...)` automatically adds the `presence-` prefix when needed.
+The SDK automatically adds the `presence-` prefix when needed.
 
 ---
 
-## Unsubscribe and Disconnect
+# Realtime event object
 
-Unsubscribe from a channel without closing the WebSocket connection:
-
-```dart
-await
-HosteDay.client.realtime.unsubscribe
-('tenant.chat.room.1
-'
-,type:
-HosteDayChannelType
-.
-private
-,
-);
-```
-
-Disconnect all Realtime channels and close the WebSocket connection:
+Realtime callbacks receive a `HosteDayRealtimeEvent`.
 
 ```dart
 await
-HosteDay.client.realtime.disconnect
-();
-```
-
-Release the full SDK when your application no longer needs it:
-
-```dart
-await
-HosteDay.dispose
-();
-```
-
----
-
-## Configuration
-
-HosteDay uses `HosteDayConfig` internally.
-
-The SDK configuration is created through:
-
-```dart
-HosteDay.initializeApp
+HosteDay.realtime.listenPublic
 (
-options: {
-// HosteDay options.
+channel: 'posts',
+event: 'PostCreated',
+onEvent: (event) {
+print(event.name);
+print(event.channelName);
+print(event.payload);
+print(event.data);
+print(event.message);
+print(event.user);
+print(event.userId);
+print(event.userName);
+print(event.userEmail);
 },
 );
 ```
 
-### Core Options
-
-| Option key        | Required      | Description                                                   |
-|-------------------|---------------|---------------------------------------------------------------|
-| `project_domain`  | Yes           | Your HosteDay project domain, such as `example.hosteday.com`. |
-| `api_base_url`    | No            | Overrides the API base URL.                                   |
-| `base_url`        | No            | Alternative key for overriding the API base URL.              |
-| `X-Api-Token`     | No            | Project-level API token sent with all requests.               |
-| `pusher_key`      | Realtime only | Pusher-compatible application key.                            |
-| `realtime_host`   | No            | Realtime server host. Defaults to the API host.               |
-| `realtime_scheme` | No            | Defaults to `wss`.                                            |
-| `realtime_port`   | No            | Defaults to `443`.                                            |
-
-### Path Override Options
-
-| Option key                     | Default value                   |
-|--------------------------------|---------------------------------|
-| `login_path_post`              | `/api/auth/login`               |
-| `register_path_post`           | `/api/auth/register`            |
-| `forgot_password_path_post`    | `/api/auth/forgot-password`     |
-| `reset_password_path_post`     | `/api/auth/reset-password`      |
-| `user_show_path_get`           | `/api/user`                     |
-| `user_update_path_put`         | `/api/user`                     |
-| `user_update_avatar_path_post` | `/api/user/avatar`              |
-| `user_delete_path_delete`      | `/api/user`                     |
-| `logout_path_post`             | `/api/logout`                   |
-| `email_verify_path_post`       | `/api/email/verify`             |
-| `public_events_path`           | `/api/realtime/events/public`   |
-| `private_events_path`          | `/api/realtime/events/private`  |
-| `presence_events_path`         | `/api/realtime/events/presence` |
-| `broadcasting_auth_path`       | `/api/broadcasting/auth-manual` |
-
-Example with custom paths:
+Access payload fields directly:
 
 ```dart
-await
-HosteDay.initializeApp
-(
-options: const <String, Object?>{
-HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
-'login_path_post': '/api/v1/auth/login',
-'user_show_path_get': '/api/v1/me',
-'broadcasting_auth_path': '/api/v1/broadcasting/auth',
-},
-);
+
+final title = event['title'];
+final post = event['post'];
+```
+
+Check if a key exists:
+
+```dart
+if (event.containsKey('post')) {
+print(event['post']);
+}
 ```
 
 ---
 
-## Backend Authentication Response
+# Error handling
 
-The login and register endpoints must return a user and an access token.
+Most API and network failures throw `HosteDayException`.
 
-Recommended Laravel response:
+```dart
+try {
+final response = await HosteDay.client.get(
+'/api/posts',
+withAuth: true,
+);
+
+print(response);
+} on HosteDayException catch (error) {
+print(error.message);
+print(error.statusCode);
+print(error.displayMessage);
+} catch (error) {
+print(error);
+}
+```
+
+---
+
+## Validation errors
+
+Laravel-style validation responses are available through `validationErrors`.
+
+Example API response:
+
+```json
+{
+  "message": "The email field is required.",
+  "errors": {
+    "email": [
+      "The email field is required."
+    ],
+    "password": [
+      "The password field is required."
+    ]
+  }
+}
+```
+
+Handle it:
+
+```dart
+try {
+await HosteDay.auth.signInWithEmailAndPassword(
+email: email,
+password: password,
+);
+} on HosteDayException catch (error) {
+final emailError = error.firstErrorFor('email');
+final passwordError = error.firstErrorFor('password');
+
+print(emailError);
+print(passwordError);
+print(error.displayMessage);
+}
+```
+
+Useful helpers:
+
+```dart
+error.hasValidationErrors;error.isValidationError;error.isUnauthenticated;error.isForbidden;error
+    .isNotFound;error.isServerError;error.firstValidationError;error.displayMessage;
+```
+
+---
+
+# Configuration options
+
+## Required options
+
+| Option                             | Description                                                         |
+|------------------------------------|---------------------------------------------------------------------|
+| `HosteDayOptionKeys.projectDomain` | Your HosteDay project domain. Example: `your-project.hosteday.com`. |
+
+---
+
+## Optional options
+
+| Option                                   | Description                                                 |
+|------------------------------------------|-------------------------------------------------------------|
+| `HosteDayOptionKeys.apiBaseUrl`          | Custom API base URL. Usually not needed.                    |
+| `HosteDayOptionKeys.baseUrl`             | Alias for `apiBaseUrl`.                                     |
+| `HosteDayOptionKeys.projectApiKey`       | Project API key sent as `X-Api-Token`.                      |
+| `HosteDayOptionKeys.projectApiKeyHeader` | Custom project API key header name. Default: `X-Api-Token`. |
+| `HosteDayOptionKeys.realtimeAppKey`      | HosteDay realtime app key.                                  |
+| `HosteDayOptionKeys.realtimeHost`        | Realtime WebSocket host.                                    |
+| `HosteDayOptionKeys.realtimeScheme`      | `ws` or `wss`. Default: `wss`.                              |
+| `HosteDayOptionKeys.realtimePort`        | Realtime port. Default: `443` for `wss`.                    |
+
+---
+
+## Fixed HosteDay endpoints
+
+Authentication and user endpoints are fixed by HosteDay and are not configurable from
+`initializeApp`.
+
+The SDK manages these internally:
+
+```text
+POST /api/auth/login
+POST /api/auth/register
+POST /api/auth/forgot-password
+GET  /api/user
+PUT  /api/user
+POST /api/user/avatar
+DELETE /api/user
+POST /api/logout
+POST /api/email/verification-notification
+```
+
+Realtime publish and authorization endpoints are also handled internally:
+
+```text
+POST /api/realtime/events/public
+POST /api/realtime/events/private
+POST /api/realtime/events/presence
+POST /api/broadcasting/auth-manual
+```
+
+Use `HosteDay.client.get`, `post`, `put`, `patch`, and `delete` for your own project endpoints such
+as:
+
+```text
+/api/posts
+/api/orders
+/api/products
+```
+
+---
+
+# Expected backend responses
+
+## Sign in response
+
+Recommended response:
 
 ```json
 {
@@ -1009,13 +1570,13 @@ Recommended Laravel response:
     "id": 1,
     "name": "Mustafa",
     "email": "mustafa@example.com",
-    "email_verified": true,
+    "email_verified_at": "2026-07-08T10:00:00.000000Z",
     "avatar_url": null
   }
 }
 ```
 
-The SDK also accepts common alternatives:
+The SDK also accepts:
 
 ```json
 {
@@ -1028,7 +1589,7 @@ The SDK also accepts common alternatives:
 }
 ```
 
-Or:
+Or nested data:
 
 ```json
 {
@@ -1043,7 +1604,9 @@ Or:
 }
 ```
 
-Supported access-token keys:
+---
+
+## Supported token keys
 
 ```text
 access_token
@@ -1051,7 +1614,9 @@ accessToken
 token
 ```
 
-Supported user identifiers:
+---
+
+## Supported user ID keys
 
 ```text
 id
@@ -1061,167 +1626,306 @@ uuid
 
 ---
 
-## Error Handling
+## Supported user name keys
 
-All network and API failures are reported through `HosteDayException`.
+```text
+name
+display_name
+displayName
+full_name
+fullName
+```
 
-Authentication failures are reported through `HosteDayAuthException`.
+---
+
+## Supported avatar keys
+
+```text
+avatar_url
+avatarUrl
+avatar
+photo_url
+photoUrl
+image
+image_url
+imageUrl
+```
+
+---
+
+## Email verification
+
+The SDK can detect verified users from:
+
+```text
+email_verified
+emailVerified
+email_verified_at
+emailVerifiedAt
+```
+
+---
+
+# Full quick example
 
 ```dart
-try {
-final credential = await HosteDay.auth.signInWithEmailAndPassword(
-email: 'user@example.com',
-password: 'password',
-);
+import 'package:flutter/material.dart';
+import 'package:hosteday_flutter/hosteday_flutter.dart';
 
-print(credential.user.email);
-} on HosteDayAuthException catch (error) {
-print(error.code);
-print(error.message);
-print(error.statusCode);
-print(error.error);
-} on HosteDayException catch (error) {
-print(error.message);
-print(error.statusCode);
-print(error.error);
-} catch (error) {
-print(error);
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await HosteDay.initializeApp(
+    options: const <String, Object?>{
+      HosteDayOptionKeys.projectDomain: 'your-project.hosteday.com',
+      HosteDayOptionKeys.projectApiKey: 'YOUR_PROJECT_API_KEY',
+    },
+    authStorage: HosteDaySharedPreferencesAuthStorage(),
+  );
+
+  runApp(const App());
+}
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: StreamBuilder<HosteDayUser?>(
+        stream: HosteDay.auth.authStateChanges(),
+        initialData: HosteDay.auth.currentUser,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+
+          if (user == null) {
+            return const SignInPage();
+          }
+
+          return HomePage(user: user);
+        },
+      ),
+    );
+  }
+}
+
+class SignInPage extends StatefulWidget {
+  const SignInPage({super.key});
+
+  @override
+  State<SignInPage> createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
+  final email = TextEditingController();
+  final password = TextEditingController();
+
+  bool loading = false;
+
+  @override
+  void dispose() {
+    email.dispose();
+    password.dispose();
+    super.dispose();
+  }
+
+  Future<void> signIn() async {
+    setState(() => loading = true);
+
+    try {
+      await HosteDay.auth.signInWithEmailAndPassword(
+        email: email.text.trim(),
+        password: password.text,
+      );
+    } on HosteDayException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.displayMessage)),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sign in'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: <Widget>[
+            TextField(
+              controller: email,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+              ),
+            ),
+            TextField(
+              controller: password,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: loading ? null : signIn,
+              child: Text(loading ? 'Signing in...' : 'Sign in'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  final HosteDayUser user;
+
+  const HomePage({
+    required this.user,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('HosteDay'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              HosteDay.auth.signOut();
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: Text(
+          'Welcome ${user.displayName ?? user.email ?? user.id}',
+        ),
+      ),
+    );
+  }
 }
 ```
 
-Typical authentication error codes include:
-
-```text
-invalid-email
-wrong-password
-invalid-credentials
-email-already-in-use
-validation-failed
-permission-denied
-no-current-user
-malformed-auth-response
-auth-request-failed
-```
-
 ---
 
-## Migration from `Hosteday`
-
-The old entry point is deprecated:
-
-```dart
-Hosteday.initializeApp
-(...)Hosteday.
-client
-Hosteday
-.
-config
-```
-
-Use the new official API:
-
-```dart
-HosteDay.initializeApp
-(...)HosteDay.
-client
-HosteDay
-.
-config
-HosteDay
-.
-auth
-```
-
-### Before
-
-```dart
-
-final tokenProvider = StaticHosteDayTokenProvider(
-  'USER_TOKEN_HERE',
-);
-
-await
-Hosteday.initializeApp
-(
-options: {
-'project_domain': 'example.hosteday.com',
-},
-tokenProvider: tokenProvider,
-);
-
-final response = await Hosteday.client.post(
-Hosteday.config.loginPathPost,
-body: {
-'email': email,
-'password': password,
-},
-);
-```
-
-### After
-
-```dart
-await
-HosteDay.initializeApp
-(
-options: {
-'project_domain': 'example.hosteday.com',
-},
-);
-
-final credential = await HosteDay.auth.signInWithEmailAndPassword(
-email: email,
-password: password,
-);
-
-final response = await HosteDay.client.get(
-'/api/user',
-withAuth: true,
-);
-
-print(credential.user.email);
-print
-(
-response
-);
-```
-
-The access token is now stored and retrieved internally by HosteDay.
-
----
-
-## Example Application
+# Example app
 
 A complete Flutter example is included in this repository:
 
-[Open the example application](example/lib/main.dart)
+```text
+example/
+```
+
+Useful files:
+
+```text
+example/README.md
+example/EXAMPLE.md
+example/lib/main.dart
+example/lib/app.dart
+```
 
 The example demonstrates:
 
-* Authentication gate.
-* Sign in and registration.
-* Session-aware API requests.
-* Current user reload and update.
-* Password reset requests.
-* Email verification requests.
-* Public, private, and presence Realtime channels.
-* Publishing and receiving Realtime events.
-* Automatic session cleanup on sign out.
+* SDK initialization.
+* Session persistence.
+* Sign in.
+* Registration.
+* Password reset email.
+* Auth gate.
+* Current user display.
+* Profile update.
+* Email verification request.
+* Posts API example.
+* Realtime listening.
+* Realtime publishing.
 
 ---
 
-## Security Notes
+# Migration notes
 
-* Never hard-code production user tokens in source code.
-* Use a secure `HosteDayAuthStorage` implementation in production.
-* Keep project API tokens out of public repositories.
-* Validate authorization and tenant ownership in your Laravel backend.
-* Do not trust client-side checks as a replacement for server-side authorization.
-* Use protected Realtime channel authorization for sensitive events.
-* Revoke or invalidate tokens server-side when your security model requires it.
+## Old project API token name
+
+Old name:
+
+```dart
+HosteDayOptionKeys.apiToken
+```
+
+New name:
+
+```dart
+HosteDayOptionKeys.projectApiKey
+```
+
+Reason:
+
+`apiToken` can be confused with the signed-in user's access token.
 
 ---
 
-## License
+## Old realtime key name
+
+Old name:
+
+```dart
+HosteDayOptionKeys.pusherKey
+```
+
+New name:
+
+```dart
+HosteDayOptionKeys.realtimeAppKey
+```
+
+Reason:
+
+HosteDay uses a Pusher-compatible protocol, but developers do not need a Pusher account.
+
+---
+
+## Old global class name
+
+Old name:
+
+```dart
+Hosteday
+```
+
+New name:
+
+```dart
+HosteDay
+```
+
+Use `HosteDay` in all new code.
+
+---
+
+# Security notes
+
+* Do not hard-code production project API keys in public repositories.
+* Do not expose sensitive user access tokens manually.
+* Use `withAuth: true` for protected requests.
+* Validate authorization on the backend.
+* Validate tenant ownership on the backend.
+* Use private or presence realtime channels for sensitive data.
+* Do not rely on client-side checks as a security boundary.
+* Revoke or invalidate user tokens server-side when needed.
+
+---
+
+# License
 
 This project is licensed under the [MIT License](LICENSE).

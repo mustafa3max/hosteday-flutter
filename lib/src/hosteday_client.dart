@@ -1,56 +1,64 @@
-import 'package:hosteday_flutter/src/auth/hosteday_auth_token_provider.dart';
-
 import 'auth/hosteday_auth.dart';
 import 'auth/hosteday_auth_storage.dart';
+import 'auth/hosteday_auth_token_provider.dart';
 import 'auth/hosteday_token_provider.dart';
 import 'config/hosteday_config.dart';
 import 'http/hosteday_http_client.dart';
 import 'realtime/hosteday_realtime_client.dart';
 
-/// A high-level client for interacting with the HosteDay API.
+/// A high-level client for interacting with HosteDay services.
 ///
-/// The client provides convenient methods for sending HTTP requests and
-/// accessing real-time functionality through [http] and [realtime].
+/// This client provides:
+/// - HTTP API requests.
+/// - Authentication access through [auth].
+/// - Realtime access through [realtime].
+/// - Realtime event publishing helpers.
+///
+/// Authentication and user API paths are fixed by HosteDay and are managed
+/// internally by [HosteDayAuth].
 class HosteDayClient {
-  /// The configuration used to connect to the HosteDay services.
+  /// The configuration used to connect to HosteDay services.
   final HosteDayConfig config;
 
-  /// The optional provider used to retrieve authentication tokens for requests.
+  /// Optional external token provider supplied during SDK initialization.
+  ///
+  /// This is used only as a fallback when there is no active HosteDay auth
+  /// session stored in [authStorage].
   final HosteDayTokenProvider? tokenProvider;
-
-  /// The HTTP client responsible for executing API requests.
-  late final HosteDayHttpClient http;
-
-  /// The real-time client responsible for managing live connections.
-  late final HosteDayRealtimeClient realtime;
 
   /// Storage used to persist the authenticated user session.
   final HosteDayAuthStorage authStorage;
 
-  /// Authentication service for the current HosteDay application.
-  late final HosteDayAuth auth;
-
   /// Token provider used internally by HTTP and realtime clients.
   ///
   /// It reads the active HosteDay auth session first, then falls back to the
-  /// original externally supplied [tokenProvider] when needed.
+  /// externally supplied [tokenProvider] when available.
   late final HosteDayTokenProvider effectiveTokenProvider;
+
+  /// The HTTP client responsible for executing API requests.
+  late final HosteDayHttpClient http;
+
+  /// The realtime client responsible for managing live connections.
+  late final HosteDayRealtimeClient realtime;
+
+  /// Authentication service for the current HosteDay application.
+  late final HosteDayAuth auth;
 
   /// Creates a [HosteDayClient] using the provided [config].
   ///
-  /// The optional [tokenProvider] is passed to the HTTP and real-time clients
-  /// to support authenticated requests and connections.
+  /// [authStorage] defaults to in-memory storage. For production apps, pass
+  /// a secure storage implementation.
   HosteDayClient({
     required this.config,
     this.tokenProvider,
     HosteDayAuthStorage? authStorage,
   }) : authStorage = authStorage ?? MemoryHosteDayAuthStorage() {
-    final sessionTokenProvider = HosteDayAuthTokenProvider(
+    final authTokenProvider = HosteDayAuthTokenProvider(
       storage: this.authStorage,
     );
 
     effectiveTokenProvider = HosteDayCombinedTokenProvider(
-      primary: sessionTokenProvider,
+      primary: authTokenProvider,
       fallback: tokenProvider,
     );
 
@@ -72,16 +80,23 @@ class HosteDayClient {
     );
   }
 
-  /// Sends an HTTP request to the HosteDay API.
+  /// Restores the saved authentication session.
   ///
-  /// The [method] defines the HTTP method to use, such as `GET`, `POST`, or
-  /// `DELETE`. The [path] identifies the target API endpoint.
+  /// Call this once during SDK initialization so [auth] can load the stored
+  /// session and notify auth state listeners.
+  Future<void> initialize() {
+    return auth.initialize();
+  }
+
+  /// Sends a raw HTTP request to the HosteDay API.
   ///
-  /// Provide [body] when the request requires a JSON payload. Set [withAuth]
-  /// to `true` when the request should include authentication credentials.
-  /// Additional request headers may be supplied through [headers].
+  /// The [method] defines the HTTP method to use, such as `GET`, `POST`,
+  /// `PUT`, `PATCH`, or `DELETE`.
   ///
-  /// Returns the decoded response payload as a map.
+  /// The [path] must be an API path relative to [HosteDayConfig.baseUrl].
+  ///
+  /// Set [withAuth] to `true` when the request should include the current
+  /// user access token.
   Future<Map<String, dynamic>> request({
     required String method,
     required String path,
@@ -98,12 +113,7 @@ class HosteDayClient {
     );
   }
 
-  /// Sends a `GET` request to the specified API [path].
-  ///
-  /// Set [withAuth] to `true` to include authentication credentials.
-  /// Additional HTTP headers can be provided through [headers].
-  ///
-  /// Returns the decoded response payload as a map.
+  /// Sends a GET request to the specified API [path].
   Future<Map<String, dynamic>> get(
     String path, {
     bool withAuth = false,
@@ -117,13 +127,7 @@ class HosteDayClient {
     );
   }
 
-  /// Sends a `POST` request to the specified API [path].
-  ///
-  /// The optional [body] is sent as the request payload. Set [withAuth] to
-  /// `true` to include authentication credentials. Additional HTTP headers
-  /// can be provided through [headers].
-  ///
-  /// Returns the decoded response payload as a map.
+  /// Sends a POST request to the specified API [path].
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,
@@ -139,13 +143,7 @@ class HosteDayClient {
     );
   }
 
-  /// Sends a `PUT` request to the specified API [path].
-  ///
-  /// The optional [body] is sent as the request payload. Set [withAuth] to
-  /// `true` to include authentication credentials. Additional HTTP headers
-  /// can be provided through [headers].
-  ///
-  /// Returns the decoded response payload as a map.
+  /// Sends a PUT request to the specified API [path].
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
@@ -161,13 +159,7 @@ class HosteDayClient {
     );
   }
 
-  /// Sends a `PATCH` request to the specified API [path].
-  ///
-  /// The optional [body] is sent as the request payload. Set [withAuth] to
-  /// `true` to include authentication credentials. Additional HTTP headers
-  /// can be provided through [headers].
-  ///
-  /// Returns the decoded response payload as a map.
+  /// Sends a PATCH request to the specified API [path].
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,
@@ -183,13 +175,7 @@ class HosteDayClient {
     );
   }
 
-  /// Sends a `DELETE` request to the specified API [path].
-  ///
-  /// The optional [body] is sent as the request payload. Set [withAuth] to
-  /// `true` to include authentication credentials. Additional HTTP headers
-  /// can be provided through [headers].
-  ///
-  /// Returns the decoded response payload as a map.
+  /// Sends a DELETE request to the specified API [path].
   Future<Map<String, dynamic>> delete(
     String path, {
     Map<String, dynamic>? body,
@@ -205,7 +191,10 @@ class HosteDayClient {
     );
   }
 
-  /// Publishes an event to a public HosteDay channel.
+  /// Publishes an event to a public HosteDay realtime channel.
+  ///
+  /// Public events do not require a user access token, but the project API
+  /// token is still sent automatically when configured.
   Future<Map<String, dynamic>> publishPublicEvent({
     required String channel,
     required String event,
@@ -213,15 +202,15 @@ class HosteDayClient {
   }) {
     return post(
       config.publicEventsPath,
-      body: {
-        'channel': channel,
+      body: <String, dynamic>{
+        'channel': _normalizePublicChannel(channel),
         'event': event,
         'payload': payload,
       },
     );
   }
 
-  /// Publishes an event to a private or presence HosteDay channel.
+  /// Publishes an event to a private HosteDay realtime channel.
   ///
   /// A valid authenticated user token is required.
   Future<Map<String, dynamic>> publishPrivateEvent({
@@ -232,15 +221,15 @@ class HosteDayClient {
     return post(
       config.privateEventsPath,
       withAuth: true,
-      body: {
-        'channel': channel,
+      body: <String, dynamic>{
+        'channel': _normalizePrivateChannel(channel),
         'event': event,
         'payload': payload,
       },
     );
   }
 
-  /// Publishes an event to a presence HosteDay channel.
+  /// Publishes an event to a presence HosteDay realtime channel.
   ///
   /// A valid authenticated user token is required.
   Future<Map<String, dynamic>> publishPresenceEvent({
@@ -248,31 +237,47 @@ class HosteDayClient {
     required String event,
     required Map<String, dynamic> payload,
   }) {
-    final normalizedChannel =
-        channel.startsWith('presence-') ? channel : 'presence-$channel';
-
     return post(
       config.presenceEventsPath,
       withAuth: true,
-      body: {
-        'channel': normalizedChannel,
+      body: <String, dynamic>{
+        'channel': _normalizePresenceChannel(channel),
         'event': event,
         'payload': payload,
       },
     );
   }
 
-  /// Restores the saved authentication session.
-  Future<void> initialize() {
-    return auth.initialize();
-  }
-
-  /// Releases resources used by the HTTP and real-time clients.
+  /// Releases resources used by the client.
   ///
-  /// This disconnects the real-time client before closing the HTTP client.
+  /// This disconnects realtime, disposes auth streams, and closes HTTP.
   Future<void> dispose() async {
     await realtime.disconnect();
     await auth.dispose();
     http.close();
+  }
+
+  static String _normalizePublicChannel(String channel) {
+    return channel.trim();
+  }
+
+  static String _normalizePrivateChannel(String channel) {
+    final value = channel.trim();
+
+    if (value.startsWith('private-')) {
+      return value;
+    }
+
+    return 'private-$value';
+  }
+
+  static String _normalizePresenceChannel(String channel) {
+    final value = channel.trim();
+
+    if (value.startsWith('presence-')) {
+      return value;
+    }
+
+    return 'presence-$value';
   }
 }

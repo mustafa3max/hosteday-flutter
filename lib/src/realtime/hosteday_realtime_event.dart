@@ -1,29 +1,38 @@
 import 'dart:convert';
 
-/// Represents a real-time event received through HosteDay channels.
+/// Represents a realtime event received through HosteDay channels.
 ///
-/// The event contains its [name], the originating [channelName], a normalized
-/// [payload], and the optional unprocessed [raw] data received from the source.
+/// The event contains:
+/// - [name]: the received event name.
+/// - [channelName]: the channel that delivered the event.
+/// - [payload]: normalized event data.
+/// - [raw]: the original unprocessed event object.
 class HosteDayRealtimeEvent {
-  /// The name that identifies the received real-time event.
+  /// The name that identifies the received realtime event.
+  ///
+  /// Example:
+  /// `OrderCreated`
   final String name;
 
   /// The name of the channel from which the event was received.
+  ///
+  /// Example:
+  /// `private-tenant.orders.1`
   final String channelName;
 
   /// The normalized event data as a key-value map.
   ///
-  /// When the original payload is not a map, it is converted to a map where
-  /// possible to provide a consistent structure for consumers.
+  /// When the original payload is not a map, it is wrapped inside a map using
+  /// either `data` or `message`.
   final Map<String, dynamic> payload;
 
-  /// The original unprocessed event data, when available.
-  final dynamic raw;
-
-  /// Creates a real-time event with the supplied event metadata and payload.
+  /// The original unprocessed event object, when available.
   ///
-  /// The [name] identifies the event type, while [channelName] identifies the
-  /// channel that delivered it. The [payload] contains the normalized data.
+  /// This is useful when the underlying realtime package exposes extra fields
+  /// that are not normalized by this class.
+  final Object? raw;
+
+  /// Creates a realtime event with the supplied metadata and payload.
   const HosteDayRealtimeEvent({
     required this.name,
     required this.channelName,
@@ -33,14 +42,12 @@ class HosteDayRealtimeEvent {
 
   /// Creates a [HosteDayRealtimeEvent] from raw event data.
   ///
-  /// The [data] value is normalized into a map before it is assigned to
-  /// [payload]. The optional [raw] value preserves the original event data
-  /// for cases where direct access is needed.
+  /// The [data] value is normalized into [payload].
   factory HosteDayRealtimeEvent.fromRaw({
     required String name,
     required String channelName,
-    required dynamic data,
-    dynamic raw,
+    required Object? data,
+    Object? raw,
   }) {
     return HosteDayRealtimeEvent(
       name: name,
@@ -50,47 +57,40 @@ class HosteDayRealtimeEvent {
     );
   }
 
-  static Map<String, dynamic> _normalizePayload(dynamic data) {
-    if (data == null) return <String, dynamic>{};
+  /// Alias for [payload].
+  ///
+  /// This is provided because many realtime APIs refer to event payloads as
+  /// `data`.
+  Map<String, dynamic> get data => payload;
 
-    if (data is Map<String, dynamic>) {
-      return data;
-    }
+  /// Reads a payload value by [key].
+  ///
+  /// Example:
+  /// ```dart
+  /// final orderId = event['order_id'];
+  /// ```
+  dynamic operator [](String key) {
+    return payload[key];
+  }
 
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
-    }
-
-    if (data is String) {
-      try {
-        final decoded = jsonDecode(data);
-
-        if (decoded is Map<String, dynamic>) {
-          return decoded;
-        }
-
-        if (decoded is Map) {
-          return Map<String, dynamic>.from(decoded);
-        }
-
-        return <String, dynamic>{'data': decoded};
-      } catch (_) {
-        return <String, dynamic>{'message': data};
-      }
-    }
-
-    return <String, dynamic>{'data': data};
+  /// Whether the payload contains [key].
+  bool containsKey(String key) {
+    return payload.containsKey(key);
   }
 
   /// The event message extracted from [payload], when present.
-  ///
-  /// Returns `null` when the payload does not include a `message` value.
-  String? get message => payload['message']?.toString();
+  String? get message => _stringValue('message');
+
+  /// Common identifier extracted from [payload], when present.
+  String? get id => _stringValue('id');
+
+  /// Common title extracted from [payload], when present.
+  String? get title => _stringValue('title');
+
+  /// Common type extracted from [payload], when present.
+  String? get type => _stringValue('type');
 
   /// The event user data extracted from [payload], when present and valid.
-  ///
-  /// Returns `null` when no `user` value exists or when it cannot be converted
-  /// to a map.
   Map<String, dynamic>? get user {
     final value = payload['user'];
 
@@ -113,4 +113,95 @@ class HosteDayRealtimeEvent {
 
   /// The email address of the user associated with this event, when available.
   String? get userEmail => user?['email']?.toString();
+
+  /// Converts this event to a JSON-safe map.
+  ///
+  /// The [raw] value is intentionally not included because it may contain
+  /// objects that cannot be JSON-encoded.
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'channel': channelName,
+      'payload': payload,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'HosteDayRealtimeEvent('
+        'name: $name, '
+        'channelName: $channelName, '
+        'payload: $payload'
+        ')';
+  }
+
+  String? _stringValue(String key) {
+    final value = payload[key];
+
+    if (value == null) {
+      return null;
+    }
+
+    final text = value.toString().trim();
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    return text;
+  }
+
+  static Map<String, dynamic> _normalizePayload(Object? data) {
+    if (data == null) {
+      return <String, dynamic>{};
+    }
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    if (data is String) {
+      return _normalizeStringPayload(data);
+    }
+
+    return <String, dynamic>{
+      'data': data,
+    };
+  }
+
+  static Map<String, dynamic> _normalizeStringPayload(String data) {
+    final text = data.trim();
+
+    if (text.isEmpty) {
+      return <String, dynamic>{};
+    }
+
+    try {
+      final decoded = jsonDecode(text);
+
+      if (decoded == null) {
+        return <String, dynamic>{};
+      }
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+
+      return <String, dynamic>{
+        'data': decoded,
+      };
+    } on FormatException {
+      return <String, dynamic>{
+        'message': data,
+      };
+    }
+  }
 }

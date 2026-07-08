@@ -3,6 +3,8 @@ import 'auth/hosteday_auth_storage.dart';
 import 'auth/hosteday_token_provider.dart';
 import 'config/hosteday_config.dart';
 import 'hosteday_client.dart';
+import 'http/hosteday_http_client.dart';
+import 'realtime/hosteday_realtime_client.dart';
 
 /// Global HosteDay application entry point.
 ///
@@ -13,12 +15,13 @@ abstract final class HosteDay {
 
   static HosteDayClient? _client;
   static HosteDayConfig? _config;
-
-  /// Returns the authentication service for the initialized HosteDay app.
-  static HosteDayAuth get auth => client.auth;
+  static Future<HosteDayClient>? _initializing;
 
   /// Returns whether HosteDay has already been initialized.
   static bool get isInitialized => _client != null;
+
+  /// Returns whether HosteDay is currently initializing.
+  static bool get isInitializing => _initializing != null;
 
   /// Returns the initialized HosteDay client.
   ///
@@ -53,23 +56,65 @@ abstract final class HosteDay {
     return value;
   }
 
+  /// Returns the authentication service for the initialized HosteDay app.
+  static HosteDayAuth get auth => client.auth;
+
+  /// Returns the HTTP client for the initialized HosteDay app.
+  static HosteDayHttpClient get http => client.http;
+
+  /// Returns the realtime client for the initialized HosteDay app.
+  static HosteDayRealtimeClient get realtime => client.realtime;
+
   /// Initializes the HosteDay SDK.
+  ///
+  /// [options] must include the HosteDay project domain.
   ///
   /// [authStorage] is used to persist and restore the authenticated session.
   /// When omitted, the SDK uses temporary in-memory storage.
+  ///
+  /// Set [connectRealtime] to true only when the app should open the realtime
+  /// connection immediately during startup.
   static Future<HosteDayClient> initializeApp({
     required Map<String, Object?> options,
     HosteDayTokenProvider? tokenProvider,
     HosteDayAuthStorage? authStorage,
     bool connectRealtime = false,
-  }) async {
-    if (_client != null) {
+  }) {
+    final currentClient = _client;
+
+    if (currentClient != null) {
       throw StateError(
         'HosteDay is already initialized. '
         'Use HosteDay.client or call HosteDay.dispose() first.',
       );
     }
 
+    final currentInitialization = _initializing;
+
+    if (currentInitialization != null) {
+      return currentInitialization;
+    }
+
+    final initialization = _initializeApp(
+      options: options,
+      tokenProvider: tokenProvider,
+      authStorage: authStorage,
+      connectRealtime: connectRealtime,
+    );
+
+    _initializing = initialization;
+
+    return initialization.whenComplete(() {
+      _initializing = null;
+    });
+  }
+
+  static Future<HosteDayClient> _initializeApp({
+    required Map<String, Object?> options,
+    HosteDayTokenProvider? tokenProvider,
+    HosteDayAuthStorage? authStorage,
+    bool connectRealtime = false,
+  }) async {
     final appConfig = HosteDayConfig.fromOptions(options);
 
     final appClient = HosteDayClient(
@@ -78,9 +123,6 @@ abstract final class HosteDay {
       authStorage: authStorage,
     );
 
-    _config = appConfig;
-    _client = appClient;
-
     try {
       await appClient.initialize();
 
@@ -88,20 +130,24 @@ abstract final class HosteDay {
         await appClient.realtime.connect();
       }
 
+      _config = appConfig;
+      _client = appClient;
+
       return appClient;
     } catch (_) {
-      _client = null;
-      _config = null;
-
       await appClient.dispose();
-
       rethrow;
     }
   }
 
   /// Connects to the configured realtime service.
   static Future<void> connectRealtime() {
-    return client.realtime.connect();
+    return realtime.connect();
+  }
+
+  /// Disconnects from the configured realtime service.
+  static Future<void> disconnectRealtime() {
+    return realtime.disconnect();
   }
 
   /// Releases all HTTP, auth, and realtime resources.
@@ -112,6 +158,7 @@ abstract final class HosteDay {
 
     _client = null;
     _config = null;
+    _initializing = null;
 
     if (currentClient != null) {
       await currentClient.dispose();
@@ -131,6 +178,8 @@ abstract final class Hosteday {
 
   static bool get isInitialized => HosteDay.isInitialized;
 
+  static bool get isInitializing => HosteDay.isInitializing;
+
   static HosteDayClient get instance => HosteDay.instance;
 
   static HosteDayClient get client => HosteDay.client;
@@ -138,6 +187,10 @@ abstract final class Hosteday {
   static HosteDayConfig get config => HosteDay.config;
 
   static HosteDayAuth get auth => HosteDay.auth;
+
+  static HosteDayHttpClient get http => HosteDay.http;
+
+  static HosteDayRealtimeClient get realtime => HosteDay.realtime;
 
   static Future<HosteDayClient> initializeApp({
     required Map<String, Object?> options,
@@ -155,6 +208,10 @@ abstract final class Hosteday {
 
   static Future<void> connectRealtime() {
     return HosteDay.connectRealtime();
+  }
+
+  static Future<void> disconnectRealtime() {
+    return HosteDay.disconnectRealtime();
   }
 
   static Future<void> dispose() {

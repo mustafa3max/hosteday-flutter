@@ -1,247 +1,52 @@
-# Changelog
+## 2.0.0 - 2026-07-08
 
-All notable changes to `hosteday_flutter` will be documented in this file.
+### Breaking Changes
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
-follows Semantic Versioning.
-
-## [1.0.6] - 2026-07-01
-
-### Added
-
-* Added a runnable Flutter example application in `example/lib/main.dart`.
-* Added a simple authentication interface for:
-
-    * Sign in with email and password.
-    * Create a new account.
-    * Automatic navigation based on `authStateChanges()`.
-    * Sign out.
-* Added support for passing example configuration through Dart environment variables:
-
-    * `HOSTEDAY_PROJECT_DOMAIN`
-    * `HOSTEDAY_API_TOKEN`
-
-### Changed
-
-* Updated the example application to use `HosteDay.initializeApp(...)`.
-* Updated the example to use `HosteDay.auth.signInWithEmailAndPassword(...)`.
-* Updated the example to use `HosteDay.auth.createUserWithEmailAndPassword(...)`.
-* Removed hard-coded project API tokens from the published example source code.
-
-### Security
-
-* Project API tokens should now be provided through `--dart-define` when running the example.
-* Do not commit production API tokens or user access tokens to public repositories.
-
-## [1.0.5] - 2026-06-22
+- Renamed `HosteDayOptionKeys.apiToken` to `HosteDayOptionKeys.projectApiKey`.
+- Renamed `HosteDayOptionKeys.apiTokenHeader` to `HosteDayOptionKeys.projectApiKeyHeader`.
+- Renamed `HosteDayOptionKeys.pusherKey` to `HosteDayOptionKeys.realtimeAppKey`.
+- Removed old configurable authentication and user path option keys.
+- Authentication and user endpoints are now fixed by HosteDay and cannot be overridden from
+  `initializeApp`.
+- Removed the old `Hosteday` compatibility entry point. Use `HosteDay` instead.
+- Updated initialization examples to use project-level naming instead of generic token naming.
 
 ### Added
 
-- Added a Firebase-inspired authentication layer through `HosteDayAuth`.
-- Added `HosteDayUser`, `HosteDaySession`, and `HosteDayUserCredential`.
-- Added `HosteDayAuthException` for authentication-specific failures.
-- Added `HosteDayAuthStorage` and `MemoryHosteDayAuthStorage`.
-- Added automatic session restoration during SDK initialization.
-- Added automatic access-token handling for authenticated HTTP requests and private Realtime
-  channels.
-- Added authentication state streams:
-    - `authStateChanges()`
-    - `idTokenChanges()`
-    - `userChanges()`
-- Added authentication methods:
-    - `signInWithEmailAndPassword(...)`
-    - `createUserWithEmailAndPassword(...)`
-    - `signOut()`
-    - `sendPasswordResetEmail(...)`
-    - `confirmPasswordReset(...)`
-    - `reload()`
-    - `updateProfile(...)`
-    - `sendEmailVerification()`
-- Added HTTP convenience methods to `HosteDayHttpClient`:
-    - `get(...)`
-    - `post(...)`
-    - `put(...)`
-    - `patch(...)`
-    - `delete(...)`
-- Added `HosteDayConfig.realtimeUrl`.
+- Added `HosteDaySharedPreferencesAuthStorage` for persistent session storage using
+  `shared_preferences`.
+- Added `projectApiKey` and `projectApiKeyHeader` option names to clarify project-level
+  authentication.
+- Added `realtimeAppKey` option name to avoid implying that developers need a Pusher account.
+- Added realtime configuration support for `realtimeScheme` and `realtimePort`.
+- Added improved Laravel-style validation error parsing through `HosteDayException`.
+- Added better validation error helpers such as `displayMessage`, `firstErrorFor`, and
+  `hasValidationErrors`.
+- Added improved `HosteDayUser` parsing for common Laravel fields such as `email_verified_at`.
+- Added improved `HosteDayRealtimeEvent` helpers, including `data`, `operator []`, `containsKey`,
+  and `toJson`.
+- Added a complete structured Flutter example app.
+- Added a quick single-file experience example.
+- Added more complete README documentation with examples for auth, users, HTTP requests, posts,
+  realtime, and errors.
 
 ### Changed
 
-- Renamed the official SDK entry point from `Hosteday` to `HosteDay`.
-- Added `HosteDay.auth` as the central authentication API.
-- Updated `HosteDayClient` to manage auth, HTTP, and Realtime through a shared dynamic token
-  provider.
-- Protected requests using `withAuth: true` now automatically use the active authenticated session
-  token.
-- Private, presence, and private encrypted channels now automatically use the current authentication
-  session token.
-- SDK initialization now restores the persisted local session before returning.
-- Realtime now uses `wss` and port `443` by default when no custom values are supplied.
-- Added `HosteDay.config.realtimeUrl` for the complete WebSocket endpoint.
-
-### Deprecated
-
-- Deprecated `Hosteday`.
-- Use `HosteDay.initializeApp(...)`, `HosteDay.client`, `HosteDay.config`, and `HosteDay.auth` in
-  all new projects.
-- Manual token extraction and manual bearer-token state management are no longer recommended after
-  using `HosteDayAuth`.
+- Updated examples to use `HosteDaySharedPreferencesAuthStorage`.
+- Updated examples to use `projectApiKey` instead of `apiToken`.
+- Updated examples to use `realtimeAppKey` instead of `pusherKey`.
+- Updated README and example documentation to explain the relationship between the SDK and the
+  HosteDay platform.
+- Improved HosteDay example theme to match the HosteDay visual identity.
+- Improved HTTP request handling with query parameters and request timeout support.
+- Improved realtime connection setup to use `realtimeScheme` and `realtimePort` from
+  `HosteDayConfig`.
 
 ### Fixed
 
-- Fixed missing `get`, `post`, `put`, `patch`, and `delete` methods in `HosteDayHttpClient`.
-- Fixed token synchronization between authenticated API requests and Realtime channel authorization.
-- Fixed local session cleanup when remote logout fails.
-
-### Migration Guide
-
-#### Before
-
-```dart
-
-final tokenProvider = StaticHosteDayTokenProvider(token);
-
-await
-Hosteday.initializeApp
-(
-options: {
-'project_domain': 'example.hosteday.com',
-},
-tokenProvider: tokenProvider,
-);
-
-final response = await Hosteday.client.post(
-Hosteday.config.loginPathPost,
-body: {
-'email': email,
-'password': password,
-},
-);
-
-final token = response['token'];
-
-await Hosteday.client.get(
-'/api/user',
-withAuth: true,
-);
-```
-
-#### After
-
-```dart
-await
-HosteDay.initializeApp
-(
-options: {
-'project_domain': 'example.hosteday.com',
-},
-);
-
-final credential = await HosteDay.auth.signInWithEmailAndPassword(
-email: email,
-password: password,
-);
-
-final user = credential.user;
-
-final response = await HosteDay.client.get(
-'/api/user',
-withAuth: true,
-);
-```
-
-The authenticated access token is now stored and used internally by the SDK.
-
-#### Authentication State
-
-```dart
-HosteDay.auth.authStateChanges
-().listen
-(
-(user) {
-if (user == null) {
-print('Signed out');
-return;
-}
-
-print('Signed in as ${user.email}');
-});
-```
-
-#### Private Realtime Channel
-
-```dart
-await
-HosteDay.connectRealtime
-();
-
-await
-HosteDay.client.realtime.listenPrivate
-(
-channel: 'tenant.chat.room.1',
-event: 'message.sent',
-onEvent: (event) {
-print(event.payload);
-},
-);
-```
-
-No manual Bearer token handling is required after successful sign-in.
-
-### Backend Response Requirements
-
-The login and registration endpoints should return a session response containing a user and access
-token.
-
-Recommended response format:
-
-```json
-{
-  "access_token": "1|example-token",
-  "token_type": "Bearer",
-  "expires_in": null,
-  "user": {
-    "id": 1,
-    "name": "Mustafa",
-    "email": "mustafa@example.com",
-    "email_verified": true,
-    "avatar_url": null
-  }
-}
-```
-
-The SDK also supports common alternative response shapes such as:
-
-```json
-{
-  "token": "1|example-token",
-  "user": {
-    "id": 1,
-    "name": "Mustafa",
-    "email": "mustafa@example.com"
-  }
-}
-```
-
-or:
-
-```json
-{
-  "data": {
-    "access_token": "1|example-token",
-    "user": {
-      "id": 1,
-      "name": "Mustafa",
-      "email": "mustafa@example.com"
-    }
-  }
-}
-```
-
-### Notes
-
-* `MemoryHosteDayAuthStorage` is suitable only for tests, demos, and temporary sessions.
-* Production applications should provide an implementation of `HosteDayAuthStorage` backed by secure
-  persistent storage.
-* A future release may provide an official secure storage adapter for Flutter.
-* `Hosteday` will be removed in a future major release. Use `HosteDay` in all new projects.
+- Fixed realtime connection configuration previously using hard-coded `wss` and `443`.
+- Fixed misleading auth/user path configuration exposure.
+- Fixed invalid or unclear README code formatting.
+- Fixed example session loss by using persistent storage.
+- Fixed confusing naming that made project API keys look like user authentication tokens.
+- Fixed confusing realtime naming that implied developers needed a Pusher account.

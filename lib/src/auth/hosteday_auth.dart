@@ -207,50 +207,6 @@ class HosteDayAuth {
     }
   }
 
-  /// Resets a password using the reset token delivered by email.
-  Future<void> confirmPasswordReset({
-    required String email,
-    required String token,
-    required String newPassword,
-    Map<String, dynamic> additionalData = const <String, dynamic>{},
-  }) async {
-    if (email.trim().isEmpty) {
-      throw const HosteDayAuthException(
-        'An email address is required.',
-        code: 'invalid-email',
-      );
-    }
-
-    if (token.trim().isEmpty) {
-      throw const HosteDayAuthException(
-        'A password reset token is required.',
-        code: 'invalid-action-code',
-      );
-    }
-
-    if (newPassword.isEmpty) {
-      throw const HosteDayAuthException(
-        'A new password is required.',
-        code: 'weak-password',
-      );
-    }
-
-    try {
-      await http.post(
-        config.resetPasswordPathPost,
-        body: <String, dynamic>{
-          ...additionalData,
-          'email': email.trim(),
-          'token': token.trim(),
-          'password': newPassword,
-          'password_confirmation': newPassword,
-        },
-      );
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
-    }
-  }
-
   /// Reloads the authenticated user's profile from the HosteDay API.
   Future<HosteDayUser> reload() async {
     await _ensureInitialized();
@@ -313,7 +269,7 @@ class HosteDayAuth {
 
     try {
       await http.post(
-        config.emailVerifyPathPost,
+        config.resendEmailVerificationPathPost,
         withAuth: true,
       );
     } on HosteDayException catch (error) {
