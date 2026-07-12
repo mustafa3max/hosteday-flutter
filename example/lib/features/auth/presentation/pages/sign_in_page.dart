@@ -61,15 +61,15 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   void _openRegisterPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const RegisterPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const RegisterPage()));
   }
 
   void _openForgotPasswordPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ForgotPasswordPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const ForgotPasswordPage()));
   }
 
   @override

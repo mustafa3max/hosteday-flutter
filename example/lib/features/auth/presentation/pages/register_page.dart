@@ -49,9 +49,7 @@ class _RegisterPageState extends State<RegisterPage> {
       await HosteDay.auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        additionalData: <String, dynamic>{
-          'name': _nameController.text.trim(),
-        },
+        additionalData: <String, dynamic>{'name': _nameController.text.trim()},
       );
 
       if (mounted) {

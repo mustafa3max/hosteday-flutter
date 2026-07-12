@@ -17,27 +17,30 @@ class Post {
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
-    final id = ApiResponseReader.firstText(
-      json,
-      const <String>['id', 'post_id', 'uuid'],
-    );
+    final id = ApiResponseReader.firstText(json, const <String>[
+      'id',
+      'post_id',
+      'uuid',
+    ]);
 
-    final title = ApiResponseReader.firstText(
-      json,
-      const <String>['title', 'name'],
-    );
+    final title = ApiResponseReader.firstText(json, const <String>[
+      'title',
+      'name',
+    ]);
 
     return Post(
       id: id ?? DateTime.now().microsecondsSinceEpoch.toString(),
       title: title ?? 'Untitled post',
-      body: ApiResponseReader.firstText(
-        json,
-        const <String>['body', 'content', 'description'],
-      ),
-      createdAtText: ApiResponseReader.firstText(
-            json,
-            const <String>['created_at', 'createdAt'],
-          ) ??
+      body: ApiResponseReader.firstText(json, const <String>[
+        'body',
+        'content',
+        'description',
+      ]),
+      createdAtText:
+          ApiResponseReader.firstText(json, const <String>[
+            'created_at',
+            'createdAt',
+          ]) ??
           '',
       data: Map<String, dynamic>.from(json),
     );

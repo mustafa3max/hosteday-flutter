@@ -5,11 +5,7 @@ class ExampleHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const ExampleHeader({
-    required this.title,
-    required this.subtitle,
-    super.key,
-  });
+  const ExampleHeader({required this.title, required this.subtitle, super.key});
 
   @override
   Widget build(BuildContext context) {

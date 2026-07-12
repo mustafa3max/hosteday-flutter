@@ -9,6 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  image_picker: ^1.2.3
   hosteday_flutter:
     path: ../
 

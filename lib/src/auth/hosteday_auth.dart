@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import '../config/hosteday_config.dart';
 import '../exceptions/hosteday_exception.dart';
@@ -257,6 +258,64 @@ class HosteDayAuth {
       await _replaceCurrentUser(user);
 
       return user;
+    } on HosteDayException catch (error) {
+      throw HosteDayAuthException.fromHosteDayException(error);
+    }
+  }
+
+  /// Uploads and updates the authenticated user's avatar.
+  ///
+  /// The image bytes are encoded automatically as Base64 before being sent
+  /// to the HosteDay API.
+  ///
+  /// Supported extensions:
+  /// - jpg
+  /// - jpeg
+  /// - png
+  /// - webp
+  ///
+  /// After a successful upload, the authenticated user is reloaded and the
+  /// persisted session is updated automatically.
+  Future<HosteDayUser> updateAvatar({
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    await _ensureInitialized();
+    _requireSignedInUser();
+
+    if (bytes.isEmpty) {
+      throw const HosteDayAuthException(
+        'Avatar image bytes cannot be empty.',
+        code: 'invalid-avatar-bytes',
+      );
+    }
+
+    final normalizedExtension = _normalizeAvatarExtension(extension);
+
+    try {
+      final response = await http.post(
+        config.updateUserAvatarPath,
+        withAuth: true,
+        body: <String, dynamic>{
+          'bytes': base64Encode(bytes),
+          'extension': normalizedExtension,
+        },
+      );
+
+      // Some API implementations may return the updated user directly.
+      final userPayload = _tryExtractUserPayload(response);
+
+      if (userPayload != null) {
+        final user = HosteDayUser.fromJson(userPayload);
+
+        await _replaceCurrentUser(user);
+
+        return user;
+      }
+
+      // The current API returns data: null after updating the avatar,
+      // therefore reload the user to get the new avatar URL.
+      return reload();
     } on HosteDayException catch (error) {
       throw HosteDayAuthException.fromHosteDayException(error);
     }
@@ -553,5 +612,30 @@ class HosteDayAuth {
     return value.containsKey('id') ||
         value.containsKey('user_id') ||
         value.containsKey('uuid');
+  }
+
+  static const Set<String> _supportedAvatarExtensions = <String>{
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  };
+
+  static String _normalizeAvatarExtension(String extension) {
+    var normalized = extension.trim().toLowerCase();
+
+    if (normalized.startsWith('.')) {
+      normalized = normalized.substring(1);
+    }
+
+    if (!_supportedAvatarExtensions.contains(normalized)) {
+      throw HosteDayAuthException(
+        'Unsupported avatar extension: $extension. '
+        'Supported extensions are jpg, jpeg, png, and webp.',
+        code: 'invalid-avatar-extension',
+      );
+    }
+
+    return normalized;
   }
 }

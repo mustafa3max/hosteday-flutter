@@ -14,10 +14,9 @@ class PostRepository {
       withAuth: true,
     );
 
-    final posts = ApiResponseReader.readList(response)
-        .map(Post.fromJson)
-        .toList()
-      ..sort((a, b) => b.createdAtText.compareTo(a.createdAtText));
+    final posts =
+        ApiResponseReader.readList(response).map(Post.fromJson).toList()
+          ..sort((a, b) => b.createdAtText.compareTo(a.createdAtText));
 
     return posts;
   }
@@ -29,10 +28,7 @@ class PostRepository {
     final response = await HosteDay.client.post(
       PostApiPaths.postsPath,
       withAuth: true,
-      body: <String, dynamic>{
-        'title': title,
-        'body': body,
-      },
+      body: <String, dynamic>{'title': title, 'body': body},
     );
 
     final createdPostJson = ApiResponseReader.readObject(response);

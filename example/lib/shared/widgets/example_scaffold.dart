@@ -5,11 +5,7 @@ class ExampleScaffold extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const ExampleScaffold({
-    required this.title,
-    required this.child,
-    super.key,
-  });
+  const ExampleScaffold({required this.title, required this.child, super.key});
 
   @override
   Widget build(BuildContext context) {

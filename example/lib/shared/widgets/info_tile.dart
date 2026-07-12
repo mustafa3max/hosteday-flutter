@@ -5,11 +5,7 @@ class InfoTile extends StatelessWidget {
   final String label;
   final String value;
 
-  const InfoTile({
-    required this.label,
-    required this.value,
-    super.key,
-  });
+  const InfoTile({required this.label, required this.value, super.key});
 
   @override
   Widget build(BuildContext context) {

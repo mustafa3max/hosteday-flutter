@@ -187,7 +187,8 @@ class _PostsPageState extends State<PostsPage> {
         children: <Widget>[
           const ExampleHeader(
             title: 'Posts',
-            subtitle: 'Example custom table loaded from /api/posts with '
+            subtitle:
+                'Example custom table loaded from /api/posts with '
                 'realtime updates.',
           ),
           const SizedBox(height: 16),

@@ -14,6 +14,7 @@ class HosteDayInitializer {
     await HosteDay.initializeApp(
       options: ExampleEnvironment.hosteDayOptions,
       connectRealtime: false,
+      authStorage: HosteDaySharedPreferencesAuthStorage(),
     );
   }
 }
