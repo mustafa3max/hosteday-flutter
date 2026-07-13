@@ -576,12 +576,13 @@ print(error.displayMessage);
 
 ## Update user profile
 
+Currently, `updateProfile` supports updating the authenticated user's name only. Additional profile
+fields may be supported in future versions.
+
 ```dart
 try {
 final user = await HosteDay.auth.updateProfile(
-<String, dynamic>{
-'name': 'Mustafa Max',
-},
+name: 'Mustafa Max',
 );
 
 print(user.displayName);
@@ -589,8 +590,6 @@ print(user.displayName);
 print(error.displayMessage);
 }
 ```
-
-The accepted fields depend on the HosteDay project backend.
 
 ---
 
@@ -1391,8 +1390,7 @@ The SDK automatically adds the `private-` prefix when needed.
 
 ```dart
 channel: '
-orders.1
-'
+orders.1'
 ```
 
 becomes:

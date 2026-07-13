@@ -86,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _startLoading();
 
     try {
-      await HosteDay.auth.updateProfile(<String, dynamic>{'name': name});
+      await HosteDay.auth.updateProfile(name: name);
 
       if (!mounted) {
         return;

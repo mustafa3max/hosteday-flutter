@@ -343,7 +343,10 @@ HosteDay.auth.signOut
 
 ### `lib/features/profile/presentation/pages/profile_page.dart`
 
-Demonstrates reading, reloading, and updating the current user.
+Demonstrates reading, listening for changes, reloading, and updating the current user's name.
+
+Currently, the HosteDay API only supports updating the user's name through `updateProfile`.
+Additional profile fields may be supported in future versions.
 
 ```dart
 
@@ -351,18 +354,19 @@ final currentUser = HosteDay.auth.currentUser;
 
 final userChanges = HosteDay.auth.userChanges();
 
-await
+final reloadedUser = await
 HosteDay.auth.reload
 ();
 
-await
+final updatedUser = await
 HosteDay.auth.updateProfile
-(<String, dynamic>{
-'name': name,
-},
+(
+name: name,
 );
 
-await HosteDay.auth.sendEmailVerification();
+await HosteDay.auth.sendEmailVerification
+(
+);
 ```
 
 It also demonstrates avatar selection and upload:

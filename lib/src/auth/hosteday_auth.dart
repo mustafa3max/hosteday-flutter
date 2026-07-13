@@ -208,6 +208,24 @@ class HosteDayAuth {
     }
   }
 
+  /// Sends a password-reset email to the currently authenticated user.
+  ///
+  /// Unlike [sendPasswordResetEmail], this method does not require an email
+  /// address because the HosteDay server gets it from the authenticated user.
+  Future<void> sendCurrentUserPasswordResetEmail() async {
+    await _ensureInitialized();
+    _requireSignedInUser();
+
+    try {
+      await http.post(
+        config.sendCurrentUserPasswordResetEmailPath,
+        withAuth: true,
+      );
+    } on HosteDayException catch (error) {
+      throw HosteDayAuthException.fromHosteDayException(error);
+    }
+  }
+
   /// Reloads the authenticated user's profile from the HosteDay API.
   Future<HosteDayUser> reload() async {
     await _ensureInitialized();
@@ -231,20 +249,32 @@ class HosteDayAuth {
     }
   }
 
-  /// Updates the authenticated user's profile.
+  /// Updates the authenticated user's name.
   ///
-  /// The exact accepted fields are defined by the HosteDay Laravel backend.
-  Future<HosteDayUser> updateProfile(
-    Map<String, dynamic> data,
-  ) async {
+  /// Currently, the HosteDay API only supports updating the user's name.
+  /// Additional profile fields may be supported in future versions.
+  Future<HosteDayUser> updateProfile({
+    required String name,
+  }) async {
     await _ensureInitialized();
     _requireSignedInUser();
+
+    final normalizedName = name.trim();
+
+    if (normalizedName.isEmpty) {
+      throw const HosteDayAuthException(
+        'The user name cannot be empty.',
+        code: 'invalid-name',
+      );
+    }
 
     try {
       final response = await http.put(
         config.userUpdatePathPut,
         withAuth: true,
-        body: data,
+        body: <String, dynamic>{
+          'name': normalizedName,
+        },
       );
 
       final userPayload = _tryExtractUserPayload(response);

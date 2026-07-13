@@ -21,6 +21,12 @@ class HosteDayConfig {
   /// The password reset itself is completed through the web link in the email.
   static const String _sendPasswordResetEmailPath = '/api/auth/forgot-password';
 
+  /// Sends a password-reset email to the currently authenticated user.
+  ///
+  /// The server gets the email address from the authenticated user.
+  static const String _sendCurrentUserPasswordResetEmailPath =
+      '/api/user/password-reset-email';
+
   /// Returns the currently authenticated user.
   static const String _currentUserPath = '/api/user';
 
@@ -233,6 +239,13 @@ class HosteDayConfig {
 
   /// Deletes the currently authenticated user.
   String get deleteUserPath => _deleteUserPath;
+
+  /// Sends a password-reset email to the currently authenticated user.
+  ///
+  /// This endpoint requires authentication and does not accept an email address.
+  /// The server gets the email from the authenticated user.
+  String get sendCurrentUserPasswordResetEmailPath =>
+      _sendCurrentUserPasswordResetEmailPath;
 
   // ---------------------------------------------------------------------------
   // Fixed HosteDay realtime API paths.
