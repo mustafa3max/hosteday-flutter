@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+import 'package:hosteday_flutter_example/features/posts/presentation/pages/home_page.dart';
 
 import '../../../../core/errors/error_presenter.dart';
 import '../../../../shared/widgets/example_header.dart';
@@ -18,9 +19,10 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _loading = false;
   String? _errorMessage;
@@ -33,7 +35,11 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) {
+    FocusScope.of(context).unfocus();
+
+    final isValid = _formKey.currentState?.validate() ?? false;
+
+    if (!isValid || _loading) {
       return;
     }
 
@@ -47,7 +53,20 @@ class _SignInPageState extends State<SignInPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const HomePage()),
+        (route) => false,
+      );
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _errorMessage = ErrorPresenter.messageFrom(error);
       });

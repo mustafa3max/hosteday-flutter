@@ -8,7 +8,7 @@ export 'src/config/hosteday_option_keys.dart';
 export 'src/exceptions/hosteday_exception.dart';
 export 'src/hosteday.dart';
 export 'src/hosteday_client.dart';
-export 'src/http/hosteday_http_client.dart';
+// export 'src/http/hosteday_http_client.dart';
 export 'src/realtime/hosteday_channel_type.dart';
 export 'src/realtime/hosteday_realtime_client.dart';
 export 'src/realtime/hosteday_realtime_event.dart';

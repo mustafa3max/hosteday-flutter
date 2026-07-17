@@ -272,6 +272,7 @@ class HosteDayAuth {
       final response = await http.put(
         config.userUpdatePathPut,
         withAuth: true,
+        id: 0,
         body: <String, dynamic>{
           'name': normalizedName,
         },

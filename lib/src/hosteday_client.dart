@@ -90,104 +90,162 @@ class HosteDayClient {
 
   /// Sends a raw HTTP request to the HosteDay API.
   ///
-  /// The [method] defines the HTTP method to use, such as `GET`, `POST`,
-  /// `PUT`, `PATCH`, or `DELETE`.
-  ///
-  /// The [path] must be an API path relative to [HosteDayConfig.baseUrl].
-  ///
-  /// Set [withAuth] to `true` when the request should include the current
-  /// user access token.
+  /// Use the specialized [get], [post], [put], [patch], and [delete] methods
+  /// when possible.
   Future<Map<String, dynamic>> request({
     required String method,
     required String path,
+    Object? id,
     Map<String, dynamic>? body,
+    Map<String, Object?>? queryParameters,
     bool withAuth = false,
     Map<String, String>? headers,
+    Duration? timeout,
   }) {
     return http.request(
       method: method,
       path: path,
+      id: id,
       body: body,
+      queryParameters: queryParameters,
       withAuth: withAuth,
       headers: headers,
+      timeout: timeout,
     );
   }
 
-  /// Sends a GET request to the specified API [path].
+  /// Sends a GET request.
+  ///
+  /// When [id] is omitted, an index request is sent.
+  ///
+  /// Example:
+  /// `/services?search=خياطة`
+  ///
+  /// When [id] is provided, a show request is sent.
+  ///
+  /// Example:
+  /// `/services/15`
   Future<Map<String, dynamic>> get(
     String path, {
+    Object? id,
+    String? search,
+    String? relationField,
+    Object? relationValue,
+    Map<String, Object?>? queryParameters,
     bool withAuth = false,
     Map<String, String>? headers,
+    Duration? timeout,
   }) {
-    return request(
-      method: 'GET',
-      path: path,
+    return http.get(
+      path,
+      id: id,
+      search: search,
+      relationField: relationField,
+      relationValue: relationValue,
+      queryParameters: queryParameters,
       withAuth: withAuth,
       headers: headers,
+      timeout: timeout,
     );
   }
 
-  /// Sends a POST request to the specified API [path].
+  /// Sends a POST request to [path].
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,
-    bool withAuth = false,
+    Map<String, Object?>? queryParameters,
+    bool withAuth = true,
     Map<String, String>? headers,
+    Duration? timeout,
   }) {
-    return request(
-      method: 'POST',
-      path: path,
+    return http.post(
+      path,
       body: body,
+      queryParameters: queryParameters,
       withAuth: withAuth,
       headers: headers,
+      timeout: timeout,
     );
   }
 
-  /// Sends a PUT request to the specified API [path].
+  /// Sends a PUT request to update a resource.
+  ///
+  /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> put(
     String path, {
+    required Object id,
     Map<String, dynamic>? body,
-    bool withAuth = false,
+    String? relationField,
+    Object? relationValue,
+    Map<String, Object?>? queryParameters,
+    bool withAuth = true,
     Map<String, String>? headers,
+    Duration? timeout,
   }) {
-    return request(
-      method: 'PUT',
-      path: path,
+    return http.put(
+      path,
+      id: id,
       body: body,
+      relationField: relationField,
+      relationValue: relationValue,
+      queryParameters: queryParameters,
       withAuth: withAuth,
       headers: headers,
+      timeout: timeout,
     );
   }
 
-  /// Sends a PATCH request to the specified API [path].
+  /// Sends a PATCH request to partially update a resource.
+  ///
+  /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> patch(
     String path, {
+    required Object id,
     Map<String, dynamic>? body,
-    bool withAuth = false,
+    String? relationField,
+    Object? relationValue,
+    Map<String, Object?>? queryParameters,
+    bool withAuth = true,
     Map<String, String>? headers,
+    Duration? timeout,
   }) {
-    return request(
-      method: 'PATCH',
-      path: path,
+    return http.patch(
+      path,
+      id: id,
       body: body,
+      relationField: relationField,
+      relationValue: relationValue,
+      queryParameters: queryParameters,
       withAuth: withAuth,
       headers: headers,
+      timeout: timeout,
     );
   }
 
-  /// Sends a DELETE request to the specified API [path].
+  /// Sends a DELETE request to delete a resource.
+  ///
+  /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> delete(
     String path, {
+    required Object id,
     Map<String, dynamic>? body,
-    bool withAuth = false,
+    String? relationField,
+    Object? relationValue,
+    Map<String, Object?>? queryParameters,
+    bool withAuth = true,
     Map<String, String>? headers,
+    Duration? timeout,
   }) {
-    return request(
-      method: 'DELETE',
-      path: path,
+    return http.delete(
+      path,
+      id: id,
       body: body,
+      relationField: relationField,
+      relationValue: relationValue,
+      queryParameters: queryParameters,
       withAuth: withAuth,
       headers: headers,
+      timeout: timeout,
     );
   }
 
@@ -220,7 +278,7 @@ class HosteDayClient {
   }) {
     return post(
       config.privateEventsPath,
-      withAuth: true,
+      withAuth: false,
       body: <String, dynamic>{
         'channel': _normalizePrivateChannel(channel),
         'event': event,
@@ -239,7 +297,7 @@ class HosteDayClient {
   }) {
     return post(
       config.presenceEventsPath,
-      withAuth: true,
+      withAuth: false,
       body: <String, dynamic>{
         'channel': _normalizePresenceChannel(channel),
         'event': event,

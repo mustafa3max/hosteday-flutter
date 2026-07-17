@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:hosteday_flutter/hosteday_flutter.dart';
 import 'package:http/http.dart' as http;
-
-import '../auth/hosteday_token_provider.dart';
-import '../config/hosteday_config.dart';
-import '../exceptions/hosteday_exception.dart';
 
 /// A low-level HTTP client for sending requests to the HosteDay API.
 ///
@@ -42,9 +39,23 @@ class HosteDayHttpClient {
     this.timeout = const Duration(seconds: 30),
   }) : _client = client ?? http.Client();
 
-  /// Sends a GET request to [path].
+  /// Sends a GET request.
+  ///
+  /// When [id] is omitted, the request is treated as an index request.
+  ///
+  /// Example:
+  /// `/services?search=خياطة&relation_field=category_id&relation_value=5`
+  ///
+  /// When [id] is provided, it is appended to [path] as the final path segment.
+  ///
+  /// Example:
+  /// `/services/15?relation_field=category_id&relation_value=5`
   Future<Map<String, dynamic>> get(
     String path, {
+    Object? id,
+    String? search,
+    String? relationField,
+    Object? relationValue,
     Map<String, Object?>? queryParameters,
     bool withAuth = false,
     Map<String, String>? headers,
@@ -53,7 +64,13 @@ class HosteDayHttpClient {
     return request(
       method: 'GET',
       path: path,
-      queryParameters: queryParameters,
+      id: id,
+      queryParameters: _buildResourceQueryParameters(
+        queryParameters: queryParameters,
+        search: search,
+        relationField: relationField,
+        relationValue: relationValue,
+      ),
       withAuth: withAuth,
       headers: headers,
       timeout: timeout,
@@ -80,10 +97,18 @@ class HosteDayHttpClient {
     );
   }
 
-  /// Sends a PUT request to [path].
+  /// Sends a PUT request.
+  ///
+  /// [id] is appended to [path] as the final path segment.
+  ///
+  /// Example:
+  /// `/services/15?relation_field=category_id&relation_value=5`
   Future<Map<String, dynamic>> put(
     String path, {
+    required Object id,
     Map<String, dynamic>? body,
+    String? relationField,
+    Object? relationValue,
     Map<String, Object?>? queryParameters,
     bool withAuth = false,
     Map<String, String>? headers,
@@ -92,18 +117,28 @@ class HosteDayHttpClient {
     return request(
       method: 'PUT',
       path: path,
+      id: id,
       body: body,
-      queryParameters: queryParameters,
+      queryParameters: _buildResourceQueryParameters(
+        queryParameters: queryParameters,
+        relationField: relationField,
+        relationValue: relationValue,
+      ),
       withAuth: withAuth,
       headers: headers,
       timeout: timeout,
     );
   }
 
-  /// Sends a PATCH request to [path].
+  /// Partially updates a resource.
+  ///
+  /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> patch(
     String path, {
+    required Object id,
     Map<String, dynamic>? body,
+    String? relationField,
+    Object? relationValue,
     Map<String, Object?>? queryParameters,
     bool withAuth = false,
     Map<String, String>? headers,
@@ -112,18 +147,31 @@ class HosteDayHttpClient {
     return request(
       method: 'PATCH',
       path: path,
+      id: id,
       body: body,
-      queryParameters: queryParameters,
+      queryParameters: _buildResourceQueryParameters(
+        queryParameters: queryParameters,
+        relationField: relationField,
+        relationValue: relationValue,
+      ),
       withAuth: withAuth,
       headers: headers,
       timeout: timeout,
     );
   }
 
-  /// Sends a DELETE request to [path].
+  /// Sends a DELETE request.
+  ///
+  /// [id] is appended to [path] as the final path segment.
+  ///
+  /// Example:
+  /// `/services/15?relation_field=category_id&relation_value=5`
   Future<Map<String, dynamic>> delete(
     String path, {
+    required Object id,
     Map<String, dynamic>? body,
+    String? relationField,
+    Object? relationValue,
     Map<String, Object?>? queryParameters,
     bool withAuth = false,
     Map<String, String>? headers,
@@ -132,8 +180,13 @@ class HosteDayHttpClient {
     return request(
       method: 'DELETE',
       path: path,
+      id: id,
       body: body,
-      queryParameters: queryParameters,
+      queryParameters: _buildResourceQueryParameters(
+        queryParameters: queryParameters,
+        relationField: relationField,
+        relationValue: relationValue,
+      ),
       withAuth: withAuth,
       headers: headers,
       timeout: timeout,
@@ -157,6 +210,7 @@ class HosteDayHttpClient {
   Future<Map<String, dynamic>> request({
     required String method,
     required String path,
+    Object? id,
     Map<String, dynamic>? body,
     Map<String, Object?>? queryParameters,
     bool withAuth = false,
@@ -180,6 +234,7 @@ class HosteDayHttpClient {
     try {
       final uri = _buildUri(
         path,
+        id: id,
         queryParameters: queryParameters,
       );
 
@@ -252,7 +307,6 @@ class HosteDayHttpClient {
 
       result['Authorization'] = 'Bearer $cleanToken';
     }
-
     return result;
   }
 
@@ -306,9 +360,35 @@ class HosteDayHttpClient {
 
   Uri _buildUri(
     String path, {
+    Object? id,
     Map<String, Object?>? queryParameters,
   }) {
-    final uri = config.uri(path);
+    var uri = config.uri(path);
+
+    if (id != null) {
+      final cleanId = id.toString().trim();
+
+      if (cleanId.isEmpty) {
+        throw ArgumentError.value(
+          id,
+          'id',
+          'The resource ID cannot be empty.',
+        );
+      }
+
+      final pathSegments = List<String>.from(uri.pathSegments);
+
+      while (pathSegments.isNotEmpty && pathSegments.last.isEmpty) {
+        pathSegments.removeLast();
+      }
+
+      uri = uri.replace(
+        pathSegments: <String>[
+          ...pathSegments,
+          cleanId,
+        ],
+      );
+    }
 
     if (queryParameters == null || queryParameters.isEmpty) {
       return uri;
@@ -328,12 +408,9 @@ class HosteDayHttpClient {
       cleanedQueryParameters[entry.key] = value.toString();
     }
 
-    if (cleanedQueryParameters.isEmpty) {
-      return uri;
-    }
-
     return uri.replace(
-      queryParameters: cleanedQueryParameters,
+      queryParameters:
+          cleanedQueryParameters.isEmpty ? null : cleanedQueryParameters,
     );
   }
 
@@ -372,6 +449,45 @@ class HosteDayHttpClient {
         method == 'PUT' ||
         method == 'PATCH' ||
         method == 'DELETE';
+  }
+
+  Map<String, Object?>? _buildResourceQueryParameters({
+    Map<String, Object?>? queryParameters,
+    String? search,
+    String? relationField,
+    Object? relationValue,
+  }) {
+    final cleanSearch = search?.trim();
+    final cleanRelationField = relationField?.trim();
+
+    final hasRelationField =
+        cleanRelationField != null && cleanRelationField.isNotEmpty;
+
+    final hasRelationValue = relationValue != null &&
+        (relationValue is! String || relationValue.trim().isNotEmpty);
+
+    if (hasRelationField != hasRelationValue) {
+      throw ArgumentError(
+        'relationField and relationValue must be provided together.',
+      );
+    }
+
+    final result = <String, Object?>{
+      if (queryParameters != null) ...queryParameters,
+    };
+
+    if (cleanSearch != null && cleanSearch.isNotEmpty) {
+      result[HosteDayOptionKeys.search] = cleanSearch;
+    }
+
+    if (hasRelationField) {
+      result[HosteDayOptionKeys.relationField] = cleanRelationField;
+
+      result[HosteDayOptionKeys.relationValue] =
+          relationValue is String ? relationValue.trim() : relationValue;
+    }
+
+    return result.isEmpty ? null : result;
   }
 
   /// Closes the underlying HTTP client and releases its resources.

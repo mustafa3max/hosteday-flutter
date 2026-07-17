@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+import 'package:hosteday_flutter_example/features/posts/presentation/pages/home_page.dart';
 
 import '../../../../core/errors/error_presenter.dart';
 import '../../../../shared/widgets/example_header.dart';
@@ -10,7 +11,7 @@ import '../../../../shared/widgets/form_fields.dart';
 /// Registration page.
 ///
 /// The backend may send a verification email after registration depending on
-/// your project configuration.
+/// the project configuration.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -19,10 +20,11 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _loading = false;
   String? _errorMessage;
@@ -36,7 +38,11 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) {
+    FocusScope.of(context).unfocus();
+
+    final isValid = _formKey.currentState?.validate() ?? false;
+
+    if (!isValid || _loading) {
       return;
     }
 
@@ -52,10 +58,19 @@ class _RegisterPageState extends State<RegisterPage> {
         additionalData: <String, dynamic>{'name': _nameController.text.trim()},
       );
 
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (!mounted) {
+        return;
       }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const HomePage()),
+        (route) => false,
+      );
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _errorMessage = ErrorPresenter.messageFrom(error);
       });
@@ -79,11 +94,12 @@ class _RegisterPageState extends State<RegisterPage> {
           children: <Widget>[
             const ExampleHeader(
               title: 'Create an account',
-              subtitle: 'Create a user and return to the sign-in page.',
+              subtitle: 'Create a user and continue to the home page.',
             ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _nameController,
+              enabled: !_loading,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(labelText: 'Name'),
               validator: requiredValidator,

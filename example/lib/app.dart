@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hosteday_flutter_example/features/posts/presentation/pages/home_page.dart';
 
 import 'core/theme/example_theme.dart';
-import 'features/auth/presentation/auth_gate.dart';
 
 /// Root widget for the educational HosteDay example.
-///
-/// The app demonstrates authentication, profile management, custom API tables,
-/// and realtime events in separated feature folders.
 class HosteDayExampleApp extends StatelessWidget {
   const HosteDayExampleApp({super.key});
 
@@ -17,7 +14,7 @@ class HosteDayExampleApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       darkTheme: ExampleTheme.dark(),
       themeMode: ThemeMode.dark,
-      home: const AuthGate(),
+      home: const HomePage(),
     );
   }
 }

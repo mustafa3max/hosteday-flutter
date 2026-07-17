@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+import 'package:hosteday_flutter_example/shared/widgets/app_bar.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/errors/error_presenter.dart';
@@ -291,82 +292,85 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<HosteDayUser?>(
-      stream: HosteDay.auth.userChanges(),
-      initialData: HosteDay.auth.currentUser,
-      builder: (context, snapshot) {
-        final user = snapshot.data;
+    return Scaffold(
+      appBar: AppBarMy(title: "Profile"),
+      body: StreamBuilder<HosteDayUser?>(
+        stream: HosteDay.auth.userChanges(),
+        initialData: HosteDay.auth.currentUser,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
 
-        if (user == null) {
-          return const Center(child: Text('No authenticated user.'));
-        }
+          if (user == null) {
+            return const Center(child: Text('No authenticated user.'));
+          }
 
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            _ProfileAvatar(
-              avatarUrl: user.avatarUrl,
-              uploading: _uploadingAvatar,
-              onPressed: _isBusy ? null : _showAvatarSourceDialog,
-            ),
-            const SizedBox(height: 20),
-            ExampleHeader(
-              title: user.displayName ?? 'Current user',
-              subtitle: user.email ?? 'No email',
-            ),
-            const SizedBox(height: 16),
-            InfoTile(label: 'User ID', value: user.id),
-            InfoTile(
-              label: 'Email verified',
-              value: user.emailVerified ? 'Yes' : 'No',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              enabled: !_isBusy,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(labelText: 'Display name'),
-              onSubmitted: (_) {
-                if (!_isBusy) {
-                  _updateProfile();
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            if (_message != null) ...<Widget>[
-              SuccessBox(message: _message!),
-              const SizedBox(height: 12),
-            ],
-            if (_errorMessage != null) ...<Widget>[
-              ErrorBox(message: _errorMessage!),
-              const SizedBox(height: 12),
-            ],
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                FilledButton.icon(
-                  onPressed: _isBusy ? null : _updateProfile,
-                  icon: _loading
-                      ? const _ButtonProgressIndicator()
-                      : const Icon(Icons.save_outlined),
-                  label: const Text('Update profile'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _isBusy ? null : _reloadUser,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reload user'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _isBusy ? null : _sendEmailVerification,
-                  icon: const Icon(Icons.mark_email_read_outlined),
-                  label: const Text('Send verification email'),
-                ),
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: <Widget>[
+              _ProfileAvatar(
+                avatarUrl: user.avatarUrl,
+                uploading: _uploadingAvatar,
+                onPressed: _isBusy ? null : _showAvatarSourceDialog,
+              ),
+              const SizedBox(height: 20),
+              ExampleHeader(
+                title: user.displayName ?? 'Current user',
+                subtitle: user.email ?? 'No email',
+              ),
+              const SizedBox(height: 16),
+              InfoTile(label: 'User ID', value: user.id),
+              InfoTile(
+                label: 'Email verified',
+                value: user.emailVerified ? 'Yes' : 'No',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                enabled: !_isBusy,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(labelText: 'Display name'),
+                onSubmitted: (_) {
+                  if (!_isBusy) {
+                    _updateProfile();
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              if (_message != null) ...<Widget>[
+                SuccessBox(message: _message!),
+                const SizedBox(height: 12),
               ],
-            ),
-          ],
-        );
-      },
+              if (_errorMessage != null) ...<Widget>[
+                ErrorBox(message: _errorMessage!),
+                const SizedBox(height: 12),
+              ],
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  FilledButton.icon(
+                    onPressed: _isBusy ? null : _updateProfile,
+                    icon: _loading
+                        ? const _ButtonProgressIndicator()
+                        : const Icon(Icons.save_outlined),
+                    label: const Text('Update profile'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _isBusy ? null : _reloadUser,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reload user'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _isBusy ? null : _sendEmailVerification,
+                    icon: const Icon(Icons.mark_email_read_outlined),
+                    label: const Text('Send verification email'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

@@ -1,42 +1,66 @@
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
 import '../../../core/utils/api_response_reader.dart';
-import '../models/post.dart';
+import '../models/post_model.dart';
 import 'post_api_paths.dart';
 
 /// Handles HTTP requests for the custom `posts` table.
 class PostRepository {
   const PostRepository();
 
-  Future<List<Post>> fetchPosts() async {
-    final response = await HosteDay.client.get(
-      PostApiPaths.postsPath,
-      withAuth: true,
-    );
+  Future<List<PostModel>> fetchPosts() async {
+    final response = await HosteDay.client.get(PostApiPaths.postsPath);
 
     final posts =
-        ApiResponseReader.readList(response).map(Post.fromJson).toList()
+        ApiResponseReader.readList(response).map(PostModel.fromJson).toList()
           ..sort((a, b) => b.createdAtText.compareTo(a.createdAtText));
 
     return posts;
   }
 
-  Future<Post?> createPost({
-    required String title,
-    required String body,
-  }) async {
+  Future<PostModel> fetchPost(Object id) async {
+    final response = await HosteDay.client.get(PostApiPaths.postsPath, id: id);
+
+    final json = ApiResponseReader.readObject(response);
+
+    if (json == null) {
+      throw const FormatException('Post data was not found in the response.');
+    }
+
+    return PostModel.fromJson(json);
+  }
+
+  Future createPost({required Map<String, dynamic> body}) async {
     final response = await HosteDay.client.post(
       PostApiPaths.postsPath,
+      body: body,
       withAuth: true,
-      body: <String, dynamic>{'title': title, 'body': body},
     );
+    final json = ApiResponseReader.readObject(response);
 
-    final createdPostJson = ApiResponseReader.readObject(response);
-
-    if (createdPostJson == null) {
+    if (json == null) {
       return null;
     }
 
-    return Post.fromJson(createdPostJson);
+    return PostModel.fromJson(json);
+  }
+
+  Future<PostModel?> updatePost({
+    required int id,
+    required String relationField,
+    required Object relationValue,
+    required Map<String, dynamic> body,
+  }) async {
+    final response = await HosteDay.client.put(
+      PostApiPaths.postsPath,
+      id: id,
+      relationField: relationField,
+      relationValue: relationValue,
+      body: body,
+    );
+
+    final json = ApiResponseReader.readObject(response);
+
+    return json == null ? null : PostModel.fromJson(json);
   }
 }

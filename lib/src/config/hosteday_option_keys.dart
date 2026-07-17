@@ -77,4 +77,30 @@ abstract final class HosteDayOptionKeys {
 
   /// The endpoint used to publish presence realtime events.
   static const String presenceEventsPath = 'presence_events_path';
+
+  /// The text used to search and filter the requested resources.
+  ///
+  /// This value is added to the request URL as the `search` query parameter.
+  ///
+  /// Example:
+  /// `?search=sewing`
+  static const String search = 'search';
+
+  /// The relation field used to filter the requested resources.
+  ///
+  /// This value is added to the request URL as the `relation_field`
+  /// query parameter.
+  ///
+  /// Example:
+  /// `?relation_field=category_id`
+  static const String relationField = 'relation_field';
+
+  /// The value of the relation field used for filtering.
+  ///
+  /// This value is added to the request URL as the `relation_value`
+  /// query parameter and should be used together with [relationField].
+  ///
+  /// Example:
+  /// `?relation_field=category_id&relation_value=5`
+  static const String relationValue = 'relation_value';
 }

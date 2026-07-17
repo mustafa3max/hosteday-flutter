@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+import 'package:hosteday_flutter_example/features/posts/presentation/pages/home_page.dart';
 
-import '../../posts/presentation/pages/posts_page.dart';
 import '../../profile/presentation/pages/profile_page.dart';
 import '../../realtime/presentation/pages/realtime_page.dart';
 
@@ -15,10 +15,10 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-enum HomeTab { posts, profile, realtime }
+enum HomeTab { home, profile, realtime }
 
 class _HomeShellState extends State<HomeShell> {
-  HomeTab _tab = HomeTab.posts;
+  HomeTab _tab = HomeTab.home;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class _HomeShellState extends State<HomeShell> {
         ],
       ),
       body: switch (_tab) {
-        HomeTab.posts => const PostsPage(),
+        HomeTab.home => const HomePage(),
         HomeTab.profile => const ProfilePage(),
         HomeTab.realtime => const RealtimePage(),
       },

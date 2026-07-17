@@ -23,7 +23,7 @@ class ExampleEnvironment {
 
   static const String projectAccessToken = String.fromEnvironment(
     'HOSTEDAY_PROJECT_ACCESS_TOKEN',
-    defaultValue: 'YOUR_PROJECT_ACCESS_TOKEN',
+    defaultValue: '',
   );
 
   static const String realtimeAppKey = String.fromEnvironment(

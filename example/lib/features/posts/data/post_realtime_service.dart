@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
-import '../models/post.dart';
+import '../models/post_model.dart';
 import 'post_api_paths.dart';
 
 /// Listens to realtime post events.
@@ -10,7 +10,7 @@ class PostRealtimeService {
   const PostRealtimeService();
 
   Future<StreamSubscription<dynamic>> listenToPostCreated({
-    required void Function(Post? post) onPostCreated,
+    required void Function(PostModel? post) onPostCreated,
   }) async {
     await HosteDay.connectRealtime();
 
@@ -25,7 +25,7 @@ class PostRealtimeService {
           return;
         }
 
-        onPostCreated(Post.fromJson(postJson));
+        onPostCreated(PostModel.fromJson(postJson));
       },
     );
   }
