@@ -9,7 +9,10 @@ class PostRepository {
   const PostRepository();
 
   Future<List<PostModel>> fetchPosts() async {
-    final response = await HosteDay.client.get(PostApiPaths.postsPath);
+    final response = await HosteDay.client.get(
+      PostApiPaths.postsPath,
+      filters: {'status': 0},
+    );
 
     final posts =
         ApiResponseReader.readList(response).map(PostModel.fromJson).toList()

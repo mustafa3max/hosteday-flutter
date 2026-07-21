@@ -118,10 +118,17 @@ class HosteDayClient {
   ///
   /// When [id] is omitted, an index request is sent.
   ///
-  /// Example:
+  /// Search example:
   /// `/services?search=خياطة`
   ///
-  /// When [id] is provided, a show request is sent.
+  /// Filter example:
+  /// `/services?filters[status]=active`
+  ///
+  /// Multiple values for one filter use Laravel array query syntax:
+  /// `/services?filters[status][]=active&filters[status][]=pending`
+  ///
+  /// When [id] is provided, a show request is sent and [filters] must be
+  /// omitted.
   ///
   /// Example:
   /// `/services/15`
@@ -129,6 +136,7 @@ class HosteDayClient {
     String path, {
     Object? id,
     String? search,
+    Map<String, Object?>? filters,
     String? relationField,
     Object? relationValue,
     Map<String, Object?>? queryParameters,
@@ -140,6 +148,7 @@ class HosteDayClient {
       path,
       id: id,
       search: search,
+      filters: filters,
       relationField: relationField,
       relationValue: relationValue,
       queryParameters: queryParameters,

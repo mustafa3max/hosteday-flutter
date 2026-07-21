@@ -71,6 +71,9 @@ class PostCard extends StatelessWidget {
                 icon: const Icon(Icons.edit_outlined),
               )
             : SizedBox(),
+        leading: post.status == 1
+            ? Icon(Icons.check_circle_outline)
+            : Icon(Icons.cancel_outlined, color: Colors.red),
       ),
     );
   }

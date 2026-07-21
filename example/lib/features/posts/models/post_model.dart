@@ -6,6 +6,7 @@ class PostModel {
   final String userId;
   final String title;
   final String? body;
+  final int? status;
   final String createdAtText;
   final Map<String, dynamic> data;
 
@@ -13,6 +14,7 @@ class PostModel {
     required this.id,
     required this.userId,
     required this.title,
+    this.status = 0,
     this.body,
     this.createdAtText = '',
     this.data = const <String, dynamic>{},
@@ -49,6 +51,7 @@ class PostModel {
       userId: userId ?? '',
       title: title ?? 'Untitled post',
       body: body,
+      status: json['status'],
       createdAtText: createdAtText,
       data: Map<String, dynamic>.from(json),
     );

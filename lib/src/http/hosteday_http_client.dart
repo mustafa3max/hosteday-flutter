@@ -15,6 +15,14 @@ import 'package:http/http.dart' as http;
 /// - Laravel-style validation errors.
 /// - API and network error conversion.
 class HosteDayHttpClient {
+  static const String _filtersQueryKey = 'filters';
+  static const int _maxFilters = 20;
+  static const int _maxFilterValues = 100;
+
+  static final RegExp _filterFieldPattern = RegExp(
+    r'^[a-zA-Z0-9_]+$',
+  );
+
   /// The configuration used to build HosteDay API request URLs.
   final HosteDayConfig config;
 
@@ -44,7 +52,11 @@ class HosteDayHttpClient {
   /// When [id] is omitted, the request is treated as an index request.
   ///
   /// Example:
-  /// `/services?search=خياطة&relation_field=category_id&relation_value=5`
+  /// `/services?search=خياطة&filters[status]=active`
+  ///
+  /// Multiple values for the same field are encoded using Laravel's array
+  /// query syntax:
+  /// `/services?filters[status][]=active&filters[status][]=pending`
   ///
   /// When [id] is provided, it is appended to [path] as the final path segment.
   ///
@@ -54,6 +66,7 @@ class HosteDayHttpClient {
     String path, {
     Object? id,
     String? search,
+    Map<String, Object?>? filters,
     String? relationField,
     Object? relationValue,
     Map<String, Object?>? queryParameters,
@@ -61,6 +74,12 @@ class HosteDayHttpClient {
     Map<String, String>? headers,
     Duration? timeout,
   }) {
+    if (id != null && filters != null && filters.isNotEmpty) {
+      throw ArgumentError(
+        'filters are supported only for index GET requests when id is omitted.',
+      );
+    }
+
     return request(
       method: 'GET',
       path: path,
@@ -68,6 +87,7 @@ class HosteDayHttpClient {
       queryParameters: _buildResourceQueryParameters(
         queryParameters: queryParameters,
         search: search,
+        filters: filters,
         relationField: relationField,
         relationValue: relationValue,
       ),
@@ -394,24 +414,113 @@ class HosteDayHttpClient {
       return uri;
     }
 
-    final cleanedQueryParameters = <String, String>{
-      ...uri.queryParameters,
-    };
+    final cleanedQueryParameters = <String, Object>{};
+
+    for (final entry in uri.queryParametersAll.entries) {
+      if (entry.value.length == 1) {
+        cleanedQueryParameters[entry.key] = entry.value.first;
+      } else if (entry.value.isNotEmpty) {
+        cleanedQueryParameters[entry.key] = List<String>.from(entry.value);
+      }
+    }
 
     for (final entry in queryParameters.entries) {
-      final value = entry.value;
-
-      if (value == null) {
-        continue;
-      }
-
-      cleanedQueryParameters[entry.key] = value.toString();
+      _appendQueryParameter(
+        cleanedQueryParameters,
+        entry.key,
+        entry.value,
+      );
     }
 
     return uri.replace(
       queryParameters:
           cleanedQueryParameters.isEmpty ? null : cleanedQueryParameters,
     );
+  }
+
+  /// Flattens nested query values using Laravel-compatible bracket syntax.
+  ///
+  /// Examples:
+  /// - `{'filters': {'status': 'active'}}`
+  ///   becomes `filters[status]=active`.
+  /// - `{'filters': {'status': ['active', 'pending']}}`
+  ///   becomes repeated `filters[status][]` parameters.
+  void _appendQueryParameter(
+    Map<String, Object> result,
+    String key,
+    Object? value,
+  ) {
+    if (value == null) {
+      return;
+    }
+
+    final cleanKey = key.trim();
+
+    if (cleanKey.isEmpty) {
+      throw ArgumentError.value(
+        key,
+        'queryParameters',
+        'Query parameter names cannot be empty.',
+      );
+    }
+
+    if (value is Map) {
+      for (final entry in value.entries) {
+        final nestedKey = entry.key.toString().trim();
+
+        if (nestedKey.isEmpty) {
+          throw ArgumentError.value(
+            entry.key,
+            'queryParameters',
+            'Nested query parameter names cannot be empty.',
+          );
+        }
+
+        _appendQueryParameter(
+          result,
+          '$cleanKey[$nestedKey]',
+          entry.value,
+        );
+      }
+
+      return;
+    }
+
+    if (value is Iterable) {
+      final values = <String>[];
+
+      for (final item in value) {
+        if (item == null) {
+          continue;
+        }
+
+        if (item is Map || item is Iterable) {
+          throw ArgumentError.value(
+            value,
+            'queryParameters',
+            'Query parameter lists may contain scalar values only.',
+          );
+        }
+
+        values.add(_stringifyQueryValue(item));
+      }
+
+      if (values.isNotEmpty) {
+        result['$cleanKey[]'] = values;
+      }
+
+      return;
+    }
+
+    result[cleanKey] = _stringifyQueryValue(value);
+  }
+
+  String _stringifyQueryValue(Object value) {
+    if (value is bool) {
+      return value ? 'true' : 'false';
+    }
+
+    return value.toString();
   }
 
   Map<String, dynamic> _decodeResponse(String body) {
@@ -454,6 +563,7 @@ class HosteDayHttpClient {
   Map<String, Object?>? _buildResourceQueryParameters({
     Map<String, Object?>? queryParameters,
     String? search,
+    Map<String, Object?>? filters,
     String? relationField,
     Object? relationValue,
   }) {
@@ -480,6 +590,12 @@ class HosteDayHttpClient {
       result[HosteDayOptionKeys.search] = cleanSearch;
     }
 
+    final normalizedFilters = _normalizeFilters(filters);
+
+    if (normalizedFilters != null) {
+      result[_filtersQueryKey] = normalizedFilters;
+    }
+
     if (hasRelationField) {
       result[HosteDayOptionKeys.relationField] = cleanRelationField;
 
@@ -488,6 +604,108 @@ class HosteDayHttpClient {
     }
 
     return result.isEmpty ? null : result;
+  }
+
+  Map<String, Object?>? _normalizeFilters(
+    Map<String, Object?>? filters,
+  ) {
+    if (filters == null || filters.isEmpty) {
+      return null;
+    }
+
+    if (filters.length > _maxFilters) {
+      throw ArgumentError.value(
+        filters,
+        'filters',
+        'A maximum of $_maxFilters filters is allowed.',
+      );
+    }
+
+    final normalized = <String, Object?>{};
+
+    for (final entry in filters.entries) {
+      final field = entry.key.trim();
+
+      if (field.isEmpty || !_filterFieldPattern.hasMatch(field)) {
+        throw ArgumentError.value(
+          entry.key,
+          'filters',
+          'Filter field names may contain letters, numbers, and underscores only.',
+        );
+      }
+
+      final value = _normalizeFilterValue(
+        field,
+        entry.value,
+      );
+
+      if (value != null) {
+        normalized[field] = value;
+      }
+    }
+
+    return normalized.isEmpty ? null : normalized;
+  }
+
+  Object? _normalizeFilterValue(
+    String field,
+    Object? value,
+  ) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is Iterable) {
+      if (value.length > _maxFilterValues) {
+        throw ArgumentError.value(
+          value,
+          'filters[$field]',
+          'A maximum of $_maxFilterValues values is allowed per filter.',
+        );
+      }
+
+      final values = <Object>[];
+
+      for (final item in value) {
+        final normalizedItem = _normalizeFilterScalar(
+          field,
+          item,
+        );
+
+        if (normalizedItem != null && !values.contains(normalizedItem)) {
+          values.add(normalizedItem);
+        }
+      }
+
+      return values.isEmpty ? null : values;
+    }
+
+    return _normalizeFilterScalar(field, value);
+  }
+
+  Object? _normalizeFilterScalar(
+    String field,
+    Object? value,
+  ) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is String) {
+      final cleanValue = value.trim();
+
+      return cleanValue.isEmpty ? null : cleanValue;
+    }
+
+    if (value is num || value is bool) {
+      return value;
+    }
+
+    throw ArgumentError.value(
+      value,
+      'filters[$field]',
+      'Filter values must be strings, numbers, booleans, or lists of them.',
+    );
   }
 
   /// Closes the underlying HTTP client and releases its resources.
