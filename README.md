@@ -720,6 +720,77 @@ user@example.com
 
 Password reset is completed through the web link sent to the user.
 
+## Delete user account
+
+The authenticated user can permanently delete their account with:
+
+```dart
+await
+HosteDay.auth.deleteUser
+();
+```
+
+`deleteUser()` sends an authenticated request to the fixed HosteDay endpoint:
+
+```http
+DELETE /api/user
+Authorization: Bearer USER_ACCESS_TOKEN
+```
+
+The user ID does not need to be passed manually. HosteDay identifies the current user from the
+authenticated access token.
+
+After successful account deletion, the SDK automatically:
+
+* Clears the persisted authentication session.
+* Removes the stored access token.
+* Sets `currentUser` and `currentSession` to `null`.
+* Emits `null` through `authStateChanges()`, `idTokenChanges()`, and `userChanges()`.
+* Disconnects authenticated realtime connections.
+
+Account deletion is permanent. Request explicit confirmation before calling `deleteUser()`:
+
+```dart
+
+final confirmed = await
+showDialog<bool>
+(
+context: context,
+builder: (dialogContext) {
+return AlertDialog(
+title: const Text('Delete account'),
+content: const Text(
+'Are you sure you want to permanently delete your account? '
+'This action cannot be undone.',
+),
+actions: <Widget>[
+TextButton(
+onPressed: () {
+Navigator.of(dialogContext).pop(false);
+},
+child: const Text('Cancel'),
+),
+FilledButton(
+onPressed: () {
+Navigator.of(dialogContext).pop(true);
+},
+child: const Text('Delete account'),
+),
+],
+);
+},
+);
+
+if (confirmed == true) {
+await HosteDay.auth.deleteUser();
+}
+```
+
+Do not call `signOut()` after successful deletion. The SDK has already cleared the local session
+and published the signed-out authentication state.
+
+---
+
 ## Sign out
 
 ```dart
@@ -1910,7 +1981,8 @@ Old show, update, or delete code may append the ID manually:
 ```dart
 await
 HosteDay.client.get
-('/posts/$postId'
+('/posts/
+$postId'
 );
 ```
 

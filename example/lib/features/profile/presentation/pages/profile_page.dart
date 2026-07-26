@@ -20,6 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _nameController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
 
+  bool _deletingUser = false;
   bool _loading = false;
   bool _uploadingAvatar = false;
 
@@ -28,7 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   HosteDayUser? get _user => HosteDay.auth.currentUser;
 
-  bool get _isBusy => _loading || _uploadingAvatar;
+  bool get _isBusy => _loading || _uploadingAvatar || _deletingUser;
 
   @override
   void initState() {
@@ -365,6 +366,22 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: const Icon(Icons.mark_email_read_outlined),
                     label: const Text('Send verification email'),
                   ),
+
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    onPressed: _isBusy ? null : _deleteUser,
+                    icon: _deletingUser
+                        ? const _ButtonProgressIndicator()
+                        : const Icon(Icons.delete_forever_outlined),
+                    label: Text(
+                      _deletingUser ? 'Deleting account...' : 'Delete account',
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -372,6 +389,69 @@ class _ProfilePageState extends State<ProfilePage> {
         },
       ),
     );
+  }
+
+  Future<void> _deleteUser() async {
+    if (_isBusy) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+
+        return AlertDialog(
+          icon: Icon(Icons.delete_forever_outlined, color: colorScheme.error),
+          title: const Text('Delete account'),
+          content: const Text(
+            'Are you sure you want to permanently delete your account? '
+            'This action cannot be undone.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.error,
+                foregroundColor: colorScheme.onError,
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              icon: const Icon(Icons.delete_forever_outlined),
+              label: const Text('Delete account'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _deletingUser = true;
+      _message = null;
+      _errorMessage = null;
+    });
+
+    try {
+      await HosteDay.auth.deleteUser();
+    } catch (error) {
+      _showError(error);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingUser = false;
+        });
+      }
+    }
   }
 }
 

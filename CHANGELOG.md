@@ -1,7 +1,7 @@
-## 2.1.3 - 2026-07-22
+## 2.1.4 - 2026-07-26
 
 ### Added
 
-* Added optional `filters` support to GET index requests through `HosteDayClient.get()`.
-* Added Laravel-compatible encoding for single and multiple filter values, such as
-  `filters[status]=active` and `filters[status][]=active`.
+* Added `HosteDay.auth.deleteUser()` to permanently delete the authenticated user.
+* The local authentication session and stored access token are cleared automatically after
+  successful account deletion.

@@ -18,7 +18,7 @@ class ExampleEnvironment {
 
   static const String projectDomain = String.fromEnvironment(
     'HOSTEDAY_PROJECT_DOMAIN',
-    defaultValue: 'https://test.hosteday.com',
+    defaultValue: 'https://free-3.hosteday.com',
   );
 
   static const String projectAccessToken = String.fromEnvironment(

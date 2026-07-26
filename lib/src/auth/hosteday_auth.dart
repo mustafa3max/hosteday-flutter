@@ -367,6 +367,28 @@ class HosteDayAuth {
     }
   }
 
+  /// Permanently deletes the currently authenticated user.
+  ///
+  /// After successful deletion, the local session is cleared automatically.
+  Future<void> deleteUser() async {
+    await _ensureInitialized();
+    _requireSignedInUser();
+
+    try {
+      await http.request(
+        method: 'DELETE',
+        path: config.userShowPathGet,
+        withAuth: true,
+      );
+
+      await _clearLocalSession(
+        emitEvents: true,
+      );
+    } on HosteDayException catch (error) {
+      throw HosteDayAuthException.fromHosteDayException(error);
+    }
+  }
+
   /// Signs out locally and attempts to invalidate the remote Laravel session.
   ///
   /// The local session is always cleared, even when the remote logout endpoint
