@@ -1,4 +1,4 @@
-## 2.2.0 (unreleased)
+## 2.2.0
 
 - Adopt Hosteday names throughout the SDK and example; retain deprecated old APIs.
 - Centralize API, host, static-page, and storage URL resolution.
