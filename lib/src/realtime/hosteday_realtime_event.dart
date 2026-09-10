@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-/// Represents a realtime event received through HosteDay channels.
+/// Represents a realtime event received through Hosteday channels.
 ///
 /// The event contains:
 /// - [name]: the received event name.
 /// - [channelName]: the channel that delivered the event.
 /// - [payload]: normalized event data.
 /// - [raw]: the original unprocessed event object.
-class HosteDayRealtimeEvent {
+class HostedayRealtimeEvent {
   /// The name that identifies the received realtime event.
   ///
   /// Example:
@@ -33,23 +33,23 @@ class HosteDayRealtimeEvent {
   final Object? raw;
 
   /// Creates a realtime event with the supplied metadata and payload.
-  const HosteDayRealtimeEvent({
+  const HostedayRealtimeEvent({
     required this.name,
     required this.channelName,
     required this.payload,
     this.raw,
   });
 
-  /// Creates a [HosteDayRealtimeEvent] from raw event data.
+  /// Creates a [HostedayRealtimeEvent] from raw event data.
   ///
   /// The [data] value is normalized into [payload].
-  factory HosteDayRealtimeEvent.fromRaw({
+  factory HostedayRealtimeEvent.fromRaw({
     required String name,
     required String channelName,
     required Object? data,
     Object? raw,
   }) {
-    return HosteDayRealtimeEvent(
+    return HostedayRealtimeEvent(
       name: name,
       channelName: channelName,
       payload: _normalizePayload(data),
@@ -128,7 +128,7 @@ class HosteDayRealtimeEvent {
 
   @override
   String toString() {
-    return 'HosteDayRealtimeEvent('
+    return 'HostedayRealtimeEvent('
         'name: $name, '
         'channelName: $channelName, '
         'payload: $payload'
@@ -205,3 +205,7 @@ class HosteDayRealtimeEvent {
     }
   }
 }
+
+/// Deprecated spelling of [HostedayRealtimeEvent].
+@Deprecated('Use HostedayRealtimeEvent instead.')
+typedef HosteDayRealtimeEvent = HostedayRealtimeEvent;

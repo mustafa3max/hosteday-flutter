@@ -52,7 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      await HosteDay.auth.createUserWithEmailAndPassword(
+      await Hosteday.auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         additionalData: <String, dynamic>{'name': _nameController.text.trim()},

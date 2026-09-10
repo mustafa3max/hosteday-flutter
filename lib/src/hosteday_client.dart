@@ -1,3 +1,5 @@
+import 'package:http/http.dart' as transport;
+import 'urls/hosteday_static_pages.dart';
 import 'auth/hosteday_auth.dart';
 import 'auth/hosteday_auth_storage.dart';
 import 'auth/hosteday_auth_token_provider.dart';
@@ -6,7 +8,7 @@ import 'config/hosteday_config.dart';
 import 'http/hosteday_http_client.dart';
 import 'realtime/hosteday_realtime_client.dart';
 
-/// A high-level client for interacting with HosteDay services.
+/// A high-level client for interacting with Hosteday services.
 ///
 /// This client provides:
 /// - HTTP API requests.
@@ -14,71 +16,85 @@ import 'realtime/hosteday_realtime_client.dart';
 /// - Realtime access through [realtime].
 /// - Realtime event publishing helpers.
 ///
-/// Authentication and user API paths are fixed by HosteDay and are managed
-/// internally by [HosteDayAuth].
-class HosteDayClient {
-  /// The configuration used to connect to HosteDay services.
-  final HosteDayConfig config;
+/// Authentication and user API paths are fixed by Hosteday and are managed
+/// internally by [HostedayAuth].
+class HostedayClient {
+  /// The configuration used to connect to Hosteday services.
+  final HostedayConfig config;
 
   /// Optional external token provider supplied during SDK initialization.
   ///
-  /// This is used only as a fallback when there is no active HosteDay auth
+  /// This is used only as a fallback when there is no active Hosteday auth
   /// session stored in [authStorage].
-  final HosteDayTokenProvider? tokenProvider;
+  final HostedayTokenProvider? tokenProvider;
 
   /// Storage used to persist the authenticated user session.
-  final HosteDayAuthStorage authStorage;
+  final HostedayAuthStorage authStorage;
 
   /// Token provider used internally by HTTP and realtime clients.
   ///
-  /// It reads the active HosteDay auth session first, then falls back to the
+  /// It reads the active Hosteday auth session first, then falls back to the
   /// externally supplied [tokenProvider] when available.
-  late final HosteDayTokenProvider effectiveTokenProvider;
+  late final HostedayTokenProvider effectiveTokenProvider;
 
   /// The HTTP client responsible for executing API requests.
-  late final HosteDayHttpClient http;
+  late final HostedayHttpClient http;
 
   /// The realtime client responsible for managing live connections.
-  late final HosteDayRealtimeClient realtime;
+  late final HostedayRealtimeClient realtime;
 
-  /// Authentication service for the current HosteDay application.
-  late final HosteDayAuth auth;
+  /// Authentication service for the current Hosteday application.
+  late final HostedayAuth auth;
 
-  /// Creates a [HosteDayClient] using the provided [config].
+  /// Creates a [HostedayClient] using the provided [config].
   ///
   /// [authStorage] defaults to in-memory storage. For production apps, pass
   /// a secure storage implementation.
-  HosteDayClient({
+  HostedayClient({
     required this.config,
     this.tokenProvider,
-    HosteDayAuthStorage? authStorage,
-  }) : authStorage = authStorage ?? MemoryHosteDayAuthStorage() {
-    final authTokenProvider = HosteDayAuthTokenProvider(
+    transport.Client? httpClient,
+    HostedayAuthStorage? authStorage,
+  }) : authStorage = authStorage ?? MemoryHostedayAuthStorage() {
+    final authTokenProvider = HostedayAuthTokenProvider(
       storage: this.authStorage,
     );
 
-    effectiveTokenProvider = HosteDayCombinedTokenProvider(
+    effectiveTokenProvider = HostedayCombinedTokenProvider(
       primary: authTokenProvider,
       fallback: tokenProvider,
     );
 
-    http = HosteDayHttpClient(
+    http = HostedayHttpClient(
+      client: httpClient,
       config: config,
       tokenProvider: effectiveTokenProvider,
     );
 
-    realtime = HosteDayRealtimeClient(
+    realtime = HostedayRealtimeClient(
       config: config,
       tokenProvider: effectiveTokenProvider,
     );
 
-    auth = HosteDayAuth(
+    auth = HostedayAuth(
       config: config,
       http: http,
       storage: this.authStorage,
       onSessionCleared: realtime.disconnect,
     );
   }
+
+  /// Root URL of the project, for example `https://max.hosteday.com`.
+  String get host => config.host;
+
+  /// Effective REST base URL, normally `$host/api`.
+  String get apiBaseUrl => config.apiBaseUrl;
+
+  /// Public pages, for example `client.staticPages['info']`.
+  HostedayStaticPages get staticPages => HostedayStaticPages(config.urls);
+
+  /// Resolves a relative public file path; absolute HTTP(S) URLs are preserved.
+  String storageUrl(String path) => config.urls.storage(path);
 
   /// Restores the saved authentication session.
   ///
@@ -88,7 +104,7 @@ class HosteDayClient {
     return auth.initialize();
   }
 
-  /// Sends a raw HTTP request to the HosteDay API.
+  /// Sends a raw HTTP request to the Hosteday API.
   ///
   /// Use the specialized [get], [post], [put], [patch], and [delete] methods
   /// when possible.
@@ -182,7 +198,7 @@ class HosteDayClient {
   /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> put(
     String path, {
-    required Object id,
+    Object? id,
     Map<String, dynamic>? body,
     String? relationField,
     Object? relationValue,
@@ -209,7 +225,7 @@ class HosteDayClient {
   /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> patch(
     String path, {
-    required Object id,
+    Object? id,
     Map<String, dynamic>? body,
     String? relationField,
     Object? relationValue,
@@ -236,7 +252,7 @@ class HosteDayClient {
   /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> delete(
     String path, {
-    required Object id,
+    Object? id,
     Map<String, dynamic>? body,
     String? relationField,
     Object? relationValue,
@@ -258,7 +274,7 @@ class HosteDayClient {
     );
   }
 
-  /// Publishes an event to a public HosteDay realtime channel.
+  /// Publishes an event to a public Hosteday realtime channel.
   ///
   /// Public events do not require a user access token, but the project API
   /// token is still sent automatically when configured.
@@ -269,6 +285,7 @@ class HosteDayClient {
   }) {
     return post(
       config.publicEventsPath,
+      withAuth: false,
       body: <String, dynamic>{
         'channel': _normalizePublicChannel(channel),
         'event': event,
@@ -277,7 +294,7 @@ class HosteDayClient {
     );
   }
 
-  /// Publishes an event to a private HosteDay realtime channel.
+  /// Publishes an event to a private Hosteday realtime channel.
   ///
   /// A valid authenticated user token is required.
   Future<Map<String, dynamic>> publishPrivateEvent({
@@ -287,7 +304,7 @@ class HosteDayClient {
   }) {
     return post(
       config.privateEventsPath,
-      withAuth: false,
+      withAuth: true,
       body: <String, dynamic>{
         'channel': _normalizePrivateChannel(channel),
         'event': event,
@@ -296,7 +313,7 @@ class HosteDayClient {
     );
   }
 
-  /// Publishes an event to a presence HosteDay realtime channel.
+  /// Publishes an event to a presence Hosteday realtime channel.
   ///
   /// A valid authenticated user token is required.
   Future<Map<String, dynamic>> publishPresenceEvent({
@@ -306,7 +323,7 @@ class HosteDayClient {
   }) {
     return post(
       config.presenceEventsPath,
-      withAuth: false,
+      withAuth: true,
       body: <String, dynamic>{
         'channel': _normalizePresenceChannel(channel),
         'event': event,
@@ -348,3 +365,7 @@ class HosteDayClient {
     return 'presence-$value';
   }
 }
+
+/// Deprecated spelling of [HostedayClient].
+@Deprecated('Use HostedayClient instead.')
+typedef HosteDayClient = HostedayClient;

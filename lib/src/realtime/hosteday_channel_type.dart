@@ -1,5 +1,5 @@
-/// Defines the channel types supported by HosteDay realtime.
-enum HosteDayChannelType {
+/// Defines the channel types supported by Hosteday realtime.
+enum HostedayChannelType {
   /// A public channel that does not require authentication.
   public,
 
@@ -12,3 +12,7 @@ enum HosteDayChannelType {
   /// Requires backend support for end-to-end encrypted channels.
   privateEncrypted,
 }
+
+/// Deprecated spelling of [HostedayChannelType].
+@Deprecated('Use HostedayChannelType instead.')
+typedef HosteDayChannelType = HostedayChannelType;

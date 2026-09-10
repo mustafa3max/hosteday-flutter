@@ -1,12 +1,12 @@
-/// Defines the official option keys accepted when initializing HosteDay.
+/// Defines the official option keys accepted when initializing Hosteday.
 ///
 /// These keys are only for values that the app developer is allowed to provide
 /// during SDK initialization.
 ///
-/// Authentication and user API paths are owned by HosteDay and are not
+/// Authentication and user API paths are owned by Hosteday and are not
 /// configurable from initialization options.
-abstract final class HosteDayOptionKeys {
-  /// The HosteDay project domain.
+abstract final class HostedayOptionKeys {
+  /// The Hosteday project domain.
   ///
   /// Example:
   /// `enterprise.hosteday.com`
@@ -65,7 +65,7 @@ abstract final class HosteDayOptionKeys {
 
   /// The endpoint used to authorize private and presence channels.
   ///
-  /// Keep this configurable only if HosteDay may give different projects
+  /// Keep this configurable only if Hosteday may give different projects
   /// different broadcasting auth endpoints.
   static const String broadcastingAuthPath = 'broadcasting_auth_path';
 
@@ -103,4 +103,28 @@ abstract final class HosteDayOptionKeys {
   /// Example:
   /// `?relation_field=category_id&relation_value=5`
   static const String relationValue = 'relation_value';
+}
+
+/// Legacy spelling of the option key constants.
+@Deprecated('Use HostedayOptionKeys instead.')
+abstract final class HosteDayOptionKeys {
+  static const String projectDomain = HostedayOptionKeys.projectDomain;
+  static const String apiBaseUrl = HostedayOptionKeys.apiBaseUrl;
+  static const String baseUrl = HostedayOptionKeys.baseUrl;
+  static const String projectApiKey = HostedayOptionKeys.projectApiKey;
+  static const String apiTokenHeader = HostedayOptionKeys.apiTokenHeader;
+  static const String legacyApiToken = HostedayOptionKeys.legacyApiToken;
+  static const String realtimeAppKey = HostedayOptionKeys.realtimeAppKey;
+  static const String realtimeHost = HostedayOptionKeys.realtimeHost;
+  static const String realtimeScheme = HostedayOptionKeys.realtimeScheme;
+  static const String realtimePort = HostedayOptionKeys.realtimePort;
+  static const String broadcastingAuthPath =
+      HostedayOptionKeys.broadcastingAuthPath;
+  static const String publicEventsPath = HostedayOptionKeys.publicEventsPath;
+  static const String privateEventsPath = HostedayOptionKeys.privateEventsPath;
+  static const String presenceEventsPath =
+      HostedayOptionKeys.presenceEventsPath;
+  static const String search = HostedayOptionKeys.search;
+  static const String relationField = HostedayOptionKeys.relationField;
+  static const String relationValue = HostedayOptionKeys.relationValue;
 }

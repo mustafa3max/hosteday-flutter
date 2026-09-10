@@ -27,7 +27,7 @@ class _RealtimePageState extends State<RealtimePage> {
     });
 
     try {
-      await HosteDay.connectRealtime();
+      await Hosteday.connectRealtime();
 
       setState(() {
         _message = 'Realtime client initialized.';
@@ -53,7 +53,7 @@ class _RealtimePageState extends State<RealtimePage> {
     });
 
     try {
-      await HosteDay.disconnectRealtime();
+      await Hosteday.disconnectRealtime();
 
       setState(() {
         _message = 'Realtime disconnected.';
@@ -73,18 +73,18 @@ class _RealtimePageState extends State<RealtimePage> {
 
   @override
   Widget build(BuildContext context) {
-    final connected = HosteDay.realtime.isConnected;
+    final connected = Hosteday.realtime.isConnected;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         const ExampleHeader(
           title: 'Realtime',
-          subtitle: 'Connect to HosteDay realtime and receive live events.',
+          subtitle: 'Connect to Hosteday realtime and receive live events.',
         ),
         const SizedBox(height: 16),
-        InfoTile(label: 'Realtime host', value: HosteDay.config.realtimeHost),
-        InfoTile(label: 'Realtime URL', value: HosteDay.config.realtimeUrl),
+        InfoTile(label: 'Realtime host', value: Hosteday.config.realtimeHost),
+        InfoTile(label: 'Realtime URL', value: Hosteday.config.realtimeUrl),
         InfoTile(label: 'Client initialized', value: connected ? 'Yes' : 'No'),
         const SizedBox(height: 16),
         if (_message != null) ...<Widget>[

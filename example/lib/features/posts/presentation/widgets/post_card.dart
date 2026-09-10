@@ -63,8 +63,8 @@ class PostCard extends StatelessWidget {
           ],
         ),
         trailing:
-            HosteDay.auth.currentUser != null &&
-                HosteDay.auth.currentUser!.hasEmail
+            Hosteday.auth.currentUser != null &&
+                Hosteday.auth.currentUser!.hasEmail
             ? IconButton(
                 tooltip: 'Edit post',
                 onPressed: () => _openUpdatePage(context),

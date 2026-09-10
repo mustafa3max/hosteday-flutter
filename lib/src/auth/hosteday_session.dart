@@ -1,11 +1,11 @@
 import 'hosteday_user.dart';
 
-/// Represents an authenticated HosteDay user session.
-class HosteDaySession {
+/// Represents an authenticated Hosteday user session.
+class HostedaySession {
   /// The authenticated user.
-  final HosteDayUser user;
+  final HostedayUser user;
 
-  /// Bearer token used by HosteDay HTTP and realtime services.
+  /// Bearer token used by Hosteday HTTP and realtime services.
   final String accessToken;
 
   /// Optional refresh token supplied by the backend.
@@ -17,8 +17,8 @@ class HosteDaySession {
   /// Token expiry time, when returned by the backend.
   final DateTime? expiresAt;
 
-  /// Creates a HosteDay session.
-  const HosteDaySession({
+  /// Creates a Hosteday session.
+  const HostedaySession({
     required this.user,
     required this.accessToken,
     this.refreshToken,
@@ -38,12 +38,12 @@ class HosteDaySession {
   }
 
   /// Creates a session from previously stored JSON data.
-  factory HosteDaySession.fromJson(Map<String, dynamic> json) {
+  factory HostedaySession.fromJson(Map<String, dynamic> json) {
     final userData = _asMap(json['user']);
 
     if (userData == null) {
       throw const FormatException(
-        'Stored HosteDay session does not include user data.',
+        'Stored Hosteday session does not include user data.',
       );
     }
 
@@ -58,12 +58,12 @@ class HosteDaySession {
 
     if (accessToken == null) {
       throw const FormatException(
-        'Stored HosteDay session does not include an access token.',
+        'Stored Hosteday session does not include an access token.',
       );
     }
 
-    return HosteDaySession(
-      user: HosteDayUser.fromJson(userData),
+    return HostedaySession(
+      user: HostedayUser.fromJson(userData),
       accessToken: accessToken,
       refreshToken: _firstText(
         <Map<String, dynamic>>[json],
@@ -96,7 +96,7 @@ class HosteDaySession {
   /// - { access_token, user }
   /// - { data: { token, user } }
   /// - { data: { access_token, user } }
-  factory HosteDaySession.fromAuthResponse(
+  factory HostedaySession.fromAuthResponse(
     Map<String, dynamic> response,
   ) {
     final root = Map<String, dynamic>.from(response);
@@ -152,8 +152,8 @@ class HosteDaySession {
           ),
         );
 
-    return HosteDaySession(
-      user: HosteDayUser.fromJson(userData),
+    return HostedaySession(
+      user: HostedayUser.fromJson(userData),
       accessToken: accessToken,
       refreshToken: _firstText(
         sources,
@@ -186,14 +186,14 @@ class HosteDaySession {
   }
 
   /// Returns a copy of this session with selected values replaced.
-  HosteDaySession copyWith({
-    HosteDayUser? user,
+  HostedaySession copyWith({
+    HostedayUser? user,
     String? accessToken,
     String? refreshToken,
     String? tokenType,
     DateTime? expiresAt,
   }) {
-    return HosteDaySession(
+    return HostedaySession(
       user: user ?? this.user,
       accessToken: accessToken ?? this.accessToken,
       refreshToken: refreshToken ?? this.refreshToken,
@@ -279,3 +279,7 @@ class HosteDaySession {
         );
   }
 }
+
+/// Deprecated spelling of [HostedaySession].
+@Deprecated('Use HostedaySession instead.')
+typedef HosteDaySession = HostedaySession;

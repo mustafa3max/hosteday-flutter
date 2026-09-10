@@ -5,7 +5,7 @@
 /// - `{ "data": { "data": [...] } }` for paginated responses
 /// - `{ "posts": [...] }`
 ///
-/// This reader keeps the example tolerant and focused on HosteDay usage rather
+/// This reader keeps the example tolerant and focused on Hosteday usage rather
 /// than a single backend response format.
 class ApiResponseReader {
   const ApiResponseReader._();

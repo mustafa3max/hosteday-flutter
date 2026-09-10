@@ -27,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _message;
   String? _errorMessage;
 
-  HosteDayUser? get _user => HosteDay.auth.currentUser;
+  HostedayUser? get _user => Hosteday.auth.currentUser;
 
   bool get _isBusy => _loading || _uploadingAvatar || _deletingUser;
 
@@ -51,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _startLoading();
 
     try {
-      final user = await HosteDay.auth.reload();
+      final user = await Hosteday.auth.reload();
 
       if (!mounted) {
         return;
@@ -88,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _startLoading();
 
     try {
-      await HosteDay.auth.updateProfile(name: name);
+      await Hosteday.auth.updateProfile(name: name);
 
       if (!mounted) {
         return;
@@ -112,7 +112,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _startLoading();
 
     try {
-      await HosteDay.auth.sendEmailVerification();
+      await Hosteday.auth.sendEmailVerification();
 
       if (!mounted) {
         return;
@@ -196,7 +196,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final extension = _extractImageExtension(image.name);
 
-      await HosteDay.auth.updateAvatar(bytes: bytes, extension: extension);
+      await Hosteday.auth.updateAvatar(bytes: bytes, extension: extension);
 
       if (!mounted) {
         return;
@@ -295,9 +295,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarMy(title: "Profile"),
-      body: StreamBuilder<HosteDayUser?>(
-        stream: HosteDay.auth.userChanges(),
-        initialData: HosteDay.auth.currentUser,
+      body: StreamBuilder<HostedayUser?>(
+        stream: Hosteday.auth.userChanges(),
+        initialData: Hosteday.auth.currentUser,
         builder: (context, snapshot) {
           final user = snapshot.data;
 
@@ -442,7 +442,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      await HosteDay.auth.deleteUser();
+      await Hosteday.auth.deleteUser();
     } catch (error) {
       _showError(error);
     } finally {

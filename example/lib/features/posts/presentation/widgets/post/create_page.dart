@@ -56,7 +56,7 @@ class _CreatePageState extends State<CreatePage> {
     try {
       final title = _titleController.text.trim();
       final postBody = _bodyController.text.trim();
-      final userId = HosteDay.auth.currentUser!.id;
+      final userId = Hosteday.auth.currentUser!.id;
 
       final requestBody = <String, dynamic>{
         'title': title,
@@ -163,7 +163,7 @@ class _CreatePageState extends State<CreatePage> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  Text(HosteDay.auth.currentUser!.id),
+                  Text(Hosteday.auth.currentUser!.id),
                   const SizedBox(height: 20),
                   FilledButton.icon(
                     onPressed: _creating ? null : _createPost,

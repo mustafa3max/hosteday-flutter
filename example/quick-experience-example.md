@@ -22,29 +22,29 @@ const realtimeHost = String.fromEnvironment(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await HosteDay.initializeApp(
+  await Hosteday.initializeApp(
     options: const <String, Object?>{
-      HosteDayOptionKeys.projectDomain: projectDomain,
+      HostedayOptionKeys.projectDomain: projectDomain,
 
       // Project API key.
       //
       // This is not the authenticated user's access token.
-      HosteDayOptionKeys.projectApiKey: projectApiKey,
+      HostedayOptionKeys.projectApiKey: projectApiKey,
 
       // Optional realtime configuration.
       //
-      // This key is provided by HosteDay.
+      // This key is provided by Hosteday.
       // It does not require a Pusher account.
-      HosteDayOptionKeys.realtimeAppKey: realtimeAppKey,
-      HosteDayOptionKeys.realtimeHost: realtimeHost,
-      HosteDayOptionKeys.realtimeScheme: 'wss',
-      HosteDayOptionKeys.realtimePort: 443,
+      HostedayOptionKeys.realtimeAppKey: realtimeAppKey,
+      HostedayOptionKeys.realtimeHost: realtimeHost,
+      HostedayOptionKeys.realtimeScheme: 'wss',
+      HostedayOptionKeys.realtimePort: 443,
     },
 
     // Stores the authenticated session using shared_preferences.
     //
     // This keeps the user signed in after closing and reopening the app.
-    authStorage: HosteDaySharedPreferencesAuthStorage(),
+    authStorage: HostedaySharedPreferencesAuthStorage(),
   );
 
   runApp(const MyApp());
@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HosteDay Quick Example',
+      title: 'Hosteday Quick Example',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -64,9 +64,9 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: StreamBuilder<HosteDayUser?>(
-        stream: HosteDay.auth.authStateChanges(),
-        initialData: HosteDay.auth.currentUser,
+      home: StreamBuilder<HostedayUser?>(
+        stream: Hosteday.auth.authStateChanges(),
+        initialData: Hosteday.auth.currentUser,
         builder: (context, snapshot) {
           final user = snapshot.data;
 
@@ -129,12 +129,12 @@ class _AuthPageState extends State<AuthPage> {
 
     try {
       if (isLogin) {
-        await HosteDay.auth.signInWithEmailAndPassword(
+        await Hosteday.auth.signInWithEmailAndPassword(
           email: userEmail,
           password: userPassword,
         );
       } else {
-        await HosteDay.auth.createUserWithEmailAndPassword(
+        await Hosteday.auth.createUserWithEmailAndPassword(
           email: userEmail,
           password: userPassword,
           additionalData: <String, dynamic>{
@@ -164,7 +164,7 @@ class _AuthPageState extends State<AuthPage> {
     setState(() => loading = true);
 
     try {
-      await HosteDay.auth.sendPasswordResetEmail(
+      await Hosteday.auth.sendPasswordResetEmail(
         email: userEmail,
       );
 
@@ -223,7 +223,7 @@ class _AuthPageState extends State<AuthPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Quickly test HosteDay authentication and session storage.',
+                  'Quickly test Hosteday authentication and session storage.',
                   textAlign: TextAlign.center,
                   style: Theme
                       .of(context)
@@ -339,7 +339,7 @@ class HomePage extends StatefulWidget {
     super.key,
   });
 
-  final HosteDayUser user;
+  final HostedayUser user;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -352,7 +352,7 @@ class _HomePageState extends State<HomePage> {
     setState(() => loading = true);
 
     try {
-      await HosteDay.auth.reload();
+      await Hosteday.auth.reload();
 
       if (mounted) {
         showMessage('User profile reloaded.');
@@ -372,7 +372,7 @@ class _HomePageState extends State<HomePage> {
     setState(() => loading = true);
 
     try {
-      await HosteDay.auth.sendEmailVerification();
+      await Hosteday.auth.sendEmailVerification();
 
       if (mounted) {
         showMessage('Verification email has been sent.');
@@ -389,7 +389,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> logout() async {
-    await HosteDay.auth.signOut();
+    await Hosteday.auth.signOut();
   }
 
   void showMessage(String message) {
@@ -402,8 +402,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<HosteDayUser?>(
-      stream: HosteDay.auth.userChanges(),
+    return StreamBuilder<HostedayUser?>(
+      stream: Hosteday.auth.userChanges(),
       initialData: widget.user,
       builder: (context, snapshot) {
         final user = snapshot.data ?? widget.user;
@@ -414,7 +414,7 @@ class _HomePageState extends State<HomePage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('HosteDay'),
+            title: const Text('Hosteday'),
             actions: <Widget>[
               IconButton(
                 tooltip: 'Sign out',
@@ -501,7 +501,7 @@ class UserInfoCard extends StatelessWidget {
     super.key,
   });
 
-  final HosteDayUser user;
+  final HostedayUser user;
 
   @override
   Widget build(BuildContext context) {
@@ -555,7 +555,7 @@ class UserInfoTile extends StatelessWidget {
 }
 
 String readableError(Object error) {
-  if (error is HosteDayException) {
+  if (error is HostedayException) {
     return error.displayMessage;
   }
 

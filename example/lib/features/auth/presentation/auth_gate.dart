@@ -13,9 +13,9 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<HosteDayUser?>(
-      stream: HosteDay.auth.authStateChanges(),
-      initialData: HosteDay.auth.currentUser,
+    return StreamBuilder<HostedayUser?>(
+      stream: Hosteday.auth.authStateChanges(),
+      initialData: Hosteday.auth.currentUser,
       builder: (context, snapshot) {
         final user = snapshot.data;
 

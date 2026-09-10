@@ -12,9 +12,9 @@ class PostRealtimeService {
   Future<StreamSubscription<dynamic>> listenToPostCreated({
     required void Function(PostModel? post) onPostCreated,
   }) async {
-    await HosteDay.connectRealtime();
+    await Hosteday.connectRealtime();
 
-    return HosteDay.realtime.listenPublic(
+    return Hosteday.realtime.listenPublic(
       channel: PostApiPaths.postsChannel,
       event: PostApiPaths.postCreatedEvent,
       onEvent: (event) {

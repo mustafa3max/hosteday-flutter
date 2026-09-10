@@ -8,26 +8,26 @@ import '../exceptions/hosteday_exception.dart';
 import 'hosteday_channel_type.dart';
 import 'hosteday_realtime_event.dart';
 
-/// A callback invoked when a HosteDay realtime event is received.
-typedef HosteDayRealtimeCallback = void Function(
-  HosteDayRealtimeEvent event,
+/// A callback invoked when a Hosteday realtime event is received.
+typedef HostedayRealtimeCallback = void Function(
+  HostedayRealtimeEvent event,
 );
 
-/// Manages HosteDay realtime connections, channels, and event subscriptions.
+/// Manages Hosteday realtime connections, channels, and event subscriptions.
 ///
 /// Supported channel types:
 /// - Public
 /// - Private
 /// - Presence
 /// - Private encrypted
-class HosteDayRealtimeClient {
+class HostedayRealtimeClient {
   /// The configuration used to establish the realtime connection.
-  final HosteDayConfig config;
+  final HostedayConfig config;
 
   /// The provider used to retrieve the authenticated user's token.
   ///
   /// A token is required for private, presence, and private encrypted channels.
-  final HosteDayTokenProvider? tokenProvider;
+  final HostedayTokenProvider? tokenProvider;
 
   PusherChannelsClient? _client;
 
@@ -49,20 +49,20 @@ class HosteDayRealtimeClient {
   StreamSubscription<dynamic>? _connectionSubscription;
 
   /// Creates a realtime client using the specified [config].
-  HosteDayRealtimeClient({
+  HostedayRealtimeClient({
     required this.config,
     this.tokenProvider,
   });
 
   /// Returns the active Pusher-compatible client.
   ///
-  /// Throws [HosteDayException] when [connect] has not been called or after
+  /// Throws [HostedayException] when [connect] has not been called or after
   /// the client has been disconnected.
   PusherChannelsClient get client {
     final value = _client;
 
     if (value == null) {
-      throw const HosteDayException(
+      throw const HostedayException(
         'Realtime client is not connected. Call connect() first.',
       );
     }
@@ -76,7 +76,7 @@ class HosteDayRealtimeClient {
   /// guarantee that the socket is currently connected at this exact moment.
   bool get isConnected => _client != null;
 
-  /// Connects to the configured HosteDay Pusher-compatible WebSocket server.
+  /// Connects to the configured Hosteday Pusher-compatible WebSocket server.
   ///
   /// Example generated URL:
   /// `wss://ws3.hosteday.com:443/app/YOUR_PUSHER_KEY`
@@ -92,14 +92,14 @@ class HosteDayRealtimeClient {
     final pusherKey = config.pusherKey.trim();
 
     if (realtimeHost.isEmpty) {
-      throw const HosteDayException(
-        'Missing realtime host. Configure realtime_host or project_domain.',
+      throw const HostedayException(
+        'Missing realtime host. Configure realtime_host before connecting realtime.',
       );
     }
 
     if (pusherKey.isEmpty) {
-      throw const HosteDayException(
-        'Missing Pusher key. Configure pusher_key before connecting realtime.',
+      throw const HostedayException(
+        'Missing Pusher key. Configure realtime_app_key before connecting realtime.',
       );
     }
 
@@ -198,7 +198,7 @@ class HosteDayRealtimeClient {
         return existingChannel;
       }
 
-      throw HosteDayException(
+      throw HostedayException(
         'A different channel type is already registered for '
         '"$normalizedChannel".',
       );
@@ -225,7 +225,7 @@ class HosteDayRealtimeClient {
 
   /// Creates or returns a tracked private encrypted channel.
   ///
-  /// The HosteDay backend must explicitly support private encrypted channels.
+  /// The Hosteday backend must explicitly support private encrypted channels.
   Future<Channel> privateEncryptedChannel(String channelName) async {
     final normalizedChannel = _normalizePrivateEncryptedChannelName(
       channelName,
@@ -259,19 +259,19 @@ class HosteDayRealtimeClient {
   /// Creates or returns a channel according to [type].
   Future<Channel> channel(
     String channelName, {
-    HosteDayChannelType type = HosteDayChannelType.public,
+    HostedayChannelType type = HostedayChannelType.public,
   }) async {
     switch (type) {
-      case HosteDayChannelType.public:
+      case HostedayChannelType.public:
         return publicChannel(channelName);
 
-      case HosteDayChannelType.private:
+      case HostedayChannelType.private:
         return privateChannel(channelName);
 
-      case HosteDayChannelType.presence:
+      case HostedayChannelType.presence:
         return presenceChannel(channelName);
 
-      case HosteDayChannelType.privateEncrypted:
+      case HostedayChannelType.privateEncrypted:
         return privateEncryptedChannel(channelName);
     }
   }
@@ -282,8 +282,8 @@ class HosteDayRealtimeClient {
   Future<StreamSubscription<dynamic>> listen({
     required String channel,
     required String event,
-    required HosteDayRealtimeCallback onEvent,
-    HosteDayChannelType type = HosteDayChannelType.public,
+    required HostedayRealtimeCallback onEvent,
+    HostedayChannelType type = HostedayChannelType.public,
   }) async {
     final normalizedChannel = _normalizeChannelName(
       channel,
@@ -297,7 +297,7 @@ class HosteDayRealtimeClient {
 
     final subscription = realtimeChannel.bind(event).listen((rawEvent) {
       onEvent(
-        HosteDayRealtimeEvent.fromRaw(
+        HostedayRealtimeEvent.fromRaw(
           name: event,
           channelName: normalizedChannel,
           data: rawEvent.data,
@@ -318,13 +318,13 @@ class HosteDayRealtimeClient {
   Future<StreamSubscription<dynamic>> listenPublic({
     required String channel,
     required String event,
-    required HosteDayRealtimeCallback onEvent,
+    required HostedayRealtimeCallback onEvent,
   }) {
     return listen(
       channel: channel,
       event: event,
       onEvent: onEvent,
-      type: HosteDayChannelType.public,
+      type: HostedayChannelType.public,
     );
   }
 
@@ -332,13 +332,13 @@ class HosteDayRealtimeClient {
   Future<StreamSubscription<dynamic>> listenPrivate({
     required String channel,
     required String event,
-    required HosteDayRealtimeCallback onEvent,
+    required HostedayRealtimeCallback onEvent,
   }) {
     return listen(
       channel: channel,
       event: event,
       onEvent: onEvent,
-      type: HosteDayChannelType.private,
+      type: HostedayChannelType.private,
     );
   }
 
@@ -346,13 +346,13 @@ class HosteDayRealtimeClient {
   Future<StreamSubscription<dynamic>> listenPresence({
     required String channel,
     required String event,
-    required HosteDayRealtimeCallback onEvent,
+    required HostedayRealtimeCallback onEvent,
   }) {
     return listen(
       channel: channel,
       event: event,
       onEvent: onEvent,
-      type: HosteDayChannelType.presence,
+      type: HostedayChannelType.presence,
     );
   }
 
@@ -360,20 +360,20 @@ class HosteDayRealtimeClient {
   Future<StreamSubscription<dynamic>> listenPrivateEncrypted({
     required String channel,
     required String event,
-    required HosteDayRealtimeCallback onEvent,
+    required HostedayRealtimeCallback onEvent,
   }) {
     return listen(
       channel: channel,
       event: event,
       onEvent: onEvent,
-      type: HosteDayChannelType.privateEncrypted,
+      type: HostedayChannelType.privateEncrypted,
     );
   }
 
   /// Listens for new members joining a presence channel.
   Future<StreamSubscription<dynamic>> listenPresenceMemberAdded({
     required String channel,
-    required HosteDayRealtimeCallback onEvent,
+    required HostedayRealtimeCallback onEvent,
   }) async {
     final normalizedChannel = _normalizePresenceChannelName(channel);
 
@@ -381,7 +381,7 @@ class HosteDayRealtimeClient {
 
     final subscription = presence.whenMemberAdded().listen((rawEvent) {
       onEvent(
-        HosteDayRealtimeEvent.fromRaw(
+        HostedayRealtimeEvent.fromRaw(
           name: 'pusher:member_added',
           channelName: normalizedChannel,
           data: rawEvent.data,
@@ -400,7 +400,7 @@ class HosteDayRealtimeClient {
   /// Listens for members leaving a presence channel.
   Future<StreamSubscription<dynamic>> listenPresenceMemberRemoved({
     required String channel,
-    required HosteDayRealtimeCallback onEvent,
+    required HostedayRealtimeCallback onEvent,
   }) async {
     final normalizedChannel = _normalizePresenceChannelName(channel);
 
@@ -408,7 +408,7 @@ class HosteDayRealtimeClient {
 
     final subscription = presence.whenMemberRemoved().listen((rawEvent) {
       onEvent(
-        HosteDayRealtimeEvent.fromRaw(
+        HostedayRealtimeEvent.fromRaw(
           name: 'pusher:member_removed',
           channelName: normalizedChannel,
           data: rawEvent.data,
@@ -427,7 +427,7 @@ class HosteDayRealtimeClient {
   /// Returns a tracked channel when it exists.
   Channel? getChannel(
     String channelName, {
-    HosteDayChannelType type = HosteDayChannelType.public,
+    HostedayChannelType type = HostedayChannelType.public,
   }) {
     final normalizedChannel = _normalizeChannelName(
       channelName,
@@ -442,7 +442,7 @@ class HosteDayRealtimeClient {
   /// All listeners attached through this client for that channel are cancelled.
   Future<void> unsubscribe(
     String channelName, {
-    HosteDayChannelType type = HosteDayChannelType.public,
+    HostedayChannelType type = HostedayChannelType.public,
   }) async {
     final normalizedChannel = _normalizeChannelName(
       channelName,
@@ -506,7 +506,7 @@ class HosteDayRealtimeClient {
     final cleanToken = token?.trim();
 
     if (cleanToken == null || cleanToken.isEmpty) {
-      throw HosteDayException(
+      throw HostedayException(
         'Missing authentication token for $channelType.',
         statusCode: 401,
       );
@@ -525,19 +525,19 @@ class HosteDayRealtimeClient {
 
   String _normalizeChannelName(
     String channel,
-    HosteDayChannelType type,
+    HostedayChannelType type,
   ) {
     switch (type) {
-      case HosteDayChannelType.public:
+      case HostedayChannelType.public:
         return _normalizePublicChannelName(channel);
 
-      case HosteDayChannelType.private:
+      case HostedayChannelType.private:
         return _normalizePrivateChannelName(channel);
 
-      case HosteDayChannelType.presence:
+      case HostedayChannelType.presence:
         return _normalizePresenceChannelName(channel);
 
-      case HosteDayChannelType.privateEncrypted:
+      case HostedayChannelType.privateEncrypted:
         return _normalizePrivateEncryptedChannelName(channel);
     }
   }
@@ -566,7 +566,7 @@ class HosteDayRealtimeClient {
       throw ArgumentError.value(
         channel,
         'channel',
-        'Use HosteDayChannelType.presence for presence channels.',
+        'Use HostedayChannelType.presence for presence channels.',
       );
     }
 
@@ -574,7 +574,7 @@ class HosteDayRealtimeClient {
       throw ArgumentError.value(
         channel,
         'channel',
-        'Use HosteDayChannelType.privateEncrypted for encrypted channels.',
+        'Use HostedayChannelType.privateEncrypted for encrypted channels.',
       );
     }
 
@@ -640,3 +640,11 @@ class HosteDayRealtimeClient {
     return normalized;
   }
 }
+
+/// Deprecated spelling of [HostedayRealtimeClient].
+@Deprecated('Use HostedayRealtimeClient instead.')
+typedef HosteDayRealtimeClient = HostedayRealtimeClient;
+
+/// Legacy callback spelling.
+@Deprecated('Use HostedayRealtimeCallback instead.')
+typedef HosteDayRealtimeCallback = HostedayRealtimeCallback;

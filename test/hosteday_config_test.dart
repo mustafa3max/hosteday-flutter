@@ -3,7 +3,7 @@ import 'package:hosteday_flutter/hosteday_flutter.dart';
 
 void main() {
   test('builds full uri from baseUrl and path', () {
-    const config = HosteDayConfig(
+    const config = HostedayConfig(
       baseUrl: 'https://example.hosteday.com',
     );
 

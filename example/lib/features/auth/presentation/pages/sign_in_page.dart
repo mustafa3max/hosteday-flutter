@@ -49,7 +49,7 @@ class _SignInPageState extends State<SignInPage> {
     });
 
     try {
-      await HosteDay.auth.signInWithEmailAndPassword(
+      await Hosteday.auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -101,7 +101,7 @@ class _SignInPageState extends State<SignInPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             const ExampleHeader(
-              title: 'Welcome to HosteDay',
+              title: 'Welcome to Hosteday',
               subtitle: 'Sign in to test auth, profile, posts, and realtime.',
             ),
             const SizedBox(height: 24),

@@ -9,7 +9,7 @@ import '../../../../shared/widgets/form_fields.dart';
 
 /// Forgot-password page.
 ///
-/// The app only asks HosteDay to send the reset email. The actual password reset
+/// The app only asks Hosteday to send the reset email. The actual password reset
 /// is completed through the web page opened from the email link.
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -44,7 +44,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     });
 
     try {
-      await HosteDay.auth.sendPasswordResetEmail(
+      await Hosteday.auth.sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
 
@@ -75,7 +75,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           children: <Widget>[
             const ExampleHeader(
               title: 'Reset password',
-              subtitle: 'Enter your email and HosteDay will send a reset link.',
+              subtitle: 'Enter your email and Hosteday will send a reset link.',
             ),
             const SizedBox(height: 24),
             EmailField(controller: _emailController),

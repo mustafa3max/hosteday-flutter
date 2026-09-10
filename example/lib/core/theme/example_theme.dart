@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Central place for the visual style of the HosteDay example app.
+/// Central place for the visual style of the Hosteday example app.
 abstract final class ExampleTheme {
   const ExampleTheme._();
 
@@ -16,7 +16,7 @@ abstract final class ExampleTheme {
   static const Color danger = Color(0xFFF87171);
   static const Color success = Color(0xFF34D399);
 
-  /// Recommended theme for the HosteDay example.
+  /// Recommended theme for the Hosteday example.
   static ThemeData dark() {
     final colorScheme =
         ColorScheme.fromSeed(

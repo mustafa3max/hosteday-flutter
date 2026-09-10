@@ -9,7 +9,7 @@ class PostRepository {
   const PostRepository();
 
   Future<List<PostModel>> fetchPosts() async {
-    final response = await HosteDay.client.get(
+    final response = await Hosteday.client.get(
       PostApiPaths.postsPath,
       filters: {'status': 0},
     );
@@ -22,7 +22,7 @@ class PostRepository {
   }
 
   Future<PostModel> fetchPost(Object id) async {
-    final response = await HosteDay.client.get(PostApiPaths.postsPath, id: id);
+    final response = await Hosteday.client.get(PostApiPaths.postsPath, id: id);
 
     final json = ApiResponseReader.readObject(response);
 
@@ -34,7 +34,7 @@ class PostRepository {
   }
 
   Future createPost({required Map<String, dynamic> body}) async {
-    final response = await HosteDay.client.post(
+    final response = await Hosteday.client.post(
       PostApiPaths.postsPath,
       body: body,
       withAuth: true,
@@ -54,7 +54,7 @@ class PostRepository {
     required Object relationValue,
     required Map<String, dynamic> body,
   }) async {
-    final response = await HosteDay.client.put(
+    final response = await Hosteday.client.put(
       PostApiPaths.postsPath,
       id: id,
       relationField: relationField,

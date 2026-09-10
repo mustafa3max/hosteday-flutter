@@ -2,20 +2,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'hosteday_auth_storage.dart';
 
-/// Persistent HosteDay auth storage backed by shared_preferences.
+/// Persistent Hosteday auth storage backed by shared_preferences.
 ///
 /// This storage uses [SharedPreferencesAsync], which avoids the local cache used
 /// by the legacy SharedPreferences API.
-class HosteDaySharedPreferencesAuthStorage implements HosteDayAuthStorage {
+class HostedaySharedPreferencesAuthStorage implements HostedayAuthStorage {
   /// Optional key prefix used to avoid collisions with other app values.
   final String keyPrefix;
 
   final SharedPreferencesAsync _preferences;
 
-  /// Creates a shared_preferences based HosteDay auth storage.
+  /// Creates a shared_preferences based Hosteday auth storage.
   ///
   /// By default, all keys are prefixed with `hosteday_flutter.`.
-  HosteDaySharedPreferencesAuthStorage({
+  HostedaySharedPreferencesAuthStorage({
     SharedPreferencesAsync? preferences,
     this.keyPrefix = 'hosteday_flutter.',
   }) : _preferences = preferences ?? SharedPreferencesAsync();
@@ -35,12 +35,12 @@ class HosteDaySharedPreferencesAuthStorage implements HosteDayAuthStorage {
     return _preferences.remove(_key(key));
   }
 
-  /// Deletes all HosteDay auth values managed by this storage.
+  /// Deletes all Hosteday auth values managed by this storage.
   ///
   /// This does not clear unrelated app preferences.
   Future<void> clear() async {
-    await delete(HosteDayAuthStorageKeys.session);
-    await delete(HosteDayAuthStorageKeys.accessToken);
+    await delete(HostedayAuthStorageKeys.session);
+    await delete(HostedayAuthStorageKeys.accessToken);
   }
 
   String _key(String key) {
@@ -53,3 +53,8 @@ class HosteDaySharedPreferencesAuthStorage implements HosteDayAuthStorage {
     return '$cleanPrefix$key';
   }
 }
+
+/// Deprecated spelling of [HostedaySharedPreferencesAuthStorage].
+@Deprecated('Use HostedaySharedPreferencesAuthStorage instead.')
+typedef HosteDaySharedPreferencesAuthStorage
+    = HostedaySharedPreferencesAuthStorage;

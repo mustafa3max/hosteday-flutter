@@ -21,7 +21,7 @@ enum _AccountAction { login, register, profile, logout }
 class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
-  const AppBarMy({this.title = 'HosteDay Example', super.key});
+  const AppBarMy({this.title = 'Hosteday Example', super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -53,7 +53,7 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
 
   Future<void> _logout(BuildContext context) async {
     try {
-      await HosteDay.client.auth.signOut();
+      await Hosteday.client.auth.signOut();
 
       if (!context.mounted) {
         return;
@@ -100,7 +100,7 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
-  List<PopupMenuEntry<_AccountAction>> _buildMenuItems(HosteDayUser? user) {
+  List<PopupMenuEntry<_AccountAction>> _buildMenuItems(HostedayUser? user) {
     final isAuthenticated = user?.hasEmail == true;
 
     if (isAuthenticated) {
@@ -163,9 +163,9 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () => _goHome(context),
           icon: const Icon(Icons.home_outlined),
         ),
-        StreamBuilder<HosteDayUser?>(
-          stream: HosteDay.auth.authStateChanges(),
-          initialData: HosteDay.auth.currentUser,
+        StreamBuilder<HostedayUser?>(
+          stream: Hosteday.auth.authStateChanges(),
+          initialData: Hosteday.auth.currentUser,
           builder: (context, snapshot) {
             final user = snapshot.data;
             final isAuthenticated = user?.hasEmail == true;

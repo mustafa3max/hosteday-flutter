@@ -7,7 +7,7 @@ import '../../realtime/presentation/pages/realtime_page.dart';
 
 /// The authenticated area of the example app.
 class HomeShell extends StatefulWidget {
-  final HosteDayUser user;
+  final HostedayUser user;
 
   const HomeShell({required this.user, super.key});
 
@@ -24,12 +24,12 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.user.displayName ?? 'HosteDay Example'),
+        title: Text(widget.user.displayName ?? 'Hosteday Example'),
         actions: <Widget>[
           IconButton(
             tooltip: 'Sign out',
             onPressed: () async {
-              await HosteDay.auth.signOut();
+              await Hosteday.auth.signOut();
             },
             icon: const Icon(Icons.logout),
           ),

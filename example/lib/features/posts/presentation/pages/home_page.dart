@@ -14,7 +14,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Future<void> _openCreatePage() async {
-    final created = await Navigator.of(
+    await Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => const CreatePage()));
   }
@@ -24,9 +24,9 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBarMy(title: 'Posts'),
       body: Index(),
-      floatingActionButton: StreamBuilder<HosteDayUser?>(
-        stream: HosteDay.auth.authStateChanges(),
-        initialData: HosteDay.auth.currentUser,
+      floatingActionButton: StreamBuilder<HostedayUser?>(
+        stream: Hosteday.auth.authStateChanges(),
+        initialData: Hosteday.auth.currentUser,
         builder: (context, snapshot) {
           final user = snapshot.data;
           final isAuthenticated = user?.hasEmail == true;

@@ -1,5 +1,5 @@
-/// Represents the currently authenticated HosteDay user.
-class HosteDayUser {
+/// Represents the currently authenticated Hosteday user.
+class HostedayUser {
   static const Object _undefined = Object();
 
   /// The stable unique identifier of the user.
@@ -23,11 +23,11 @@ class HosteDayUser {
   /// User last update date, when returned by the API.
   final DateTime? updatedAt;
 
-  /// The original user data returned by the HosteDay API.
+  /// The original user data returned by the Hosteday API.
   final Map<String, dynamic> data;
 
-  /// Creates a HosteDay user.
-  HosteDayUser({
+  /// Creates a Hosteday user.
+  HostedayUser({
     required this.id,
     this.email,
     this.displayName,
@@ -68,7 +68,7 @@ class HosteDayUser {
   }
 
   /// Creates a user from an API response map.
-  factory HosteDayUser.fromJson(Map<String, dynamic> json) {
+  factory HostedayUser.fromJson(Map<String, dynamic> json) {
     final normalized = Map<String, dynamic>.from(json);
 
     final id = _firstText(
@@ -82,11 +82,11 @@ class HosteDayUser {
 
     if (id == null) {
       throw const FormatException(
-        'HosteDay user response does not include an id.',
+        'Hosteday user response does not include an id.',
       );
     }
 
-    return HosteDayUser(
+    return HostedayUser(
       id: id,
       email: _firstText(
         normalized,
@@ -160,7 +160,7 @@ class HosteDayUser {
   /// ```dart
   /// final updated = user.copyWith(photoUrl: null);
   /// ```
-  HosteDayUser copyWith({
+  HostedayUser copyWith({
     String? id,
     Object? email = _undefined,
     Object? displayName = _undefined,
@@ -170,7 +170,7 @@ class HosteDayUser {
     Object? updatedAt = _undefined,
     Map<String, dynamic>? data,
   }) {
-    return HosteDayUser(
+    return HostedayUser(
       id: id ?? this.id,
       email: email == _undefined ? this.email : email as String?,
       displayName:
@@ -187,7 +187,7 @@ class HosteDayUser {
 
   @override
   String toString() {
-    return 'HosteDayUser('
+    return 'HostedayUser('
         'id: $id, '
         'email: $email, '
         'displayName: $displayName, '
@@ -294,3 +294,7 @@ class HosteDayUser {
     return null;
   }
 }
+
+/// Deprecated spelling of [HostedayUser].
+@Deprecated('Use HostedayUser instead.')
+typedef HosteDayUser = HostedayUser;

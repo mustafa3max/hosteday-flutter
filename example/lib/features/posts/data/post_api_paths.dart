@@ -2,7 +2,7 @@
 class PostApiPaths {
   const PostApiPaths._();
 
-  static const String postsPath = '/api/posts';
+  static const String postsPath = '/posts';
   static const String postsChannel = 'posts';
   static const String postCreatedEvent = 'PostCreated';
 }

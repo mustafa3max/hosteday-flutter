@@ -3,23 +3,23 @@ import 'dart:convert';
 import 'hosteday_auth_storage.dart';
 import 'hosteday_token_provider.dart';
 
-/// Retrieves the active user access token from HosteDay auth storage.
+/// Retrieves the active user access token from Hosteday auth storage.
 ///
 /// This provider is used internally by HTTP and realtime clients so that
 /// requests automatically start using the newest authenticated user token.
-class HosteDayAuthTokenProvider implements HosteDayTokenProvider {
-  /// The storage that contains the persisted HosteDay session.
-  final HosteDayAuthStorage storage;
+class HostedayAuthTokenProvider implements HostedayTokenProvider {
+  /// The storage that contains the persisted Hosteday session.
+  final HostedayAuthStorage storage;
 
   /// Creates a token provider backed by [storage].
-  const HosteDayAuthTokenProvider({
+  const HostedayAuthTokenProvider({
     required this.storage,
   });
 
   @override
   Future<String?> getToken() async {
     final directToken = await storage.read(
-      HosteDayAuthStorageKeys.accessToken,
+      HostedayAuthStorageKeys.accessToken,
     );
 
     final normalizedDirectToken = directToken?.trim();
@@ -29,7 +29,7 @@ class HosteDayAuthTokenProvider implements HosteDayTokenProvider {
     }
 
     final serializedSession = await storage.read(
-      HosteDayAuthStorageKeys.session,
+      HostedayAuthStorageKeys.session,
     );
 
     if (serializedSession == null || serializedSession.trim().isEmpty) {
@@ -56,15 +56,15 @@ class HosteDayAuthTokenProvider implements HosteDayTokenProvider {
 
 /// Uses the authenticated session token first, then falls back to another
 /// externally supplied token provider when no signed-in user session exists.
-class HosteDayCombinedTokenProvider implements HosteDayTokenProvider {
-  /// Token provider that reads the current HosteDay auth session.
-  final HosteDayTokenProvider primary;
+class HostedayCombinedTokenProvider implements HostedayTokenProvider {
+  /// Token provider that reads the current Hosteday auth session.
+  final HostedayTokenProvider primary;
 
   /// Optional fallback provider, useful for existing API-token workflows.
-  final HosteDayTokenProvider? fallback;
+  final HostedayTokenProvider? fallback;
 
   /// Creates a combined provider.
-  const HosteDayCombinedTokenProvider({
+  const HostedayCombinedTokenProvider({
     required this.primary,
     this.fallback,
   });
@@ -86,3 +86,11 @@ class HosteDayCombinedTokenProvider implements HosteDayTokenProvider {
     return fallbackToken.trim();
   }
 }
+
+/// Deprecated spelling of [HostedayAuthTokenProvider].
+@Deprecated('Use HostedayAuthTokenProvider instead.')
+typedef HosteDayAuthTokenProvider = HostedayAuthTokenProvider;
+
+/// Deprecated spelling of [HostedayCombinedTokenProvider].
+@Deprecated('Use HostedayCombinedTokenProvider instead.')
+typedef HosteDayCombinedTokenProvider = HostedayCombinedTokenProvider;
