@@ -7,12 +7,12 @@ void main() {
     tester,
   ) async {
     await Hosteday.initializeApp(
-      options: {'project_domain': 'max.hosteday.com'},
+      options: {'project_domain': 'example.hosteday.com'},
     );
     addTearDown(Hosteday.dispose);
     await tester.pumpWidget(const HostedayExampleApp());
     expect(find.text('Hosteday API explorer'), findsOneWidget);
-    expect(find.textContaining('https://max.hosteday.com/api'), findsOneWidget);
+    expect(find.textContaining('https://example.hosteday.com/api'), findsOneWidget);
     expect(find.text('Send GET'), findsOneWidget);
   });
 }

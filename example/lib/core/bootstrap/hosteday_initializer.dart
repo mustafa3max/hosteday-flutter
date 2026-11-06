@@ -1,6 +1,7 @@
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
 import '../config/example_environment.dart';
+import '../../hosteday_config.dart';
 
 /// Initializes the Hosteday SDK before the Flutter app starts.
 ///
@@ -12,7 +13,7 @@ class HostedayInitializer {
   static Future<void> initialize() async {
     await Hosteday.initializeApp(
       options: ExampleEnvironment.hostedayOptions,
-      connectRealtime: false,
+      connectRealtime: HosteDayConfig.realtimeWebsocketsEnabled && HosteDayConfig.wsKey.isNotEmpty,
       authStorage: HostedaySharedPreferencesAuthStorage(),
     );
   }

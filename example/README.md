@@ -5,9 +5,20 @@ sample records, or substitute offline data when requests fail.
 
 ## Run
 
+### Option 1: Using HosteDay CLI (Recommended)
+Generate and clone the configured example project directly from your HosteDay dashboard:
+
+```bash
+curl -fsSL https://dash.hosteday.com/cli/setup.sh | bash -s -- --project=your-project --token="your-token" --clone
+```
+
+This automatically configures `lib/hosteday_config.dart` with your project's credentials and endpoints.
+
+### Option 2: Manual Run
+
 ```bash
 flutter pub get
-flutter run --dart-define=HOSTEDAY_PROJECT_DOMAIN=max.hosteday.com
+flutter run --dart-define=HOSTEDAY_PROJECT_DOMAIN=your-project.hosteday.com
 ```
 
 If your project requires a client API key, add

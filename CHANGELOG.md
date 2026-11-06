@@ -1,3 +1,7 @@
+## 2.2.1 - 2026-11-06
+
+- Template-ready starter configuration and automated CLI setup
+
 ## 2.2.0
 
 - Adopt Hosteday names throughout the SDK and example; retain deprecated old APIs.
