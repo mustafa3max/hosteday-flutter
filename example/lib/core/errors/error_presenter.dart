@@ -5,7 +5,7 @@ class ErrorPresenter {
   const ErrorPresenter._();
 
   static String messageFrom(Object error) {
-    if (error is HosteDayException) {
+    if (error is HostedayException) {
       return error.displayMessage;
     }
 

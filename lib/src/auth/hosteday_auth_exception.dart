@@ -1,23 +1,26 @@
 import '../exceptions/hosteday_exception.dart';
 
-/// Represents an authentication-specific HosteDay error.
-class HosteDayAuthException extends HosteDayException {
+/// Represents an authentication-specific Hosteday error.
+class HostedayAuthException extends HostedayException {
   /// Stable machine-readable error code.
   final String code;
 
   /// Creates an authentication exception.
-  const HosteDayAuthException(
+  const HostedayAuthException(
     super.message, {
     required this.code,
     super.statusCode,
     super.error,
+    super.response,
+    super.validationErrors,
   });
 
-  /// Converts a general HosteDay request error into an auth error.
-  factory HosteDayAuthException.fromHosteDayException(
-    HosteDayException exception,
+  /// Converts a general Hosteday request error into an auth error.
+  factory HostedayAuthException.fromHostedayException(
+    HostedayException exception,
   ) {
-    final rawError = exception.error;
+    final rawError =
+        exception.response?['error'] ?? exception.response ?? exception.error;
 
     String? serverCode;
 
@@ -26,13 +29,21 @@ class HosteDayAuthException extends HosteDayException {
           rawError['code']?.toString() ?? rawError['error_code']?.toString();
     }
 
-    return HosteDayAuthException(
+    return HostedayAuthException(
       exception.message,
       code: serverCode ?? _codeFromStatus(exception.statusCode),
       statusCode: exception.statusCode,
       error: exception.error,
+      response: exception.response,
+      validationErrors: exception.validationErrors,
     );
   }
+
+  /// Legacy factory spelling.
+  @Deprecated('Use fromHostedayException instead.')
+  factory HostedayAuthException.fromHosteDayException(
+          HostedayException exception) =>
+      HostedayAuthException.fromHostedayException(exception);
 
   static String _codeFromStatus(int? statusCode) {
     switch (statusCode) {
@@ -58,7 +69,7 @@ class HosteDayAuthException extends HosteDayException {
 
   @override
   String toString() {
-    return 'HosteDayAuthException('
+    return 'HostedayAuthException('
         'code: $code, '
         'message: $message, '
         'statusCode: $statusCode, '
@@ -66,3 +77,7 @@ class HosteDayAuthException extends HosteDayException {
         ')';
   }
 }
+
+/// Deprecated spelling of [HostedayAuthException].
+@Deprecated('Use HostedayAuthException instead.')
+typedef HosteDayAuthException = HostedayAuthException;

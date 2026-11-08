@@ -5,12 +5,12 @@ import 'core/bootstrap/hosteday_initializer.dart';
 
 /// Application entry point.
 ///
-/// This file intentionally stays small. All HosteDay configuration lives in
-/// [HosteDayInitializer], and the UI starts from [HosteDayExampleApp].
+/// This file intentionally stays small. All Hosteday configuration lives in
+/// [HostedayInitializer], and the UI starts from [HostedayExampleApp].
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await HosteDayInitializer.initialize();
+  await HostedayInitializer.initialize();
 
-  runApp(const HosteDayExampleApp());
+  runApp(const HostedayExampleApp());
 }

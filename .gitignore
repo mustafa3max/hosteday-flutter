@@ -29,3 +29,10 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 /build/
 /coverage/
+
+# Local secrets & credentials
+.local_secrets/
+*.local.dart
+*.local.json
+*.local.plist
+

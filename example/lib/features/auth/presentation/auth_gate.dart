@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
 import '../../home/presentation/home_shell.dart';
-import 'pages/sign_in_page.dart';
+import 'pages/login_page.dart';
 
 /// Chooses the first screen according to the authentication state.
 ///
@@ -13,14 +13,14 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<HosteDayUser?>(
-      stream: HosteDay.auth.authStateChanges(),
-      initialData: HosteDay.auth.currentUser,
+    return StreamBuilder<HostedayUser?>(
+      stream: Hosteday.auth.authStateChanges(),
+      initialData: Hosteday.auth.currentUser,
       builder: (context, snapshot) {
         final user = snapshot.data;
 
         if (user == null) {
-          return const SignInPage();
+          return const LoginPage();
         }
 
         return HomeShell(user: user);

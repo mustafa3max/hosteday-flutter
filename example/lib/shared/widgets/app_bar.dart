@@ -1,68 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
-import 'package:hosteday_flutter_example/features/auth/presentation/pages/sign_in_page.dart';
 
-import '../../features/auth/presentation/auth_gate.dart';
-import '../../features/auth/presentation/pages/register_page.dart';
-import '../../features/posts/presentation/pages/home_page.dart';
-import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../core/localization/localization_controller.dart';
+import '../../core/routes/go_page.dart';
 
 enum _AccountAction { login, register, profile, logout }
 
-/// Shared application AppBar.
-///
-/// When unauthenticated, the account menu displays:
-/// - Sign in
-/// - Create account
-///
-/// When authenticated, it displays:
-/// - Profile
-/// - Sign out
+/// Shared application AppBar with account menu, language toggle, and navigation actions.
 class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
+  final String? title;
 
-  const AppBarMy({this.title = 'HosteDay Example', super.key});
+  const AppBarMy({this.title, super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   void _goHome(BuildContext context) {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const HomePage()),
-      (route) => false,
-    );
+    GoPage.offHome();
   }
 
   Future<void> _openLogin(BuildContext context) async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const SignInPage()));
+    await GoPage.login();
   }
 
   Future<void> _openRegister(BuildContext context) async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const RegisterPage()));
+    await GoPage.register();
   }
 
   Future<void> _openProfile(BuildContext context) async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const ProfilePage()));
+    await GoPage.profile(showAppBar: true);
   }
 
   Future<void> _logout(BuildContext context) async {
     try {
-      await HosteDay.client.auth.signOut();
+      await Hosteday.client.auth.signOut();
 
       if (!context.mounted) {
         return;
       }
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => const AuthGate()),
-        (route) => false,
-      );
+      GoPage.offHome();
     } catch (error) {
       if (!context.mounted) {
         return;
@@ -70,7 +48,7 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Sign out failed: $error'),
+          content: Text('sign_out_failed'.trParams({'error': error.toString()})),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -100,43 +78,43 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
-  List<PopupMenuEntry<_AccountAction>> _buildMenuItems(HosteDayUser? user) {
+  List<PopupMenuEntry<_AccountAction>> _buildMenuItems(HostedayUser? user) {
     final isAuthenticated = user?.hasEmail == true;
 
     if (isAuthenticated) {
-      return const <PopupMenuEntry<_AccountAction>>[
+      return <PopupMenuEntry<_AccountAction>>[
         PopupMenuItem<_AccountAction>(
           value: _AccountAction.profile,
           child: Row(
             children: <Widget>[
-              Icon(Icons.person_outline),
-              SizedBox(width: 12),
-              Text('Profile'),
+              const Icon(Icons.person_outline),
+              const SizedBox(width: 12),
+              Text('nav_profile'.tr),
             ],
           ),
         ),
-        PopupMenuDivider(),
+        const PopupMenuDivider(),
         PopupMenuItem<_AccountAction>(
           value: _AccountAction.logout,
           child: Row(
             children: <Widget>[
-              Icon(Icons.logout),
-              SizedBox(width: 12),
-              Text('Sign out'),
+              const Icon(Icons.logout),
+              const SizedBox(width: 12),
+              Text('sign_out'.tr),
             ],
           ),
         ),
       ];
     }
 
-    return const <PopupMenuEntry<_AccountAction>>[
+    return <PopupMenuEntry<_AccountAction>>[
       PopupMenuItem<_AccountAction>(
         value: _AccountAction.login,
         child: Row(
-          children: <Widget>[
-            Icon(Icons.login),
-            SizedBox(width: 12),
-            Text('Sign in'),
+            children: <Widget>[
+            const Icon(Icons.login),
+            const SizedBox(width: 12),
+            Text('sign_in'.tr),
           ],
         ),
       ),
@@ -144,9 +122,9 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
         value: _AccountAction.register,
         child: Row(
           children: <Widget>[
-            Icon(Icons.person_add_outlined),
-            SizedBox(width: 12),
-            Text('Create account'),
+            const Icon(Icons.person_add_outlined),
+            const SizedBox(width: 12),
+            Text('create_account'.tr),
           ],
         ),
       ),
@@ -156,22 +134,32 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(title),
+      title: Text(title ?? 'starter_title'.tr),
       actions: <Widget>[
+        // Language switcher
         IconButton(
-          tooltip: 'Home',
+          tooltip: 'switch_language'.tr,
+          onPressed: () {
+            if (Get.isRegistered<LocalizationController>()) {
+              LocalizationController.to.toggleLanguage();
+            }
+          },
+          icon: const Icon(Icons.language_rounded),
+        ),
+        IconButton(
+          tooltip: 'home'.tr,
           onPressed: () => _goHome(context),
           icon: const Icon(Icons.home_outlined),
         ),
-        StreamBuilder<HosteDayUser?>(
-          stream: HosteDay.auth.authStateChanges(),
-          initialData: HosteDay.auth.currentUser,
+        StreamBuilder<HostedayUser?>(
+          stream: Hosteday.auth.authStateChanges(),
+          initialData: Hosteday.auth.currentUser,
           builder: (context, snapshot) {
             final user = snapshot.data;
             final isAuthenticated = user?.hasEmail == true;
 
             return PopupMenuButton<_AccountAction>(
-              tooltip: 'Account menu',
+              tooltip: 'account_menu'.tr,
               icon: Icon(
                 isAuthenticated
                     ? Icons.account_circle

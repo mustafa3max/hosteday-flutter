@@ -1,0 +1,8 @@
+{
+  "apiKey": "AIzaSy_YOUR_DUMMY_WEB_API_KEY_HERE",
+  "authDomain": "example-app.firebaseapp.com",
+  "projectId": "example-firebase-project",
+  "storageBucket": "example-firebase-project.firebasestorage.app",
+  "messagingSenderId": "000000000000",
+  "appId": "1:000000000000:web:0000000000000000000000"
+}

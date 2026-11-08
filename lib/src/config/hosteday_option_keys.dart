@@ -1,12 +1,12 @@
-/// Defines the official option keys accepted when initializing HosteDay.
+/// Defines the official option keys accepted when initializing Hosteday.
 ///
 /// These keys are only for values that the app developer is allowed to provide
 /// during SDK initialization.
 ///
-/// Authentication and user API paths are owned by HosteDay and are not
+/// Authentication and user API paths are owned by Hosteday and are not
 /// configurable from initialization options.
-abstract final class HosteDayOptionKeys {
-  /// The HosteDay project domain.
+abstract final class HostedayOptionKeys {
+  /// The Hosteday project domain.
   ///
   /// Example:
   /// `enterprise.hosteday.com`
@@ -65,7 +65,7 @@ abstract final class HosteDayOptionKeys {
 
   /// The endpoint used to authorize private and presence channels.
   ///
-  /// Keep this configurable only if HosteDay may give different projects
+  /// Keep this configurable only if Hosteday may give different projects
   /// different broadcasting auth endpoints.
   static const String broadcastingAuthPath = 'broadcasting_auth_path';
 
@@ -77,6 +77,66 @@ abstract final class HosteDayOptionKeys {
 
   /// The endpoint used to publish presence realtime events.
   static const String presenceEventsPath = 'presence_events_path';
+
+  /// Whether push notifications and device registration are enabled.
+  ///
+  /// Default: `true`.
+  static const String notificationsEnabled = 'notifications_enabled';
+
+  /// Custom endpoint path to send notifications.
+  static const String sendNotificationPath = 'send_notification_path';
+
+  /// Custom endpoint path to register device tokens.
+  static const String registerDeviceTokenPath = 'register_device_token_path';
+
+  /// Custom endpoint path to unregister device tokens.
+  static const String unregisterDeviceTokenPath = 'unregister_device_token_path';
+
+  /// Custom endpoint path to list registered devices.
+  static const String registeredDevicesPath = 'registered_devices_path';
+
+  /// The default push notification topic for the project/app.
+  ///
+  /// Example:
+  /// `global_announcements`
+  static const String defaultNotificationTopic = 'default_notification_topic';
+
+  /// Firebase API key for native push notifications (Web/Mobile).
+  static const String firebaseApiKey = 'firebase_api_key';
+  static const String fcmApiKey = 'fcm_api_key';
+
+  /// Firebase App ID for push notifications.
+  static const String firebaseAppId = 'firebase_app_id';
+  static const String fcmAppId = 'fcm_app_id';
+
+  /// Firebase Messaging Sender ID.
+  static const String firebaseMessagingSenderId = 'firebase_messaging_sender_id';
+  static const String fcmSenderId = 'fcm_sender_id';
+
+  /// Firebase Project ID.
+  static const String firebaseProjectId = 'firebase_project_id';
+  static const String fcmProjectId = 'fcm_project_id';
+
+  /// Web Push Public Certificate (VAPID key) for Web browsers.
+  static const String firebaseVapidKey = 'firebase_vapid_key';
+  static const String fcmVapidKey = 'fcm_vapid_key';
+  static const String webPushVapidKey = 'web_push_vapid_key';
+
+  /// Firebase Auth Domain.
+  static const String firebaseAuthDomain = 'firebase_auth_domain';
+
+  /// Firebase Storage Bucket.
+  static const String firebaseStorageBucket = 'firebase_storage_bucket';
+
+  /// Firebase Measurement ID.
+  static const String firebaseMeasurementId = 'firebase_measurement_id';
+
+  /// Whether smart background jobs and scheduled tasks are enabled.
+  static const String jobsEnabled = 'jobs_enabled';
+  static const String backgroundJobsEnabled = 'background_jobs_enabled';
+
+  /// The endpoint path for smart background jobs.
+  static const String jobsPath = 'jobs_path';
 
   /// The text used to search and filter the requested resources.
   ///
@@ -103,4 +163,32 @@ abstract final class HosteDayOptionKeys {
   /// Example:
   /// `?relation_field=category_id&relation_value=5`
   static const String relationValue = 'relation_value';
+}
+
+/// Legacy spelling of the option key constants.
+@Deprecated('Use HostedayOptionKeys instead.')
+abstract final class HosteDayOptionKeys {
+  static const String projectDomain = HostedayOptionKeys.projectDomain;
+  static const String apiBaseUrl = HostedayOptionKeys.apiBaseUrl;
+  static const String baseUrl = HostedayOptionKeys.baseUrl;
+  static const String projectApiKey = HostedayOptionKeys.projectApiKey;
+  static const String apiTokenHeader = HostedayOptionKeys.apiTokenHeader;
+  static const String legacyApiToken = HostedayOptionKeys.legacyApiToken;
+  static const String realtimeAppKey = HostedayOptionKeys.realtimeAppKey;
+  static const String realtimeHost = HostedayOptionKeys.realtimeHost;
+  static const String realtimeScheme = HostedayOptionKeys.realtimeScheme;
+  static const String realtimePort = HostedayOptionKeys.realtimePort;
+  static const String broadcastingAuthPath =
+      HostedayOptionKeys.broadcastingAuthPath;
+  static const String publicEventsPath = HostedayOptionKeys.publicEventsPath;
+  static const String privateEventsPath = HostedayOptionKeys.privateEventsPath;
+  static const String presenceEventsPath =
+      HostedayOptionKeys.presenceEventsPath;
+  static const String notificationsEnabled =
+      HostedayOptionKeys.notificationsEnabled;
+  static const String defaultNotificationTopic =
+      HostedayOptionKeys.defaultNotificationTopic;
+  static const String search = HostedayOptionKeys.search;
+  static const String relationField = HostedayOptionKeys.relationField;
+  static const String relationValue = HostedayOptionKeys.relationValue;
 }

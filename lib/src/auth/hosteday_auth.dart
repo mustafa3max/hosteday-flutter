@@ -11,7 +11,7 @@ import 'hosteday_session.dart';
 import 'hosteday_user.dart';
 import 'hosteday_user_credential.dart';
 
-/// Provides Firebase-style authentication methods for HosteDay.
+/// Provides Firebase-style authentication methods for Hosteday.
 ///
 /// Supports:
 /// - Email/password sign-in
@@ -22,50 +22,62 @@ import 'hosteday_user_credential.dart';
 /// - Password reset requests
 /// - User reload and profile update
 /// - Sign-out
-class HosteDayAuth {
+class HostedayAuth {
   /// API configuration that defines auth endpoints.
-  final HosteDayConfig config;
+  final HostedayConfig config;
 
   /// HTTP client used for authentication requests.
-  final HosteDayHttpClient http;
+  final HostedayHttpClient http;
 
   /// Persistent storage for the authenticated session.
-  final HosteDayAuthStorage storage;
+  final HostedayAuthStorage storage;
 
   /// Called after the local user session has been removed.
   ///
-  /// HosteDayClient uses this to disconnect realtime safely on sign-out.
+  /// HostedayClient uses this to disconnect realtime safely on sign-out.
   final Future<void> Function()? _onSessionCleared;
 
-  final StreamController<HosteDayUser?> _authStateController =
-      StreamController<HosteDayUser?>.broadcast();
+  /// Called before signing out to allow unregistering device tokens or other cleanup.
+  final Future<void> Function()? _onBeforeSignOut;
 
-  final StreamController<HosteDayUser?> _idTokenController =
-      StreamController<HosteDayUser?>.broadcast();
+  /// Called after a new user session has been established and activated.
+  ///
+  /// Used to automatically register or re-link device tokens to the authenticated user.
+  final Future<void> Function(HostedayUser user)? _onSessionActivated;
 
-  final StreamController<HosteDayUser?> _userController =
-      StreamController<HosteDayUser?>.broadcast();
+  final StreamController<HostedayUser?> _authStateController =
+      StreamController<HostedayUser?>.broadcast();
 
-  HosteDaySession? _currentSession;
+  final StreamController<HostedayUser?> _idTokenController =
+      StreamController<HostedayUser?>.broadcast();
+
+  final StreamController<HostedayUser?> _userController =
+      StreamController<HostedayUser?>.broadcast();
+
+  HostedaySession? _currentSession;
   bool _initialized = false;
   bool _disposed = false;
 
-  /// Creates a HosteDay auth service.
-  HosteDayAuth({
+  /// Creates a Hosteday auth service.
+  HostedayAuth({
     required this.config,
     required this.http,
     required this.storage,
     Future<void> Function()? onSessionCleared,
-  }) : _onSessionCleared = onSessionCleared;
+    Future<void> Function()? onBeforeSignOut,
+    Future<void> Function(HostedayUser user)? onSessionActivated,
+  })  : _onSessionCleared = onSessionCleared,
+        _onBeforeSignOut = onBeforeSignOut,
+        _onSessionActivated = onSessionActivated;
 
   /// Whether the local session has been restored from storage.
   bool get isInitialized => _initialized;
 
-  /// Returns the active HosteDay user, or null when signed out.
-  HosteDayUser? get currentUser => _currentSession?.user;
+  /// Returns the active Hosteday user, or null when signed out.
+  HostedayUser? get currentUser => _currentSession?.user;
 
   /// Returns the active authenticated session, or null when signed out.
-  HosteDaySession? get currentSession => _currentSession;
+  HostedaySession? get currentSession => _currentSession;
 
   /// Restores the saved session after SDK initialization.
   ///
@@ -76,7 +88,7 @@ class HosteDayAuth {
     }
 
     final serializedSession = await storage.read(
-      HosteDayAuthStorageKeys.session,
+      HostedayAuthStorageKeys.session,
     );
 
     if (serializedSession != null && serializedSession.trim().isNotEmpty) {
@@ -85,11 +97,11 @@ class HosteDayAuth {
 
         if (decoded is! Map) {
           throw const FormatException(
-            'Stored HosteDay session is not a JSON object.',
+            'Stored Hosteday session is not a JSON object.',
           );
         }
 
-        final session = HosteDaySession.fromJson(
+        final session = HostedaySession.fromJson(
           Map<String, dynamic>.from(decoded),
         );
 
@@ -107,7 +119,7 @@ class HosteDayAuth {
   }
 
   /// Emits the current auth state immediately, then emits on sign-in/sign-out.
-  Stream<HosteDayUser?> authStateChanges() {
+  Stream<HostedayUser?> authStateChanges() {
     return _streamWithInitialValue(
       _authStateController.stream,
       currentUser,
@@ -115,7 +127,7 @@ class HosteDayAuth {
   }
 
   /// Emits the current user immediately, then emits on auth or token changes.
-  Stream<HosteDayUser?> idTokenChanges() {
+  Stream<HostedayUser?> idTokenChanges() {
     return _streamWithInitialValue(
       _idTokenController.stream,
       currentUser,
@@ -123,7 +135,7 @@ class HosteDayAuth {
   }
 
   /// Emits the current user immediately, then emits on auth or user changes.
-  Stream<HosteDayUser?> userChanges() {
+  Stream<HostedayUser?> userChanges() {
     return _streamWithInitialValue(
       _userController.stream,
       currentUser,
@@ -138,7 +150,7 @@ class HosteDayAuth {
   }
 
   /// Signs in an existing user using email and password.
-  Future<HosteDayUserCredential> signInWithEmailAndPassword({
+  Future<HostedayUserCredential> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) {
@@ -148,7 +160,7 @@ class HosteDayAuth {
     );
 
     return _authenticate(
-      path: config.loginPathPost,
+      path: config.signInPath,
       body: <String, dynamic>{
         'email': email.trim(),
         'password': password,
@@ -161,7 +173,7 @@ class HosteDayAuth {
   ///
   /// Pass fields such as `name`, `phone`, or tenant data through
   /// [additionalData].
-  Future<HosteDayUserCredential> createUserWithEmailAndPassword({
+  Future<HostedayUserCredential> createUserWithEmailAndPassword({
     required String email,
     required String password,
     Map<String, dynamic> additionalData = const <String, dynamic>{},
@@ -172,7 +184,7 @@ class HosteDayAuth {
     );
 
     return _authenticate(
-      path: config.registerPathPost,
+      path: config.signUpPath,
       body: <String, dynamic>{
         ...additionalData,
         'email': email.trim(),
@@ -189,7 +201,7 @@ class HosteDayAuth {
     Map<String, dynamic> additionalData = const <String, dynamic>{},
   }) async {
     if (email.trim().isEmpty) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         "An email address is required.",
         code: 'invalid-email',
       );
@@ -197,21 +209,21 @@ class HosteDayAuth {
 
     try {
       await http.post(
-        config.forgotPasswordPathPost,
+        config.sendPasswordResetEmailPath,
         body: <String, dynamic>{
           ...additionalData,
           'email': email.trim(),
         },
       );
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
   /// Sends a password-reset email to the currently authenticated user.
   ///
   /// Unlike [sendPasswordResetEmail], this method does not require an email
-  /// address because the HosteDay server gets it from the authenticated user.
+  /// address because the Hosteday server gets it from the authenticated user.
   Future<void> sendCurrentUserPasswordResetEmail() async {
     await _ensureInitialized();
     _requireSignedInUser();
@@ -221,39 +233,39 @@ class HosteDayAuth {
         config.sendCurrentUserPasswordResetEmailPath,
         withAuth: true,
       );
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
-  /// Reloads the authenticated user's profile from the HosteDay API.
-  Future<HosteDayUser> reload() async {
+  /// Reloads the authenticated user's profile from the Hosteday API.
+  Future<HostedayUser> reload() async {
     await _ensureInitialized();
     _requireSignedInUser();
 
     try {
       final response = await http.get(
-        config.userShowPathGet,
+        config.currentUserPath,
         withAuth: true,
       );
 
-      final user = HosteDayUser.fromJson(
+      final user = HostedayUser.fromJson(
         _extractUserPayload(response),
       );
 
       await _replaceCurrentUser(user);
 
       return user;
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
   /// Updates the authenticated user's name.
   ///
-  /// Currently, the HosteDay API only supports updating the user's name.
+  /// Currently, the Hosteday API only supports updating the user's name.
   /// Additional profile fields may be supported in future versions.
-  Future<HosteDayUser> updateProfile({
+  Future<HostedayUser> updateProfile({
     required String name,
   }) async {
     await _ensureInitialized();
@@ -262,7 +274,7 @@ class HosteDayAuth {
     final normalizedName = name.trim();
 
     if (normalizedName.isEmpty) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         'The user name cannot be empty.',
         code: 'invalid-name',
       );
@@ -270,9 +282,8 @@ class HosteDayAuth {
 
     try {
       final response = await http.put(
-        config.userUpdatePathPut,
+        config.updateUserPath,
         withAuth: true,
-        id: 0,
         body: <String, dynamic>{
           'name': normalizedName,
         },
@@ -281,23 +292,23 @@ class HosteDayAuth {
       final userPayload = _tryExtractUserPayload(response);
 
       if (userPayload == null) {
-        return reload();
+        return await reload();
       }
 
-      final user = HosteDayUser.fromJson(userPayload);
+      final user = HostedayUser.fromJson(userPayload);
 
       await _replaceCurrentUser(user);
 
       return user;
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
   /// Uploads and updates the authenticated user's avatar.
   ///
   /// The image bytes are encoded automatically as Base64 before being sent
-  /// to the HosteDay API.
+  /// to the Hosteday API.
   ///
   /// Supported extensions:
   /// - jpg
@@ -307,7 +318,7 @@ class HosteDayAuth {
   ///
   /// After a successful upload, the authenticated user is reloaded and the
   /// persisted session is updated automatically.
-  Future<HosteDayUser> updateAvatar({
+  Future<HostedayUser> updateAvatar({
     required Uint8List bytes,
     required String extension,
   }) async {
@@ -315,7 +326,7 @@ class HosteDayAuth {
     _requireSignedInUser();
 
     if (bytes.isEmpty) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         'Avatar image bytes cannot be empty.',
         code: 'invalid-avatar-bytes',
       );
@@ -337,7 +348,7 @@ class HosteDayAuth {
       final userPayload = _tryExtractUserPayload(response);
 
       if (userPayload != null) {
-        final user = HosteDayUser.fromJson(userPayload);
+        final user = HostedayUser.fromJson(userPayload);
 
         await _replaceCurrentUser(user);
 
@@ -346,9 +357,9 @@ class HosteDayAuth {
 
       // The current API returns data: null after updating the avatar,
       // therefore reload the user to get the new avatar URL.
-      return reload();
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+      return await reload();
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
@@ -359,11 +370,11 @@ class HosteDayAuth {
 
     try {
       await http.post(
-        config.resendEmailVerificationPathPost,
+        config.sendEmailVerificationNotificationPath,
         withAuth: true,
       );
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
@@ -377,15 +388,15 @@ class HosteDayAuth {
     try {
       await http.request(
         method: 'DELETE',
-        path: config.userShowPathGet,
+        path: config.currentUserPath,
         withAuth: true,
       );
 
       await _clearLocalSession(
         emitEvents: true,
       );
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     }
   }
 
@@ -396,12 +407,20 @@ class HosteDayAuth {
   Future<void> signOut() async {
     await _ensureInitialized();
 
+    if (_onBeforeSignOut != null) {
+      try {
+        await _onBeforeSignOut();
+      } catch (_) {
+        // Continue signing out even if pre-signout hook fails.
+      }
+    }
+
     Object? remoteError;
 
     if (_currentSession != null) {
       try {
         await http.post(
-          config.logoutPathPost,
+          config.signOutPath,
           withAuth: true,
         );
       } catch (error) {
@@ -413,8 +432,8 @@ class HosteDayAuth {
       emitEvents: true,
     );
 
-    if (remoteError is HosteDayException) {
-      throw HosteDayAuthException.fromHosteDayException(remoteError);
+    if (remoteError is HostedayException) {
+      throw HostedayAuthException.fromHostedayException(remoteError);
     }
 
     if (remoteError != null) {
@@ -435,7 +454,7 @@ class HosteDayAuth {
     await _userController.close();
   }
 
-  Future<HosteDayUserCredential> _authenticate({
+  Future<HostedayUserCredential> _authenticate({
     required String path,
     required Map<String, dynamic> body,
     required bool isNewUser,
@@ -448,7 +467,7 @@ class HosteDayAuth {
         body: body,
       );
 
-      final session = HosteDaySession.fromAuthResponse(response);
+      final session = HostedaySession.fromAuthResponse(response);
 
       await _activateSession(
         session,
@@ -457,15 +476,15 @@ class HosteDayAuth {
         emitUser: true,
       );
 
-      return HosteDayUserCredential(
+      return HostedayUserCredential(
         user: session.user,
         session: session,
         isNewUser: isNewUser,
       );
-    } on HosteDayException catch (error) {
-      throw HosteDayAuthException.fromHosteDayException(error);
+    } on HostedayException catch (error) {
+      throw HostedayAuthException.fromHostedayException(error);
     } on FormatException catch (error) {
-      throw HosteDayAuthException(
+      throw HostedayAuthException(
         error.message.toString(),
         code: 'malformed-auth-response',
         error: error,
@@ -474,7 +493,7 @@ class HosteDayAuth {
   }
 
   Future<void> _activateSession(
-    HosteDaySession session, {
+    HostedaySession session, {
     required bool emitAuthState,
     required bool emitIdToken,
     required bool emitUser,
@@ -494,15 +513,23 @@ class HosteDayAuth {
     if (emitUser) {
       _userController.add(session.user);
     }
+
+    if (_onSessionActivated != null) {
+      try {
+        await _onSessionActivated(session.user);
+      } catch (_) {
+        // Post-login device registration should not abort successful login.
+      }
+    }
   }
 
   Future<void> _replaceCurrentUser(
-    HosteDayUser user,
+    HostedayUser user,
   ) async {
     final session = _currentSession;
 
     if (session == null) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         'No authenticated user is available.',
         code: 'no-current-user',
       );
@@ -540,26 +567,26 @@ class HosteDayAuth {
   }
 
   Future<void> _persistSession(
-    HosteDaySession session,
+    HostedaySession session,
   ) async {
     await storage.write(
-      HosteDayAuthStorageKeys.session,
+      HostedayAuthStorageKeys.session,
       jsonEncode(session.toJson()),
     );
 
     await storage.write(
-      HosteDayAuthStorageKeys.accessToken,
+      HostedayAuthStorageKeys.accessToken,
       session.accessToken,
     );
   }
 
   Future<void> _removePersistedSession() async {
     await storage.delete(
-      HosteDayAuthStorageKeys.session,
+      HostedayAuthStorageKeys.session,
     );
 
     await storage.delete(
-      HosteDayAuthStorageKeys.accessToken,
+      HostedayAuthStorageKeys.accessToken,
     );
   }
 
@@ -571,7 +598,7 @@ class HosteDayAuth {
 
   void _requireSignedInUser() {
     if (_currentSession == null) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         'This operation requires an authenticated user.',
         code: 'no-current-user',
       );
@@ -583,14 +610,14 @@ class HosteDayAuth {
     required String password,
   }) {
     if (email.trim().isEmpty) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         'An email address is required.',
         code: 'invalid-email',
       );
     }
 
     if (password.isEmpty) {
-      throw const HosteDayAuthException(
+      throw const HostedayAuthException(
         'A password is required.',
         code: 'wrong-password',
       );
@@ -682,7 +709,7 @@ class HosteDayAuth {
     }
 
     if (!_supportedAvatarExtensions.contains(normalized)) {
-      throw HosteDayAuthException(
+      throw HostedayAuthException(
         'Unsupported avatar extension: $extension. '
         'Supported extensions are jpg, jpeg, png, and webp.',
         code: 'invalid-avatar-extension',
@@ -692,3 +719,7 @@ class HosteDayAuth {
     return normalized;
   }
 }
+
+/// Deprecated spelling of [HostedayAuth].
+@Deprecated('Use HostedayAuth instead.')
+typedef HosteDayAuth = HostedayAuth;

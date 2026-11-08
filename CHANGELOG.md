@@ -1,7 +1,46 @@
+## 2.3.1
+
+### Added
+- **Native Dart Configuration**: Adopted `lib/hosteday_config.dart` for direct, compile-time type-safe configuration.
+- **HosteDay CLI Integration**: Full compatibility with automated CLI project cloning and provisioning (`setup.sh --clone`).
+- **Live Bidding Radar Feature Module**: Added a pluggable, zero-impact architecture module (`lib/features/live_bidding/`) showcasing:
+  - Real-time client-to-client events using WebSockets Whisper (`client-new-bid`).
+  - Presence Channels with live participant tracking (`here`, `joining`, `leaving`).
+  - Private Channels for individual outbid alerts and user-specific events.
+  - Public Channels for global auction status.
+- **Rich Push Notifications (FCM v1)**: Support for FCM v1 rich payloads, actions, and deep link routing.
+
+### Security & Tooling
+- **Secrets Sanitization**: Fully isolated tenant credentials and Firebase configurations from sample code into ignored local environments.
+- Automated scripts for restoring and sanitizing development secrets.
+
+## 2.3.0
+
+- Add `HostedayClient.index()` returning `HostedayPage` with records and pagination metadata.
+- Add `HostedayClient.show()` returning the unwrapped record.
+- Validate resource response envelopes and preserve server error details and original field values.
+- Keep raw `get()` behavior unchanged and reuse existing request routing, authentication, headers, and timeouts.
+- Update the posts example and document search, pagination, and error handling.
+- Add regression coverage for resource reads, malformed responses, pagination, and compatibility.
+
+## 2.2.0
+
+- Adopt Hosteday names throughout the SDK and example; retain deprecated old APIs.
+- Centralize API, host, static-page, and storage URL resolution.
+- Automatically prefix REST resources with /api, without repeating existing prefixes.
+- Add host, apiBaseUrl, staticPages, storageUrl, and initializeFromAsset APIs.
+- Permit complete resource paths without an id argument on PUT/PATCH/DELETE.
+- Add injectable HTTP transport to the composed client.
+- Keep null optional keys compatible with REST-only generated applications.
+- Preserve status/raw body on invalid JSON and useful network/timeout messages.
+- Preserve auth validation details; correct profile update and event auth behavior.
+- Add a live API explorer, rewrite documentation, and expand regression tests.
+- Document URL/realtime behavior changes and environment-limited verification.
+
 ## 2.1.4 - 2026-07-26
 
 ### Added
 
-* Added `HosteDay.auth.deleteUser()` to permanently delete the authenticated user.
+* Added `Hosteday.auth.deleteUser()` to permanently delete the authenticated user.
 * The local authentication session and stored access token are cleared automatically after
   successful account deletion.

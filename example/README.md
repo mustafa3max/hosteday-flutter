@@ -4,8 +4,8 @@ A complete Flutter example app demonstrating how to use the `hosteday_flutter` p
 services.
 
 This example is designed to help developers initialize HosteDay, authenticate users, persist
-sessions, manage user profiles, upload avatars, connect to realtime services, and perform complete
-CRUD operations on a custom `posts` API table.
+sessions, manage user profiles, upload avatars, connect to realtime WebSockets services, and test the
+interactive **Live Bidding Radar** feature.
 
 ---
 
@@ -13,28 +13,33 @@ CRUD operations on a custom `posts` API table.
 
 This example demonstrates:
 
-* HosteDay SDK initialization.
-* Optional project API protection through `X-Api-Token`.
+* Direct Dart configuration via `lib/hosteday_config.dart`.
 * Persistent authentication session storage using `shared_preferences`.
-* Email/password sign in.
-* Email/password registration.
-* Navigation to the home page after successful sign in or registration.
-* Password reset email requests.
-* Authentication state handling using streams.
-* A shared AppBar that reacts automatically to authentication changes.
-* Current user display.
-* User profile reload and update.
-* User avatar selection and upload.
-* Full HTTPS avatar URL handling.
-* Email verification requests.
-* Sign out.
-* Realtime connection setup.
-* Custom API usage through the public `HosteDay.client` interface.
-* Listing, showing, creating, updating, and deleting posts.
-* Search and relation query parameters.
-* Public and authenticated API requests.
-* Common Laravel API response parsing.
-* Laravel validation and database error handling.
+* Email/password sign in and registration.
+* Password reset email requests and email verification.
+* Authentication state handling using streams and GetX controllers.
+* Current user display and profile updates.
+* User avatar selection and upload with HTTPS URL resolution.
+* **Live Bidding Radar & Channels Lab**:
+  - **Presence Channel (`presence-auction.room`)**: Live participants tracking (`here`, `joining`, `leaving`) and client-to-client events with WebSockets Whisper (`client-new-bid`).
+  - **Private Channel (`private-user.{id}`)**: Personal outbid alerts for authenticated users.
+  - **Public Channel (`auction-global`)**: Global auction announcements and state.
+* **Rich Push Notifications (FCM v1)**: Foreground and background handling of auction alerts and deep link routing.
+* **Secrets Sanitization & Backup**: Scripts to protect live credentials before publishing.
+
+---
+
+## Security & Secrets Management
+
+Active project credentials and Firebase configurations are safely stored in `.local_secrets/` (ignored by Git):
+
+```bash
+# Strip credentials and replace with dummy templates before committing or publishing:
+./scripts/sanitize_example.sh
+
+# Restore your live development credentials for local testing:
+./scripts/restore_secrets.sh
+```
 
 ---
 
@@ -45,54 +50,33 @@ example/
 ├── lib/
 │   ├── main.dart
 │   ├── app.dart
+│   ├── hosteday_config.dart     <-- Direct Dart configuration
 │   ├── core/
 │   │   ├── bootstrap/
 │   │   │   └── hosteday_initializer.dart
 │   │   ├── config/
-│   │   │   └── example_environment.dart
+│   │   │   ├── example_environment.dart
+│   │   │   └── hosteday_config_adapter.dart
 │   │   ├── errors/
 │   │   │   └── error_presenter.dart
+│   │   ├── localization/
+│   │   ├── notifications/
+│   │   ├── routes/
 │   │   ├── theme/
-│   │   │   └── example_theme.dart
 │   │   └── utils/
-│   │       └── api_response_reader.dart
 │   ├── features/
 │   │   ├── auth/
-│   │   │   └── presentation/
-│   │   │       ├── auth_gate.dart
-│   │   │       └── pages/
-│   │   │           ├── forgot_password_page.dart
-│   │   │           ├── register_page.dart
-│   │   │           └── sign_in_page.dart
-│   │   ├── posts/
-│   │   │   ├── data/
-│   │   │   │   └── post_repository.dart
+│   │   ├── example/
+│   │   ├── home/
+│   │   ├── live_bidding/        <-- Pluggable Live Bidding Radar
+│   │   │   ├── controllers/
 │   │   │   ├── models/
-│   │   │   │   └── post_model.dart
-│   │   │   └── presentation/
-│   │   │       ├── pages/
-│   │   │       │   └── home_page.dart
-│   │   │       └── widgets/
-│   │   │           ├── post_card.dart
-│   │   │           └── post/
-│   │   │               ├── create_page.dart
-│   │   │               ├── delete.dart
-│   │   │               ├── index.dart
-│   │   │               ├── show.dart
-│   │   │               └── update_page.dart
-│   │   ├── profile/
-│   │   │   └── presentation/
-│   │   │       └── pages/
-│   │   │           └── profile_page.dart
-│   │   └── realtime/
+│   │   │   ├── views/
+│   │   │   └── live_bidding_binding.dart
+│   │   ├── notifications/
+│   │   └── user/
 │   └── shared/
 │       └── widgets/
-│           ├── app_bar_my.dart
-│           ├── empty_box.dart
-│           ├── example_header.dart
-│           ├── example_scaffold.dart
-│           ├── feedback_boxes.dart
-│           └── form_fields.dart
 ├── pubspec.yaml
 └── README.md
 ```

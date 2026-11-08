@@ -4,17 +4,17 @@ import 'dart:convert';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 import 'package:http/http.dart' as http;
 
-/// A low-level HTTP client for sending requests to the HosteDay API.
+/// A low-level HTTP client for sending requests to the Hosteday API.
 ///
 /// This client handles:
 /// - Request URL building.
-/// - Default HosteDay headers.
+/// - Default Hosteday headers.
 /// - Optional bearer authentication.
 /// - JSON request bodies.
 /// - JSON response decoding.
 /// - Laravel-style validation errors.
 /// - API and network error conversion.
-class HosteDayHttpClient {
+class HostedayHttpClient {
   static const String _filtersQueryKey = 'filters';
   static const int _maxFilters = 20;
   static const int _maxFilterValues = 100;
@@ -23,24 +23,24 @@ class HosteDayHttpClient {
     r'^[a-zA-Z0-9_]+$',
   );
 
-  /// The configuration used to build HosteDay API request URLs.
-  final HosteDayConfig config;
+  /// The configuration used to build Hosteday API request URLs.
+  final HostedayConfig config;
 
   /// The optional provider used to retrieve authentication tokens.
   ///
-  /// A token is required when [request] is called with [withAuth] set to true.
-  final HosteDayTokenProvider? tokenProvider;
+  /// A token is required when [request] is called with `withAuth` set to true.
+  final HostedayTokenProvider? tokenProvider;
 
   /// Default timeout used for all requests.
   final Duration timeout;
 
   final http.Client _client;
 
-  /// Creates an HTTP client for the HosteDay API.
+  /// Creates an HTTP client for the Hosteday API.
   ///
   /// The optional [client] can be provided to supply a custom HTTP client,
   /// such as one configured for testing.
-  HosteDayHttpClient({
+  HostedayHttpClient({
     required this.config,
     this.tokenProvider,
     http.Client? client,
@@ -125,7 +125,7 @@ class HosteDayHttpClient {
   /// `/services/15?relation_field=category_id&relation_value=5`
   Future<Map<String, dynamic>> put(
     String path, {
-    required Object id,
+    Object? id,
     Map<String, dynamic>? body,
     String? relationField,
     Object? relationValue,
@@ -155,7 +155,7 @@ class HosteDayHttpClient {
   /// [id] is appended to [path] as the final path segment.
   Future<Map<String, dynamic>> patch(
     String path, {
-    required Object id,
+    Object? id,
     Map<String, dynamic>? body,
     String? relationField,
     Object? relationValue,
@@ -188,7 +188,7 @@ class HosteDayHttpClient {
   /// `/services/15?relation_field=category_id&relation_value=5`
   Future<Map<String, dynamic>> delete(
     String path, {
-    required Object id,
+    Object? id,
     Map<String, dynamic>? body,
     String? relationField,
     Object? relationValue,
@@ -213,12 +213,12 @@ class HosteDayHttpClient {
     );
   }
 
-  /// Sends an HTTP request to the HosteDay API.
+  /// Sends an HTTP request to the Hosteday API.
   ///
   /// The [method] determines the HTTP operation, such as GET, POST, PUT,
   /// PATCH, or DELETE.
   ///
-  /// The [path] is resolved against [HosteDayConfig.baseUrl].
+  /// The [path] is resolved against [HostedayConfig.baseUrl].
   ///
   /// [queryParameters] are appended to the request URL.
   ///
@@ -240,7 +240,7 @@ class HosteDayHttpClient {
     final normalizedMethod = method.trim().toUpperCase();
 
     if (!_isSupportedMethod(normalizedMethod)) {
-      throw HosteDayException(
+      throw HostedayException(
         'Unsupported HTTP method: $method',
       );
     }
@@ -271,26 +271,41 @@ class HosteDayHttpClient {
         body: hasJsonBody ? jsonEncode(body) : null,
       ).timeout(timeout ?? this.timeout);
 
-      final decoded = _decodeResponse(response.body);
+      Map<String, dynamic> decoded;
+      try {
+        decoded = _decodeResponse(response.body);
+      } on HostedayException catch (error) {
+        throw HostedayException(
+          'HTTP ${response.statusCode}: ${error.message}',
+          statusCode: response.statusCode,
+          error: error.error,
+          response: {'raw_body': response.body},
+        );
+      }
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw HosteDayException.fromResponse(
+        throw HostedayException.fromResponse(
           decoded,
           statusCode: response.statusCode,
         );
       }
 
       return decoded;
-    } on HosteDayException {
+    } on HostedayException {
       rethrow;
     } on TimeoutException catch (error) {
-      throw HosteDayException(
-        'HosteDay request timed out.',
+      throw HostedayException(
+        'Hosteday request timed out.',
         error: error,
       );
+    } on http.ClientException catch (error) {
+      throw HostedayException('Hosteday network error: ${error.message}',
+          error: error);
+    } on ArgumentError {
+      rethrow;
     } catch (error) {
-      throw HosteDayException(
-        'HosteDay request error.',
+      throw HostedayException(
+        'Hosteday request failed: $error',
         error: error,
       );
     }
@@ -319,7 +334,7 @@ class HosteDayHttpClient {
       final cleanToken = token?.trim();
 
       if (cleanToken == null || cleanToken.isEmpty) {
-        throw const HosteDayException(
+        throw const HostedayException(
           'Missing authentication token.',
           statusCode: 401,
         );
@@ -372,7 +387,7 @@ class HosteDayHttpClient {
         );
 
       default:
-        throw HosteDayException(
+        throw HostedayException(
           'Unsupported HTTP method: $method',
         );
     }
@@ -545,8 +560,8 @@ class HosteDayHttpClient {
         'data': decoded,
       };
     } on FormatException catch (error) {
-      throw HosteDayException(
-        'HosteDay returned an invalid JSON response.',
+      throw HostedayException(
+        'Hosteday returned an invalid JSON response.',
         error: error,
       );
     }
@@ -587,7 +602,7 @@ class HosteDayHttpClient {
     };
 
     if (cleanSearch != null && cleanSearch.isNotEmpty) {
-      result[HosteDayOptionKeys.search] = cleanSearch;
+      result[HostedayOptionKeys.search] = cleanSearch;
     }
 
     final normalizedFilters = _normalizeFilters(filters);
@@ -597,9 +612,9 @@ class HosteDayHttpClient {
     }
 
     if (hasRelationField) {
-      result[HosteDayOptionKeys.relationField] = cleanRelationField;
+      result[HostedayOptionKeys.relationField] = cleanRelationField;
 
-      result[HosteDayOptionKeys.relationValue] =
+      result[HostedayOptionKeys.relationValue] =
           relationValue is String ? relationValue.trim() : relationValue;
     }
 
@@ -716,3 +731,7 @@ class HosteDayHttpClient {
     _client.close();
   }
 }
+
+/// Deprecated spelling of [HostedayHttpClient].
+@Deprecated('Use HostedayHttpClient instead.')
+typedef HosteDayHttpClient = HostedayHttpClient;

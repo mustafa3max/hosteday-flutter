@@ -1,20 +1,33 @@
+import 'package:flutter/foundation.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
-import '../config/example_environment.dart';
+import '../../hosteday_config.dart';
+import '../config/hosteday_config_adapter.dart';
 
-/// Initializes the HosteDay SDK before the Flutter app starts.
+/// Initializes the Hosteday SDK before the Flutter app starts.
 ///
-/// Keep SDK setup in one place so examples and production apps can understand
-/// which values are required: project domain, project access token, and realtime
-/// connection options.
-class HosteDayInitializer {
-  const HosteDayInitializer._();
+/// Uses the strongly-typed Dart configuration defined in `lib/hosteday_config.dart`,
+/// eliminating any need for manual assets loading or JSON decoding.
+class HostedayInitializer {
+  const HostedayInitializer._();
 
   static Future<void> initialize() async {
-    await HosteDay.initializeApp(
-      options: ExampleEnvironment.hosteDayOptions,
-      connectRealtime: false,
-      authStorage: HosteDaySharedPreferencesAuthStorage(),
+    debugPrint(
+      '[HostedayInitializer] Initializing Hosteday with app "${HosteDayConfig.appName}" '
+      'at ${HosteDayConfig.baseUrl}',
     );
+
+    await Hosteday.initializeApp(
+      options: HosteDayConfigAdapter.toOptions(
+        overrides: const {
+          'jobs_enabled': true,
+          'jobs_path': '/api/jobs',
+        },
+      ),
+      connectRealtime: false,
+      authStorage: HostedaySharedPreferencesAuthStorage(),
+    );
+
+    debugPrint('[HostedayInitializer] Hosteday initialized successfully.');
   }
 }

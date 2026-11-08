@@ -1,11 +1,11 @@
-/// Represents an error returned while communicating with HosteDay services.
+/// Represents an error returned while communicating with Hosteday services.
 ///
 /// This exception can include:
 /// - A human-readable [message].
 /// - An optional HTTP [statusCode].
 /// - Validation errors returned from Laravel-style responses.
 /// - The original underlying [error] when available.
-class HosteDayException implements Exception {
+class HostedayException implements Exception {
   /// A human-readable description of the error.
   final String message;
 
@@ -24,8 +24,8 @@ class HosteDayException implements Exception {
   /// The original error or exception that caused this failure, when available.
   final Object? error;
 
-  /// Creates a HosteDay exception with the provided [message].
-  const HosteDayException(
+  /// Creates a Hosteday exception with the provided [message].
+  const HostedayException(
     this.message, {
     this.statusCode,
     this.validationErrors = const <String, List<String>>{},
@@ -33,16 +33,19 @@ class HosteDayException implements Exception {
     this.error,
   });
 
-  /// Creates a [HosteDayException] from a decoded API response.
-  factory HosteDayException.fromResponse(
+  /// Creates a [HostedayException] from a decoded API response.
+  factory HostedayException.fromResponse(
     Map<String, dynamic> response, {
     int? statusCode,
     Object? error,
   }) {
-    final message = _extractMessage(response);
+    final message = _extractMessage(response) ??
+        (statusCode == 429
+            ? 'Too many requests (HTTP 429).'
+            : 'Hosteday request failed (HTTP $statusCode).');
     final validationErrors = _extractValidationErrors(response);
 
-    return HosteDayException(
+    return HostedayException(
       message,
       statusCode: statusCode,
       validationErrors: validationErrors,
@@ -118,10 +121,10 @@ class HosteDayException implements Exception {
       parts.add('error: $error');
     }
 
-    return 'HosteDayException(${parts.join(', ')})';
+    return 'HostedayException(${parts.join(', ')})';
   }
 
-  static String _extractMessage(Map<String, dynamic> response) {
+  static String? _extractMessage(Map<String, dynamic> response) {
     final message = response['message'];
 
     if (message is String && message.trim().isNotEmpty) {
@@ -134,7 +137,10 @@ class HosteDayException implements Exception {
       return error.trim();
     }
 
-    return 'HosteDay request failed.';
+    if (error is Map && error['message'] is String) {
+      return error['message'] as String;
+    }
+    return null;
   }
 
   static Map<String, List<String>> _extractValidationErrors(
@@ -168,3 +174,7 @@ class HosteDayException implements Exception {
     return result;
   }
 }
+
+/// Deprecated spelling of [HostedayException].
+@Deprecated('Use HostedayException instead.')
+typedef HosteDayException = HostedayException;

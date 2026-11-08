@@ -41,6 +41,43 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <!-- Unified Firebase Web Configuration Loader -->
+  <script>
+    window.firebaseConfig = null;
+    fetch('firebase-config.json')
+      .then(function (res) { return res.json(); })
+      .then(function (config) {
+        window.firebaseConfig = config;
+      })
+      .catch(function (err) {
+        console.warn('Could not pre-load firebase-config.json in index.html:', err);
+      });
+  </script>
+
+  <!-- Register Firebase Messaging Service Worker for Web Push -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('firebase-messaging-sw.js')
+          .then(function (reg) {
+            console.log('Hosteday Firebase ServiceWorker registered:', reg.scope);
+            // Ensure worker updates immediately
+            reg.update();
+          }).catch(function (err) {
+            console.warn('Hosteday Firebase ServiceWorker registration failed:', err);
+          });
+      });
+
+      // Listen for push notifications forwarded by the Service Worker
+      navigator.serviceWorker.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'HOSTEDAY_PUSH_NOTIFICATION') {
+          console.log('[index.html] Received push notification message from SW:', event.data);
+          window.dispatchEvent(new CustomEvent('hosteday-push-received', { detail: event.data }));
+        }
+      });
+    }
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
