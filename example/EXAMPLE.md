@@ -1,11 +1,11 @@
-# HosteDay Flutter Complete Example
+# Hosteday Flutter Complete Example
 
 This example is a small but complete Flutter app that demonstrates how to use
 `hosteday_flutter` in a clean educational structure.
 
 ## Quick Experience Example
 
-If you only want to test HosteDay quickly without exploring the full structured
+If you only want to test Hosteday quickly without exploring the full structured
 example, start here:
 
 [Open the Quick Experience example](#quick-experience-example)
@@ -136,22 +136,22 @@ flutter pub get
 
 ### `lib/main.dart`
 
-A small entry point that initializes Flutter bindings, initializes HosteDay,
+A small entry point that initializes Flutter bindings, initializes Hosteday,
 then runs the example app.
 
 ```dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await HosteDayInitializer.initialize();
+  await HostedayInitializer.initialize();
 
-  runApp(const HosteDayExampleApp());
+  runApp(const HostedayExampleApp());
 }
 ```
 
 ### `lib/app.dart`
 
-Defines `HosteDayExampleApp`, the root `MaterialApp`, the theme, and the first
+Defines `HostedayExampleApp`, the root `MaterialApp`, the theme, and the first
 screen: `AuthGate`.
 
 ### `lib/core/bootstrap/hosteday_initializer.dart`
@@ -161,23 +161,23 @@ configuration with production values later.
 
 ```dart
 await
-HosteDay.initializeApp
+Hosteday.initializeApp
 (
 options: <String, Object?>{
-HosteDayOptionKeys.projectDomain:
+HostedayOptionKeys.projectDomain:
 ExampleEnvironment.projectDomain,
-HosteDayOptionKeys.projectApiKey:
+HostedayOptionKeys.projectApiKey:
 ExampleEnvironment.projectApiKey,
-HosteDayOptionKeys.realtimeAppKey:
+HostedayOptionKeys.realtimeAppKey:
 ExampleEnvironment.realtimeAppKey,
-HosteDayOptionKeys.realtimeHost:
+HostedayOptionKeys.realtimeHost:
 ExampleEnvironment.realtimeHost,
-HosteDayOptionKeys.realtimeScheme:
+HostedayOptionKeys.realtimeScheme:
 ExampleEnvironment.realtimeScheme,
-HosteDayOptionKeys.realtimePort:
+HostedayOptionKeys.realtimePort:
 ExampleEnvironment.realtimePort,
 },
-authStorage: HosteDaySharedPreferencesAuthStorage(),
+authStorage: HostedaySharedPreferencesAuthStorage(),
 connectRealtime: false,
 );
 ```
@@ -252,14 +252,14 @@ static const String projectDomain = String.fromEnvironment(
 
 ### `lib/features/auth/presentation/auth_gate.dart`
 
-Listens to `HosteDay.auth.authStateChanges()` and decides whether the app should
+Listens to `Hosteday.auth.authStateChanges()` and decides whether the app should
 show `SignInPage` or `HomeShell`.
 
 ```dart
-StreamBuilder<HosteDayUser?>
+StreamBuilder<HostedayUser?>
 (
-stream: HosteDay.auth.authStateChanges(),
-initialData: HosteDay.auth.currentUser,
+stream: Hosteday.auth.authStateChanges(),
+initialData: Hosteday.auth.currentUser,
 builder: (context, snapshot) {
 final user = snapshot.data;
 
@@ -278,7 +278,7 @@ Demonstrates:
 
 ```dart
 await
-HosteDay.auth.signInWithEmailAndPassword
+Hosteday.auth.signInWithEmailAndPassword
 (
 email
 :
@@ -297,7 +297,7 @@ Demonstrates:
 
 ```dart
 await
-HosteDay.auth.createUserWithEmailAndPassword
+Hosteday.auth.createUserWithEmailAndPassword
 (
 email: email,
 password: password,
@@ -313,7 +313,7 @@ Demonstrates:
 
 ```dart
 await
-HosteDay.auth.sendPasswordResetEmail
+Hosteday.auth.sendPasswordResetEmail
 (
 email
 :
@@ -337,7 +337,7 @@ It also includes the sign-out action:
 
 ```dart
 await
-HosteDay.auth.signOut
+Hosteday.auth.signOut
 ();
 ```
 
@@ -345,26 +345,26 @@ HosteDay.auth.signOut
 
 Demonstrates reading, listening for changes, reloading, and updating the current user's name.
 
-Currently, the HosteDay API only supports updating the user's name through `updateProfile`.
+Currently, the Hosteday API only supports updating the user's name through `updateProfile`.
 Additional profile fields may be supported in future versions.
 
 ```dart
 
-final currentUser = HosteDay.auth.currentUser;
+final currentUser = Hosteday.auth.currentUser;
 
-final userChanges = HosteDay.auth.userChanges();
+final userChanges = Hosteday.auth.userChanges();
 
 final reloadedUser = await
-HosteDay.auth.reload
+Hosteday.auth.reload
 ();
 
 final updatedUser = await
-HosteDay.auth.updateProfile
+Hosteday.auth.updateProfile
 (
 name: name,
 );
 
-await HosteDay.auth.sendEmailVerification
+await Hosteday.auth.sendEmailVerification
 (
 );
 ```
@@ -393,7 +393,7 @@ final extension = image.name
     .trim()
     .toLowerCase();
 
-await HosteDay.auth.updateAvatar(
+await Hosteday.auth.updateAvatar(
 bytes: bytes,
 extension: extension,
 );
@@ -436,7 +436,7 @@ The Flutter user model exposes this through:
 
 ```dart
 
-final user = HosteDay.auth.currentUser;
+final user = Hosteday.auth.currentUser;
 
 final photoUrl = user?.photoUrl;
 final avatarUrl = user?.avatarUrl;
@@ -466,10 +466,10 @@ Using `userChanges()` allows the interface to refresh automatically after the
 avatar is updated:
 
 ```dart
-StreamBuilder<HosteDayUser?>
+StreamBuilder<HostedayUser?>
 (
-stream: HosteDay.auth.userChanges(),
-initialData: HosteDay.auth.currentUser,
+stream: Hosteday.auth.userChanges(),
+initialData: Hosteday.auth.currentUser,
 builder: (context, snapshot) {
 final user = snapshot.data;
 final avatarUrl = user?.avatarUrl;
@@ -496,7 +496,7 @@ Load posts:
 ```dart
 
 final response = await
-HosteDay.client.get
+Hosteday.client.get
 ('/api/posts
 '
 ,withAuth:
@@ -510,7 +510,7 @@ Create a post:
 ```dart
 
 final response = await
-HosteDay.client.post
+Hosteday.client.post
 ('/api/posts
 '
 ,withAuth: true,
@@ -530,11 +530,11 @@ Connects to realtime and listens for post events:
 
 ```dart
 await
-HosteDay.connectRealtime
+Hosteday.connectRealtime
 ();
 
 await
-HosteDay.realtime.listenPublic
+Hosteday.realtime.listenPublic
 (
 channel: 'posts',
 event: 'PostCreated',
@@ -614,7 +614,7 @@ prefer gallery selection where direct camera capture is unavailable.
 
 ## Backend requirements
 
-The example expects the following endpoints to exist in the HosteDay project
+The example expects the following endpoints to exist in the Hosteday project
 backend.
 
 ### Authentication
@@ -785,7 +785,7 @@ flutter run
 
 ## Troubleshooting
 
-### `HosteDay request error`
+### `Hosteday request error`
 
 This usually means one of the following:
 
@@ -860,7 +860,7 @@ user after a successful upload.
 Use:
 
 ```dart
-HosteDay.auth.userChanges
+Hosteday.auth.userChanges
 ()
 ```
 
