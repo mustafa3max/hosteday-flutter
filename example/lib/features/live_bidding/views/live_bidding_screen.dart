@@ -6,8 +6,8 @@ import 'widgets/active_bidders_bar.dart';
 import 'widgets/bidding_controls.dart';
 import 'widgets/real_time_logs_card.dart';
 
-/// Full interactive screen for the "رادار المزايدة الحية والتحدي الصامت"
-/// (Live Bidding Radar) feature.
+/// Full interactive screen for the "Live Bidding Radar" feature,
+/// matching the official Hosteday design language, theme system, and translations.
 class LiveBiddingScreen extends GetView<LiveBiddingController> {
   const LiveBiddingScreen({super.key});
 
@@ -19,257 +19,382 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
     }
     final canPop = Navigator.of(context).canPop();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A10),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF101018),
-        elevation: 0,
-        leading: canPop
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                onPressed: () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  } else {
-                    Get.back();
-                  }
-                },
-              )
-            : null,
-        title: Row(
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.radar_rounded,
-                color: Color(0xFFF59E0B),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const Text(
-                    'رادار المزايدة الحية (Live Bidding)',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Obx(() => Text(
-                        controller.auctionTitle.value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 11,
-                        ),
-                      )),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          // WebSocket Connection Status Pill
-          Obx(() {
-            final isConnected = controller.isConnected.value;
-            final isConnecting = controller.isConnecting.value;
+    final body = LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 1024;
+        final isTablet = constraints.maxWidth >= 600 && !isDesktop;
+        final horizontalPadding = isDesktop ? 32.0 : (isTablet ? 20.0 : 16.0);
 
-            return Center(
-              child: Container(
-                margin: const EdgeInsets.only(left: 12, right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1240),
+            child: ListView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 20,
+              ),
+              children: <Widget>[
+                // 1. Hero Header Card
+                _buildHeroHeader(context, theme),
+                const SizedBox(height: 20),
+
+                // 2. Active Bidders Presence Radar Bar
+                const ActiveBiddersBar(),
+                const SizedBox(height: 16),
+
+                // 3. Outbid Alert Banner (Reactive)
+                _buildOutbidAlertBanner(context, theme),
+
+                // 4. Main Auction Arena Card
+                _buildAuctionArenaCard(context, theme),
+                const SizedBox(height: 16),
+
+                // 5. Bidding Controls
+                const BiddingControls(),
+                const SizedBox(height: 16),
+
+                // 6. Real-Time Activity Feed
+                const RealTimeLogsCard(),
+                const SizedBox(height: 20),
+
+                // 7. Technical Lab & Channels Explanation
+                _buildIntroExplanationCard(context, theme),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    return Title(
+      title: '${'live_bidding_app_bar_title'.tr} | Hosteday',
+      color: theme.colorScheme.primary,
+      child: canPop
+          ? Scaffold(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              appBar: AppBar(title: Text('live_bidding_app_bar_title'.tr)),
+              body: body,
+            )
+          : Material(color: Colors.transparent, child: body),
+    );
+  }
+
+  Widget _buildHeroHeader(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+          width: 1,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.25 : 0.04,
+            ),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: isConnected
-                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                      : (isConnecting
-                          ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
-                          : const Color(0xFFEF4444).withValues(alpha: 0.15)),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isConnected
-                        ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                        : (isConnecting
-                            ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
-                            : const Color(0xFFEF4444).withValues(alpha: 0.4)),
-                  ),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Icon(
+                  Icons.radar_rounded,
+                  size: 26,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: isConnected
-                            ? const Color(0xFF10B981)
-                            : (isConnecting
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFFEF4444)),
-                        shape: BoxShape.circle,
+                    Text(
+                      'live_bidding_hero_title'.tr,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(height: 4),
                     Text(
-                      isConnected
-                          ? 'الويب سوكت متصل'
-                          : (isConnecting ? 'جاري الاتصال...' : 'غير متصل'),
-                      style: TextStyle(
-                        color: isConnected
-                            ? const Color(0xFF34D399)
-                            : (isConnecting
-                                ? const Color(0xFFFBBF24)
-                                : const Color(0xFFF87171)),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                      'live_bidding_hero_desc'.tr,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                        height: 1.45,
                       ),
                     ),
                   ],
                 ),
               ),
-            );
-          }),
-        ],
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 1024;
-          final isTablet = constraints.maxWidth >= 600 && !isDesktop;
-          final horizontalPadding = isDesktop ? 32.0 : (isTablet ? 20.0 : 12.0);
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              // WebSocket Connection Status Pill
+              Obx(() {
+                final isConnected = controller.isConnected.value;
+                final isConnecting = controller.isConnecting.value;
+                final statusColor = isConnected
+                    ? const Color(0xFF10B981)
+                    : (isConnecting
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFFEF4444));
+                final statusText = isConnected
+                    ? 'live_bidding_ws_connected'.tr
+                    : (isConnecting
+                          ? 'live_bidding_ws_connecting'.tr
+                          : 'live_bidding_ws_disconnected'.tr);
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1240),
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  16,
-                  horizontalPadding,
-                  32,
-                ),
-                children: <Widget>[
-                  // 0. Introductory Explanation Card (Channels & FCM Lab)
-                  _buildIntroExplanationCard(context),
-
-                  // 1. Presence Radar Bar
-                  const ActiveBiddersBar(),
-                  const SizedBox(height: 16),
-
-                  // 2. Outbid Alert Banner (Reactive)
-                  Obx(() {
-                    if (!controller.hasOutbidNotice.value) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      child: Row(
-                        children: <Widget>[
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Color(0xFFF87171),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                const Text(
-                                  'تنبيه: تم كسر عرضك!',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  controller.lastOutbidMessage.value,
-                                  style: const TextStyle(
-                                    color: Color(0xFFFCA5A5),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => controller.submitBid(50),
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFEF4444),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'استعد الصدارة (+50\$)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 6),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    );
-                  }),
+                    ],
+                  ),
+                );
+              }),
 
-                  // 3. Main Auction Arena Card
-                  _buildAuctionArenaCard(context, theme),
-                  const SizedBox(height: 16),
-
-                  // 4. Bidding Controls
-                  const BiddingControls(),
-                  const SizedBox(height: 16),
-
-                  // 5. Real-Time Activity Feed
-                  const RealTimeLogsCard(),
-                ],
+              // Auction Item Room Tag
+              Obx(
+                () => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.gavel_rounded,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        controller.auctionTitle.value,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          );
-        },
+
+              // Identity Badge
+              Builder(
+                builder: (context) {
+                  final isAuth = controller.isAuthenticated;
+                  final statusColor = isAuth
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFF59E0B);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          isAuth
+                              ? Icons.verified_user_rounded
+                              : Icons.person_outline_rounded,
+                          size: 14,
+                          color: statusColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isAuth
+                              ? 'live_bidding_logged_in_badge'.trParams({
+                                  'name': controller.currentUserName,
+                                })
+                              : 'live_bidding_guest_badge'.tr,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildOutbidAlertBanner(BuildContext context, ThemeData theme) {
+    return Obx(() {
+      if (!controller.hasOutbidNotice.value) {
+        return const SizedBox.shrink();
+      }
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.error.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          children: <Widget>[
+            Icon(
+              Icons.warning_amber_rounded,
+              color: theme.colorScheme.error,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'live_bidding_outbid_alert_title'.tr,
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    controller.lastOutbidMessage.value,
+                    style: TextStyle(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            FilledButton.tonal(
+              onPressed:
+                  (!controller.isConnected.value ||
+                      controller.isSubmittingBid.value)
+                  ? null
+                  : () => controller.submitBid(50),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+                disabledBackgroundColor: theme.colorScheme.onSurface.withValues(
+                  alpha: 0.12,
+                ),
+                disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+                  alpha: 0.38,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+              ),
+              child: Text(
+                'live_bidding_regain_lead'.tr,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
   Widget _buildAuctionArenaCard(BuildContext context, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF13131A),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF262636),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
           width: 1,
         ),
-        boxShadow: const <BoxShadow>[
+        boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Color(0x33000000),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.25 : 0.04,
+            ),
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -279,27 +404,30 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
           Row(
             children: <Widget>[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.35),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Icon(
                       Icons.flash_on_rounded,
-                      color: Color(0xFF38BDF8),
+                      color: theme.colorScheme.primary,
                       size: 14,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'تحدي المزايدة الصامت (Live Whisper)',
+                      'live_bidding_silent_whisper_badge'.tr,
                       style: TextStyle(
-                        color: Color(0xFF38BDF8),
+                        color: theme.colorScheme.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -314,7 +442,10 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                   controller.remainingSeconds.value,
                 );
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -332,9 +463,9 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'ينتهي خلال: $time',
+                        'live_bidding_ends_in'.trParams({'time': time}),
                         style: const TextStyle(
-                          color: Color(0xFFFBBF24),
+                          color: Color(0xFFF59E0B),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -357,7 +488,10 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutBack,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isPulsing
                       ? const Color(0xFF10B981).withValues(alpha: 0.15)
@@ -373,9 +507,11 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                 child: Column(
                   children: <Widget>[
                     Text(
-                      'أعلى عرض حالي (Highest Bid)',
+                      'live_bidding_highest_bid_label'.tr,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.65,
+                        ),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -385,8 +521,8 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                       '\$$amount',
                       style: TextStyle(
                         color: isPulsing
-                            ? const Color(0xFF34D399)
-                            : const Color(0xFF10B981),
+                            ? const Color(0xFF10B981)
+                            : theme.colorScheme.primary,
                         fontSize: 48,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -1,
@@ -403,27 +539,46 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
           Obx(() {
             final leaderName = controller.highestBidderName.value;
             final isSelf = controller.isCurrentHighestBidder;
+            final hasBids = controller.highestBidderId.value.isNotEmpty;
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelf
                     ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                    : const Color(0xFF262636),
+                    : (hasBids
+                          ? theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.5)
+                          : theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.25)),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelf
                       ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                      : const Color(0xFF374151),
+                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Text(
-                    isSelf ? '👑 أنت متصدر المزاد حالياً' : 'المتصدر الحالي: $leaderName',
+                    isSelf
+                        ? 'live_bidding_you_are_leading'.tr
+                        : (hasBids
+                              ? 'live_bidding_current_leader'.trParams({
+                                  'name': leaderName.isEmpty
+                                      ? 'live_bidding_anonymous_bidder'.tr
+                                      : leaderName,
+                                })
+                              : 'live_bidding_be_first_bidder'.tr),
                     style: TextStyle(
-                      color: isSelf ? const Color(0xFF34D399) : Colors.white,
+                      color: isSelf
+                          ? const Color(0xFF10B981)
+                          : (hasBids
+                                ? theme.colorScheme.onSurface
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.7,
+                                  )),
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -437,21 +592,22 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
     );
   }
 
-  Widget _buildIntroExplanationCard(BuildContext context) {
+  Widget _buildIntroExplanationCard(BuildContext context, ThemeData theme) {
     final isAuth = controller.isAuthenticated;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF141422),
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF6366F1).withValues(alpha: 0.3),
-          width: 1.2,
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+          width: 1,
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.25 : 0.04,
+            ),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -462,97 +618,57 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
         children: <Widget>[
           // Header Bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C2E),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.45,
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(19),
+              ),
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.35,
+                  ),
                 ),
               ),
             ),
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
+            child: Row(
               children: <Widget>[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.cell_tower_rounded,
-                        color: Color(0xFF818CF8),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'منصة اختبار الاتصال المباشر (Real-Time & Channels Lab)',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'اختبار القنوات الثلاث (العامة، الخاصة، التواجد) وتجربة الإشعارات الفورية',
-                          style: TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                // Identity status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: isAuth
-                        ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                        : const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isAuth
-                          ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                          : const Color(0xFFF59E0B).withValues(alpha: 0.4),
-                    ),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Icon(
+                    Icons.cell_tower_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Icon(
-                        isAuth
-                            ? Icons.verified_user_rounded
-                            : Icons.person_outline_rounded,
-                        size: 14,
-                        color: isAuth
-                            ? const Color(0xFF34D399)
-                            : const Color(0xFFFBBF24),
-                      ),
-                      const SizedBox(width: 6),
                       Text(
-                        isAuth
-                            ? 'مسجل دخول: ${controller.currentUserName}'
-                            : 'وضع الزائر (غير مسجل)',
+                        'live_bidding_lab_title'.tr,
                         style: TextStyle(
-                          color: isAuth
-                              ? const Color(0xFF34D399)
-                              : const Color(0xFFFBBF24),
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'live_bidding_lab_subtitle'.tr,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.65,
+                          ),
                           fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -564,19 +680,19 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
 
           // Body Content
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
-                  'توضح هذه الصفحة كيفية عمل وتبادل البيانات لحظياً عبر الويب سوكت (WebSockets) في خوادم HosteDay، وتوفر بيئة حية لفحص القنوات الثلاث واستقبال تنبيهات الـ Push:',
+                Text(
+                  'live_bidding_intro_desc'.tr,
                   style: TextStyle(
-                    color: Color(0xFFCBD5E1),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     fontSize: 12.5,
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 // Channels Pillars
                 LayoutBuilder(
@@ -584,50 +700,52 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                     final isNarrow = constraints.maxWidth < 680;
                     final items = <Widget>[
                       _buildChannelPillar(
+                        context,
                         icon: Icons.public_rounded,
                         iconColor: const Color(0xFF3B82F6),
-                        title: '1. القنوات العامة (Public Channels)',
-                        badge: 'مفتوحة للجميع',
+                        title: 'live_bidding_ch_public_title'.tr,
+                        badge: 'live_bidding_ch_public_badge'.tr,
                         badgeColor: const Color(0xFF3B82F6),
-                        description:
-                            'تعمل تلقائياً لجميع المستخدمين والزوار دون الحاجة لتسجيل دخول. تُبث عبرها إعلانات حالة المزاد والتحديثات الجماعية.',
+                        description: 'live_bidding_ch_public_desc'.tr,
                       ),
                       _buildChannelPillar(
+                        context,
                         icon: Icons.people_alt_rounded,
                         iconColor: const Color(0xFF10B981),
-                        title: '2. قنوات التواجد (Presence Channels)',
-                        badge: 'تتطلب تسجيل الدخول ⚠️',
+                        title: 'live_bidding_ch_presence_title'.tr,
+                        badge: 'live_bidding_ch_presence_badge'.tr,
                         badgeColor: const Color(0xFFF59E0B),
-                        description:
-                            'يجب تسجيل الدخول أولاً؛ لتوقيع طلب الانضمام والمصادقة على هويتك لدى السيرفر (/api/broadcasting/auth-manual). تُستخدم لرادار المتواجدين (Here, Joining, Leaving) والهمس المباشر (Whisper).',
+                        description: 'live_bidding_ch_presence_desc'.tr,
                       ),
                       _buildChannelPillar(
+                        context,
                         icon: Icons.lock_outline_rounded,
                         iconColor: const Color(0xFFA855F7),
-                        title: '3. القنوات الخاصة (Private Channels)',
-                        badge: 'تتطلب تسجيل الدخول ⚠️',
+                        title: 'live_bidding_ch_private_title'.tr,
+                        badge: 'live_bidding_ch_private_badge'.tr,
                         badgeColor: const Color(0xFFF59E0B),
-                        description:
-                            'تتطلب توثيق المستخدم وتوكن معتمد (private-user.{id})؛ لاستقبال تنبيهات كسر العرض (Outbid) والأحداث الموجهة لشخصك حصراً وبأمان.',
+                        description: 'live_bidding_ch_private_desc'.tr,
                       ),
                       _buildChannelPillar(
+                        context,
                         icon: Icons.notifications_active_rounded,
                         iconColor: const Color(0xFFEC4899),
-                        title: '4. تجربة الإشعارات (FCM Push)',
-                        badge: 'تنبيهات فورية',
+                        title: 'live_bidding_ch_fcm_title'.tr,
+                        badge: 'live_bidding_ch_fcm_badge'.tr,
                         badgeColor: const Color(0xFF10B981),
-                        description:
-                            'اختبار استقبال إشعارات الـ Push في الواجهة (Foreground) والخلفية (Background) عند كسر المزايدة أو الفوز، أو إرسال إشعار تجريبي مباشر من لوحة تحكم HosteDay.',
+                        description: 'live_bidding_ch_fcm_desc'.tr,
                       ),
                     ];
 
                     if (isNarrow) {
                       return Column(
                         children: items
-                            .map((item) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: item,
-                                ))
+                            .map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: item,
+                              ),
+                            )
                             .toList(),
                       );
                     }
@@ -638,16 +756,16 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Expanded(child: items[0]),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Expanded(child: items[1]),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Expanded(child: items[2]),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Expanded(child: items[3]),
                           ],
                         ),
@@ -658,29 +776,31 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
 
                 // Call-To-Action if user is not logged in
                 if (!isAuth) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
                       ),
                     ),
                     child: Row(
                       children: <Widget>[
                         const Icon(
                           Icons.info_outline_rounded,
-                          color: Color(0xFFFBBF24),
+                          color: Color(0xFFF59E0B),
                           size: 20,
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'تنبيه: لتفعيل ظهورك في رادار المتواجدين واستقبال إشعارات كسر المزايدة الخاصة بك، يرجى تسجيل الدخول أولاً.',
+                            'live_bidding_signin_prompt'.tr,
                             style: TextStyle(
-                              color: Color(0xFFFDE68A),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.85,
+                              ),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -695,12 +815,12 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                               horizontal: 14,
                               vertical: 6,
                             ),
-                            minimumSize: const Size(0, 34),
+                            minimumSize: const Size(0, 36),
                           ),
                           onPressed: () => Get.toNamed('/login'),
-                          child: const Text(
-                            'تسجيل الدخول',
-                            style: TextStyle(
+                          child: Text(
+                            'sign_in'.tr,
+                            style: const TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -718,7 +838,8 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
     );
   }
 
-  Widget _buildChannelPillar({
+  Widget _buildChannelPillar(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -726,12 +847,15 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
     required Color badgeColor,
     required String description,
   }) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF10101C),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -743,8 +867,8 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -767,13 +891,13 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             description,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 11,
-              height: 1.4,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+              fontSize: 11.5,
+              height: 1.45,
             ),
           ),
         ],
@@ -781,4 +905,3 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
     );
   }
 }
-

@@ -1,8 +1,8 @@
 /// English (en_US) translations for Hosteday App
 const Map<String, String> enUS = {
   // Common / General
-  'app_title': 'Hosteday Platform',
-  'starter_title': 'Hosteday App',
+  'app_title': 'Hosteday',
+  'starter_title': 'Hosteday',
   'home': 'Home',
   'back': 'Back',
   'cancel': 'Cancel',
@@ -29,8 +29,41 @@ const Map<String, String> enUS = {
   'nav_guide': 'Guide & Code',
   'nav_realtime': 'Realtime',
   'nav_notifications': 'Notifications',
+  'nav_settings': 'Settings',
   'nav_profile': 'Profile',
   'account_menu': 'Account menu',
+  'settings_title': 'General Settings',
+  'settings_subtitle':
+      'Customize notifications, alerts, appearance, and app language',
+  'settings_section_notifications': 'Notifications & Alerts',
+  'settings_push_title': 'Push Notifications',
+  'settings_push_desc':
+      'Receive real-time auction and system alerts on this device',
+  'settings_push_enabled': 'Enabled',
+  'settings_push_disabled': 'Disabled',
+  'settings_auction_alerts_title': 'Auction & Outbid Alerts',
+  'settings_auction_alerts_desc':
+      'Get notified immediately when another bidder outbids you',
+  'settings_sound_title': 'Sound & Haptic Feedback',
+  'settings_sound_desc':
+      'Play interactive sounds and vibrations on live events',
+  'settings_announcements_title': 'Platform Announcements',
+  'settings_announcements_desc':
+      'Receive platform updates, news, and system announcements',
+  'settings_section_theme': 'Appearance & Colors',
+  'settings_theme_desc':
+      'Select your preferred visual style (3 Light and 3 Dark themes)',
+  'settings_section_language': 'Language & Region',
+  'settings_language_desc':
+      'Choose your preferred application display language',
+  'settings_section_about': 'About App',
+  'settings_app_version': 'App Version',
+  'settings_environment': 'Connected Environment',
+  'settings_permission_request':
+      'Enable system notification permission to receive real-time alerts',
+  'settings_permission_granted': 'Notification permission enabled successfully',
+  'settings_permission_denied':
+      'Notification permission denied or not granted yet',
   'theme_label': 'Theme',
   'change_theme': 'Change Theme',
   'language_label': 'Language',
@@ -40,21 +73,25 @@ const Map<String, String> enUS = {
   'sign_in': 'Sign In',
   'sign_out': 'Sign Out',
   'sign_out_confirm_title': 'Sign Out Confirmation',
-  'sign_out_confirm_message': 'Are you sure you want to sign out of your account?',
+  'sign_out_confirm_message':
+      'Are you sure you want to sign out of your account?',
   'sign_out_failed': 'Sign out failed: @error',
   'create_account': 'Create Account',
   'auth_required_title': 'Authentication Required',
-  'auth_required_desc': 'To view and edit your profile and manage your avatar, please sign in or create a new account in your project.',
+  'auth_required_desc':
+      'To view and edit your profile and manage your avatar, please sign in or create a new account in your project.',
   'email_unverified_banner_title': 'Email unverified',
-  'email_unverified_banner_desc': 'Please verify your email (@email) to secure your account and unlock all features.',
+  'email_unverified_banner_desc':
+      'Please verify your email (@email) to secure your account and unlock all features.',
   'email_unverified_long_title': 'Notice: Your email is not verified yet',
-  'email_unverified_long_desc': 'Please verify your email (@email) to fully benefit from account features.',
+  'email_unverified_long_desc':
+      'Please verify your email (@email) to fully benefit from account features.',
   'verify_now': 'Verify Now',
   'reload_status': 'Reload Status',
 
   // Form Fields & Validation
   'email_label': 'Email Address',
-  'email_hint': 'name@example.com',
+  'email_hint': 'name@domain.com',
   'email_required': 'Email address is required.',
   'email_invalid': 'Please enter a valid email address.',
   'password_label': 'Password',
@@ -76,8 +113,10 @@ const Map<String, String> enUS = {
   'login_success_title': 'Signed In Successfully',
   'welcome_back_user': 'Welcome back @name!',
   'register_success_title': 'Account Created Successfully',
-  'register_success_desc': 'Welcome to Hosteday platform!',
-  'check_inbox_reset_desc': 'Please check your email inbox to reset your password.',
+  'register_success_desc':
+      'Welcome! Your account has been created successfully.',
+  'check_inbox_reset_desc':
+      'Please check your email inbox to reset your password.',
   'sign_out_success_title': 'Signed Out',
   'sign_out_success_desc': 'Your session ended safely.',
   'profile_reloaded': 'Profile reloaded successfully.',
@@ -85,22 +124,26 @@ const Map<String, String> enUS = {
   'name_updated_desc': 'New display name saved successfully.',
   'empty_image_error': 'Selected image file is empty.',
   'invalid_image_ext': 'Selected file does not have a valid extension.',
-  'unsupported_image_ext': 'Extension @ext is not supported. Supported extensions: jpg, jpeg, png, webp',
+  'unsupported_image_ext':
+      'Extension @ext is not supported. Supported extensions: jpg, jpeg, png, webp',
   'avatar_updated_title': 'Avatar Updated',
   'avatar_updated_desc': 'New profile photo saved successfully.',
   'account_deleted_title': 'Account Deleted',
   'account_deleted_desc': 'Your account data has been permanently removed.',
   'reset_email_sent_to': 'Password reset link sent to @email',
-  'check_inbox_reset_email': 'Please check inbox at @email to reset your password.',
+  'check_inbox_reset_email':
+      'Please check inbox at @email to reset your password.',
   'verification_sent_title': 'Verification Sent',
   'verification_sent_desc': 'Verification link sent to your email address.',
   'verification_congrats_title': 'Congratulations!',
   'verification_congrats_desc': 'Your email address is verified and active.',
   'verification_pending_title': 'Pending Verification',
-  'verification_pending_desc': 'Email not verified yet. Please click the link sent to your email first.',
+  'verification_pending_desc':
+      'Email not verified yet. Please click the link sent to your email first.',
   'login_app_bar_title': 'Sign In',
   'login_header_title': 'Welcome Back',
-  'login_header_subtitle': 'Sign in to manage and develop your Flutter application with Hosteday',
+  'login_header_subtitle':
+      'Sign in to access your account and continue your activity',
   'login_button': 'Sign In',
   'forgot_password_link': 'Forgot password?',
   'no_account_text': 'Don\'t have an account?',
@@ -108,19 +151,25 @@ const Map<String, String> enUS = {
 
   // Authentication - Register
   'register_app_bar_title': 'Create Account',
-  'register_header_title': 'Join Hosteday Platform',
-  'register_header_subtitle': 'Create your account to start building production-ready Flutter applications',
+  'register_header_title': 'Create Account',
+  'register_header_subtitle':
+      'Enter your details to create an account and get started',
   'register_button': 'Create Account',
   'have_account_text': 'Already have an account?',
   'login_link': 'Sign In',
 
   // Authentication - Forgot Password
+  'forgot_password_title': 'Reset Password',
+  'reset_password': 'Reset Password',
+  'verification_notice_title': 'Email Verification Notice',
   'forgot_password_app_bar_title': 'Reset Password',
   'forgot_password_header_title': 'Reset Password',
-  'forgot_password_header_subtitle': 'Enter your email address and we will immediately send you a password reset link.',
+  'forgot_password_header_subtitle':
+      'Enter your email address and we will immediately send you a password reset link.',
   'send_reset_link_button': 'Send Reset Link',
   'reset_link_sent_title': 'Reset link sent successfully!',
-  'reset_link_sent_desc': 'Please check your inbox at @email and click the link.',
+  'reset_link_sent_desc':
+      'Please check your inbox at @email and click the link.',
   'send_another_link': 'Send link to another email',
   'remember_password_question': 'Remembered your password?',
   'back_to_login': 'Back to Sign In',
@@ -130,7 +179,8 @@ const Map<String, String> enUS = {
   'choose_from_gallery': 'Choose from gallery',
   'take_a_photo': 'Take a photo',
   'delete_account_title': 'Delete Account',
-  'delete_account_message': 'Are you sure you want to permanently delete your account? This action cannot be undone.',
+  'delete_account_message':
+      'Are you sure you want to permanently delete your account? This action cannot be undone.',
   'no_active_session': 'No active user session',
   'account_created_at': 'Member since: @date',
   'email_status_verified': 'Verified email',
@@ -151,11 +201,14 @@ const Map<String, String> enUS = {
   'verify_page_button': 'Verification Page',
   'send_verification_link_short': 'Send Verification Link',
   'send_password_reset_email_action': 'Send Password Reset Email',
-  'send_password_reset_email_desc': 'Secure link sent via email to update your account password',
+  'send_password_reset_email_desc':
+      'Secure link sent via email to update your account password',
   'send_verification_notification_action': 'Send Email Verification Link',
-  'send_verification_notification_desc': 'Verification email to confirm ownership of your address',
+  'send_verification_notification_desc':
+      'Verification email to confirm ownership of your address',
   'delete_account_action': 'Delete Account Permanently',
-  'delete_account_desc': 'Permanently removes all user profile records and active sessions',
+  'delete_account_desc':
+      'Permanently removes all user profile records and active sessions',
   'avatar_uploaded_success': 'Avatar updated successfully!',
   'avatar_upload_failed': 'Avatar upload failed: @error',
   'profile_updated_success': 'Profile updated successfully!',
@@ -166,9 +219,11 @@ const Map<String, String> enUS = {
   // Password Reset Email Page
   'password_reset_email_app_bar_title': 'Password Reset',
   'password_reset_email_header_title': 'Password Reset via Email',
-  'password_reset_email_header_subtitle': 'We will send an encrypted link to your email to reset and update your Hosteday account password.',
+  'password_reset_email_header_subtitle':
+      'We will send a secure link to your email to reset and update your account password.',
   'password_reset_email_sent_title': 'Reset link sent successfully!',
-  'password_reset_email_sent_desc': 'We sent an email to @email.\nPlease check your inbox (or spam folder) and click the link to complete password reset.',
+  'password_reset_email_sent_desc':
+      'We sent an email to @email.\nPlease check your inbox (or spam folder) and click the link to complete password reset.',
   'send_reset_email_button': 'Send Reset Email',
   'resend_button': 'Resend',
   'back_to_profile': 'Back to Profile',
@@ -177,8 +232,10 @@ const Map<String, String> enUS = {
   'verification_notification_app_bar_title': 'Email Verification',
   'verification_verified_title': 'Email Verified Successfully!',
   'verification_unverified_title': 'Email Verification Required',
-  'verification_verified_desc': 'Your email is verified and your account has full access to all Hosteday services and database capabilities.',
-  'verification_unverified_desc': 'We sent a verification email to:\n@email\nPlease click the link in the message to activate your account.',
+  'verification_verified_desc':
+      'Your email is verified and your account has full access to all features.',
+  'verification_unverified_desc':
+      'We sent a verification email to:\n@email\nPlease click the link in the message to activate your account.',
   'verification_status_label': 'Current Account Status:',
   'status_verified_badge': 'Verified',
   'status_unverified_badge': 'Pending Verification',
@@ -186,11 +243,13 @@ const Map<String, String> enUS = {
   'status_verified_long': 'Status: Email verified and active',
   'status_unverified_long': 'Status: Pending - Not verified yet',
   'check_status_now': 'Check Status Now',
-  'verification_sent_success': 'Verification link sent successfully to your email!',
+  'verification_sent_success':
+      'Verification link sent successfully to your email!',
 
   // Realtime Page
   'realtime_header_title': 'Realtime WebSockets',
-  'realtime_header_subtitle': 'Connect to Hosteday realtime service and receive live stream events.',
+  'realtime_header_subtitle':
+      'Connect to realtime service and receive live stream events.',
   'realtime_host_label': 'Realtime Host',
   'realtime_url_label': 'Realtime URL',
   'realtime_client_status_label': 'Client Status',
@@ -198,24 +257,32 @@ const Map<String, String> enUS = {
   'realtime_disconnected': 'No (Disconnected)',
   'connect_realtime_button': 'Connect Realtime',
   'disconnect_button': 'Disconnect',
-  'realtime_info_text': 'Hosteday Realtime uses Pusher-compatible WebSockets. You can listen to Public, Private, and Presence channels with automatic token authorization.',
+  'realtime_info_text':
+      'Realtime uses WebSockets to listen to Public, Private, and Presence channels with automatic token authorization.',
 
   // Notifications Page
   'notifications_page_title': 'Notifications Center',
-  'notifications_page_subtitle': 'Configure push preferences and review inbox notifications on this device.',
+  'notifications_page_subtitle':
+      'Configure push preferences and review inbox notifications on this device.',
   'notifications_status_enabled': 'Active',
   'notifications_status_disabled': 'Disabled',
   'notifications_settings_title': 'Notification Preferences',
   'push_notifications_toggle_title': 'Instant Push Notifications',
-  'push_notifications_toggle_subtitle': 'Receive direct notifications as soon as they are sent',
+  'push_notifications_toggle_subtitle':
+      'Receive direct notifications as soon as they are sent',
   'general_announcements_toggle_title': 'General Announcements & News',
-  'general_announcements_toggle_subtitle': 'Updates, news, and important system broadcasts',
+  'general_announcements_toggle_subtitle':
+      'Updates, news, and important system broadcasts',
   'send_test_push_button': 'Send Test Push Alert 🔔',
   'copy_fcm_token_button': 'Copy Device FCM Token for Testing',
-  'how_to_send_from_dashboard_title': 'To send a notification from HosteDay Dashboard:',
-  'how_to_send_from_dashboard_step1': '1. Provider: Firebase Cloud Messaging (FCM v1).',
-  'how_to_send_from_dashboard_step2': '2. Target type: "Device Token" or "Topic: all" for Android.',
-  'how_to_send_from_dashboard_step3': '3. Do not select Amazon SNS (it requires an AWS ARN format).',
+  'how_to_send_from_dashboard_title':
+      'To send a notification from HosteDay Dashboard:',
+  'how_to_send_from_dashboard_step1':
+      '1. Provider: Firebase Cloud Messaging (FCM v1).',
+  'how_to_send_from_dashboard_step2':
+      '2. Target type: "Device Token" or "Topic: all" for Android.',
+  'how_to_send_from_dashboard_step3':
+      '3. Do not select Amazon SNS (it requires an AWS ARN format).',
   'device_registration_title': 'Device Registration in HosteDay',
   'refresh_device_list_tooltip': 'Refresh registered device list',
   'sync_status_label': 'Sync Status:',
@@ -229,19 +296,25 @@ const Map<String, String> enUS = {
   'notifications_inbox_title': 'Notifications Inbox',
   'clear_notifications_button': 'Clear',
   'no_notifications_title': 'No new notifications yet',
-  'no_notifications_subtitle': 'Direct alerts sent to this device will appear here.',
+  'no_notifications_subtitle':
+      'Direct alerts sent to this device will appear here.',
   'default_notification_title': 'Notification',
-  'fcm_token_empty_error': 'Device FCM token is not yet ready. Please enable notifications first.',
-  'fcm_token_copied': 'FCM Token copied to clipboard! Paste it into your HosteDay dashboard.',
+  'fcm_token_empty_error':
+      'Device FCM token is not yet ready. Please enable notifications first.',
+  'fcm_token_copied':
+      'FCM Token copied to clipboard! Paste it into your HosteDay dashboard.',
   'push_disabled_msg': 'Push notifications disabled on this device.',
-  'subscribed_announcements_msg': 'Successfully subscribed to announcements topic.',
+  'subscribed_announcements_msg':
+      'Successfully subscribed to announcements topic.',
   'unsubscribed_announcements_msg': 'Unsubscribed from announcements topic.',
   'test_push_title': 'Test Push from HosteDay 🔔',
-  'test_push_body': 'Notification received successfully! Your device is online and registered.',
+  'test_push_body':
+      'Notification received successfully! Your device is online and registered.',
 
   // Theme Picker Sheet
   'theme_sheet_title': 'Theme Customization',
-  'theme_sheet_subtitle': 'Choose from 6 refined color presets (3 Light & 3 Dark)',
+  'theme_sheet_subtitle':
+      'Choose from 6 refined color presets (3 Light & 3 Dark)',
   'light_themes_section': 'Light Themes (3)',
   'dark_themes_section': 'Dark Themes (3)',
   'theme_ocean_blue_light': 'Ocean Blue (Light)',
@@ -266,20 +339,104 @@ const Map<String, String> enUS = {
   // Guide Page Hero & Overview
   'guide_hero_badge': 'Official Production-Ready Flutter Kit',
   'guide_hero_title': 'Hosteday SDK Guide & Toolkit',
-  'guide_hero_subtitle': 'A battle-tested starter template demonstrating initialization, auth, profile management, realtime WebSockets, and push notifications.',
+  'guide_hero_subtitle':
+      'A battle-tested starter template demonstrating initialization, auth, profile management, realtime WebSockets, and push notifications.',
   'guide_switch_to_en': 'English',
   'guide_switch_to_ar': 'العربية',
   'cap_starter_title': 'Modular Starter Boilerplate',
-  'cap_starter_subtitle': 'GetX architecture ready for immediate duplication & expansion',
+  'cap_starter_subtitle':
+      'GetX architecture ready for immediate duplication & expansion',
   'cap_auth_title': 'Authentication & Accounts',
-  'cap_auth_subtitle': 'Sign In, Register, Email Verification, & Avatar Uploads',
+  'cap_auth_subtitle':
+      'Sign In, Register, Email Verification, & Avatar Uploads',
   'cap_api_title': 'REST API Client',
   'cap_api_subtitle': 'CRUD operations, pagination, and unified error handling',
   'cap_realtime_title': 'Realtime Streaming',
-  'cap_realtime_subtitle': 'Public, Private, and Presence Pusher-compatible WebSockets',
+  'cap_realtime_subtitle':
+      'Public, Private, and Presence Pusher-compatible WebSockets',
   'cap_notifications_title': 'Push Notifications',
-  'cap_notifications_subtitle': 'Instant push alerts via FCM and background handlers',
+  'cap_notifications_subtitle':
+      'Instant push alerts via FCM and background handlers',
   'interactive_status_title': 'Interactive User & Connection Status',
   'interactive_status_authenticated': 'User is currently signed in (@email)',
-  'interactive_status_guest': 'Browsing as Guest - You can sign in to access full features',
+  'interactive_status_guest':
+      'Browsing as Guest - You can sign in to access full features',
+
+  // Live Bidding Radar & Real-Time Arena
+  'live_bidding_app_bar_title': 'Live Bidding Radar',
+  'live_bidding_hero_title': 'Live Bidding & Silent Whisper Radar',
+  'live_bidding_hero_desc':
+      'Interactive live environment testing WebSocket broadcasting, presence radar, and instant outbid notifications.',
+  'live_bidding_ws_connected': 'WebSocket Connected',
+  'live_bidding_ws_connecting': 'Connecting...',
+  'live_bidding_ws_disconnected': 'Disconnected',
+  'live_bidding_outbid_alert_title': 'Alert: You have been outbid!',
+  'live_bidding_regain_lead': 'Regain Lead (+\$50)',
+  'live_bidding_silent_whisper_badge': 'Silent Live Whisper Challenge',
+  'live_bidding_ends_in': 'Ends in: @time',
+  'live_bidding_highest_bid_label': 'Current Highest Bid',
+  'live_bidding_you_are_leading': '👑 You are currently leading the auction',
+  'live_bidding_current_leader': 'Current Leader: @name',
+  'live_bidding_presence_title': 'Presence Radar',
+  'live_bidding_online_count': '@count online now',
+  'live_bidding_instant_whisper': 'Instant Whisper Bids',
+  'live_bidding_no_db_persistence': 'In-Memory (No DB)',
+  'live_bidding_activity_feed_title': 'Live Activity Stream (3 Channels + FCM)',
+  'live_bidding_events_count': '@count events',
+  'live_bidding_waiting_events': 'Waiting for the first bid or activity...',
+  'live_bidding_lab_title': 'Real-Time & Channels Lab',
+  'live_bidding_lab_subtitle':
+      'Testing public, presence, and private channels alongside push notifications',
+  'live_bidding_guest_badge': 'Guest Mode (Unauthenticated)',
+  'live_bidding_logged_in_badge': 'Signed in: @name',
+  'live_bidding_intro_desc':
+      'This page demonstrates live real-time communication via WebSockets and provides a sandbox to test presence, private channels, and Push alerts:',
+  'live_bidding_ch_public_title': '1. Public Channels',
+  'live_bidding_ch_public_badge': 'Open to Everyone',
+  'live_bidding_ch_public_desc':
+      'Works automatically for all visitors without sign-in. Broadcasts public auction updates and announcements.',
+  'live_bidding_ch_presence_title': '2. Presence Channels',
+  'live_bidding_ch_presence_badge': 'Requires Sign-in ⚠️',
+  'live_bidding_ch_presence_desc':
+      'Requires sign-in to sign the channel authorization request. Used for online member tracking and direct whisper bids.',
+  'live_bidding_ch_private_title': '3. Private Channels',
+  'live_bidding_ch_private_badge': 'Requires Sign-in ⚠️',
+  'live_bidding_ch_private_desc':
+      'Requires authentication tokens to receive personal outbid notifications and targeted private events securely.',
+  'live_bidding_ch_fcm_title': '4. FCM Push Notifications',
+  'live_bidding_ch_fcm_badge': 'Instant Alerts',
+  'live_bidding_ch_fcm_desc':
+      'Test receiving foreground and background push notifications when outbid, winning, or receiving direct alerts.',
+  'live_bidding_anonymous_bidder': 'Anonymous Bidder',
+  'live_bidding_no_bids_yet': 'No bids yet',
+  'live_bidding_be_first_bidder': 'Be the first to place a bid',
+  'live_bidding_bid_increment': '+\$@amount',
+  'live_bidding_signin_prompt':
+      'Notice: To appear on the presence radar and receive personal outbid notifications, please sign in first.',
+  'you': 'You',
+  'live_bidding_default_item_title':
+      'Rare Rolex Daytona Watch - Special Edition 2024',
+  'live_bidding_bidder_prefix': 'Bidder @id',
+  'live_bidding_log_radar_connected': 'Bidding Radar Connected',
+  'live_bidding_log_connected_desc':
+      'Successfully connected to WebSocket server (@host) and active channels',
+  'live_bidding_log_connection_err': 'Connection Notice',
+  'live_bidding_log_connection_err_desc': 'Could not connect to server: @err',
+  'live_bidding_log_joined_title': 'New Bidder Joined',
+  'live_bidding_log_joined_desc': '@name joined the bidding radar room',
+  'live_bidding_log_left_title': 'Bidder Left',
+  'live_bidding_log_left_desc': '@name left the bidding room',
+  'live_bidding_log_here_title': 'Presence Radar (Here)',
+  'live_bidding_log_here_desc':
+      'Room participants synchronized (@count active members)',
+  'live_bidding_log_status_updated_title': 'Auction Status Updated',
+  'live_bidding_log_status_updated_desc':
+      'Auction status was updated via public broadcast',
+  'live_bidding_outbid_default_msg':
+      'Alert: Another bidder has outbid your latest offer!',
+  'live_bidding_outbid_by_msg': '@name placed a higher bid of \$@amount!',
+  'live_bidding_log_your_bid': 'Your New Bid',
+  'live_bidding_log_whisper_bid': 'New Bid (Whisper)',
+  'live_bidding_log_bid_desc': '@name placed a bid of \$@amount',
+  'live_bidding_push_notification_default_title': 'Live Auction Notification',
 };

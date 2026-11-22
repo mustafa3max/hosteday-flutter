@@ -11,4 +11,3 @@ class AuthBinding extends Bindings {
     }
   }
 }
-

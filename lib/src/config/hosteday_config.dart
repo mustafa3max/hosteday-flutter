@@ -186,9 +186,12 @@ class HostedayConfig {
   /// Only project, token, API base URL, and realtime settings can be provided.
   /// Auth and user paths are fixed by Hosteday.
   factory HostedayConfig.fromOptions(Map<String, Object?> options) {
-    final projectDomain = _requiredOption(
+    final rawDomain = _stringOption(
       options,
-      HostedayOptionKeys.projectDomain,
+      const [
+        HostedayOptionKeys.projectDomain,
+        'domain',
+      ],
     );
 
     final baseUrl = _stringOption(
@@ -198,7 +201,17 @@ class HostedayConfig {
             HostedayOptionKeys.baseUrl,
           ],
         ) ??
-        _baseUrlFromProjectDomain(projectDomain);
+        (rawDomain != null ? _baseUrlFromProjectDomain(rawDomain) : null);
+
+    if (baseUrl == null) {
+      throw ArgumentError.value(
+        null,
+        HostedayOptionKeys.apiBaseUrl,
+        'Either "${HostedayOptionKeys.projectDomain}" or "${HostedayOptionKeys.baseUrl}" is required.',
+      );
+    }
+
+    final projectDomain = rawDomain ?? Uri.tryParse(baseUrl)?.host ?? baseUrl;
 
     final baseUri = Uri.tryParse(baseUrl);
 
@@ -446,7 +459,6 @@ class HostedayConfig {
     return '$realtimeScheme://$realtimeHost:$realtimePort/app/$pusherKey';
   }
 
-
   /// Headers sent automatically with all Hosteday HTTP requests.
   Map<String, String> get defaultHeaders {
     final token = apiToken?.trim();
@@ -516,23 +528,6 @@ class HostedayConfig {
   @Deprecated('Use sendEmailVerificationNotificationPath instead.')
   String get resendEmailVerificationPathPost {
     return sendEmailVerificationNotificationPath;
-  }
-
-  static String _requiredOption(
-    Map<String, Object?> options,
-    String key,
-  ) {
-    final value = _stringOption(options, <String>[key]);
-
-    if (value == null) {
-      throw ArgumentError.value(
-        null,
-        key,
-        'The "$key" option is required.',
-      );
-    }
-
-    return value;
   }
 
   static String? _stringOption(

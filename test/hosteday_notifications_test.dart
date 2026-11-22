@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 void main() {
   group('Hosteday Notification Config & Response', () {
@@ -33,7 +36,8 @@ void main() {
         HostedayOptionKeys.firebaseProjectId: 'test-app',
         HostedayOptionKeys.firebaseVapidKey: 'BBL8TestVapidKey',
         HostedayOptionKeys.firebaseAuthDomain: 'test-app.firebaseapp.com',
-        HostedayOptionKeys.firebaseStorageBucket: 'test-app.firebasestorage.app',
+        HostedayOptionKeys.firebaseStorageBucket:
+            'test-app.firebasestorage.app',
         HostedayOptionKeys.firebaseMeasurementId: 'G-TEST1234',
         HostedayOptionKeys.jobsEnabled: true,
         HostedayOptionKeys.jobsPath: '/api/v1/jobs',
@@ -81,6 +85,87 @@ void main() {
       expect(response.error, 'Failed to deliver notification.');
       expect(response.messageId, isNull);
     });
+
+    test(
+        'syncDeviceToken transmits token, device metadata, and Bearer authorization',
+        () async {
+      http.Request? capturedRequest;
+      final sdk = HostedayClient(
+        config: HostedayConfig.fromOptions(const {
+          HostedayOptionKeys.projectDomain: 'test-app.hosteday.com',
+          HostedayOptionKeys.notificationsEnabled: true,
+        }),
+        httpClient: MockClient((request) async {
+          capturedRequest = request;
+          return http.Response(
+            jsonEncode({'success': true, 'message': 'Device token synced'}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
+      addTearDown(sdk.dispose);
+
+      final result = await sdk.notifications.syncDeviceToken(
+        token: 'fcm_token_12345',
+        accessToken: 'user_jwt_access_token',
+        deviceType: 'web',
+        deviceId: 'device_uuid_99',
+        deviceName: 'Web Browser',
+      );
+
+      expect(result['success'], isTrue);
+      expect(capturedRequest, isNotNull);
+      expect(capturedRequest!.url.path, '/api/notifications/devices/register');
+      expect(capturedRequest!.headers['authorization'],
+          'Bearer user_jwt_access_token');
+
+      final body = jsonDecode(capturedRequest!.body) as Map<String, dynamic>;
+      expect(body['device_token'], 'fcm_token_12345');
+      expect(body['device_type'], 'web');
+      expect(body['device_name'], 'Web Browser');
+      expect(body['device_id'], 'device_uuid_99');
+    });
+
+    test(
+        'syncDeviceToken handles 404 fallback between /api/device-tokens and /api/notifications/devices/register',
+        () async {
+      final pathsCalled = <String>[];
+      final sdk = HostedayClient(
+        config: HostedayConfig.fromOptions(const {
+          HostedayOptionKeys.projectDomain: 'test-app.hosteday.com',
+          HostedayOptionKeys.notificationsEnabled: true,
+        }),
+        httpClient: MockClient((request) async {
+          pathsCalled.add(request.url.path);
+          if (request.url.path == '/api/device-tokens') {
+            return http.Response(
+              '{"message": "Not Found"}',
+              404,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          return http.Response(
+            jsonEncode({'success': true, 'message': 'Device token synced'}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
+      addTearDown(sdk.dispose);
+
+      final result = await sdk.notifications.syncDeviceToken(
+        token: 'fcm_token_fallback',
+        accessToken: 'jwt_token',
+        deviceType: 'web',
+        endpoint: '/api/device-tokens',
+      );
+
+      expect(result['success'], isTrue);
+      expect(
+          pathsCalled,
+          containsAllInOrder(
+              ['/api/device-tokens', '/api/notifications/devices/register']));
+    });
   });
 }
-

@@ -12,18 +12,19 @@ abstract final class AppThemeFactory {
   static ThemeData build(AppThemePreset preset) {
     final brightness = preset.isDark ? Brightness.dark : Brightness.light;
 
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: preset.primaryColor,
-      brightness: brightness,
-    ).copyWith(
-      primary: preset.primaryColor,
-      onPrimary: preset.isDark ? Colors.black : Colors.white,
-      secondary: preset.accentColor,
-      surface: preset.surfaceColor,
-      onSurface: preset.textColor,
-      error: const Color(0xFFEF4444),
-      outlineVariant: preset.borderColor,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: preset.primaryColor,
+          brightness: brightness,
+        ).copyWith(
+          primary: preset.primaryColor,
+          onPrimary: preset.isDark ? Colors.black : Colors.white,
+          secondary: preset.accentColor,
+          surface: preset.surfaceColor,
+          onSurface: preset.textColor,
+          error: const Color(0xFFEF4444),
+          outlineVariant: preset.borderColor,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -95,7 +96,9 @@ abstract final class AppThemeFactory {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: preset.surfaceColor,
-        hintStyle: TextStyle(color: preset.textMutedColor.withValues(alpha: 0.8)),
+        hintStyle: TextStyle(
+          color: preset.textMutedColor.withValues(alpha: 0.8),
+        ),
         labelStyle: TextStyle(color: preset.textMutedColor),
         floatingLabelStyle: TextStyle(
           color: preset.primaryColor,
@@ -137,7 +140,10 @@ abstract final class AppThemeFactory {
           disabledForegroundColor: preset.textMutedColor,
           minimumSize: const Size(64, 48),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          textStyle: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -150,7 +156,10 @@ abstract final class AppThemeFactory {
           minimumSize: const Size(64, 48),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           side: BorderSide(color: preset.borderColor),
-          textStyle: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -205,10 +214,7 @@ abstract final class AppThemeFactory {
         }),
       ),
 
-      dividerTheme: DividerThemeData(
-        color: preset.borderColor,
-        thickness: 1,
-      ),
+      dividerTheme: DividerThemeData(color: preset.borderColor, thickness: 1),
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: preset.surfaceColor,
@@ -226,4 +232,3 @@ abstract final class AppThemeFactory {
     );
   }
 }
-

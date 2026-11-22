@@ -50,20 +50,22 @@ void main() {
     }
   });
 
-  test('LocalizationController toggles language and persists selection', () async {
-    final controller = Get.put(LocalizationController());
+  test(
+    'LocalizationController toggles language and persists selection',
+    () async {
+      final controller = Get.put(LocalizationController());
 
-    expect(controller.isArabic, isTrue);
-    expect(controller.textDirection, TextDirection.rtl);
+      expect(controller.isArabic, isTrue);
+      expect(controller.textDirection, TextDirection.rtl);
 
-    await controller.toggleLanguage();
+      await controller.toggleLanguage();
 
-    expect(controller.isEnglish, isTrue);
-    expect(controller.textDirection, TextDirection.ltr);
+      expect(controller.isEnglish, isTrue);
+      expect(controller.textDirection, TextDirection.ltr);
 
-    await controller.toggleLanguage();
+      await controller.toggleLanguage();
 
-    expect(controller.isArabic, isTrue);
-  });
+      expect(controller.isArabic, isTrue);
+    },
+  );
 }
-

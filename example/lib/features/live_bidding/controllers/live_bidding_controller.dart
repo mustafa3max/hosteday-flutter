@@ -22,9 +22,9 @@ class LiveBiddingController extends GetxController {
   // Reactive State Variables
   // ---------------------------------------------------------------------------
   final RxList<BidderModel> onlineBidders = <BidderModel>[].obs;
-  final RxInt currentHighestBid = 1450.obs;
-  final RxString highestBidderName = 'سالم الهاشمي'.obs;
-  final RxString highestBidderId = 'bidder_initial_01'.obs;
+  final RxInt currentHighestBid = 1000.obs;
+  final RxString highestBidderName = ''.obs;
+  final RxString highestBidderId = ''.obs;
   final RxList<Map<String, dynamic>> biddingLogs = <Map<String, dynamic>>[].obs;
 
   final RxBool isConnected = false.obs;
@@ -32,8 +32,7 @@ class LiveBiddingController extends GetxController {
   final RxBool isSubmittingBid = false.obs;
   final RxBool isPulsing = false.obs;
 
-  final RxString auctionTitle =
-      'ساعة رولكس دايتونا النادرة - إصدار خاص 2024'.obs;
+  final RxString auctionTitle = 'live_bidding_default_item_title'.tr.obs;
   final RxString auctionStatus = 'active'.obs;
   final RxInt remainingSeconds = 1800.obs; // 30 minutes
 
@@ -71,7 +70,10 @@ class LiveBiddingController extends GetxController {
       final name = user?.name;
       if (name != null && name.trim().isNotEmpty) return name.trim();
     }
-    return 'مزايد ${currentUserId.length > 6 ? currentUserId.substring(0, 6) : currentUserId}';
+    final idShort = currentUserId.length > 6
+        ? currentUserId.substring(0, 6)
+        : currentUserId;
+    return 'live_bidding_bidder_prefix'.trParams({'id': idShort});
   }
 
   String? get currentUserAvatar {
@@ -81,29 +83,9 @@ class LiveBiddingController extends GetxController {
     return null;
   }
 
-  bool get isCurrentHighestBidder => highestBidderId.value == currentUserId;
-
-  // Initial active auction participants to keep the radar fully populated
-  static final List<BidderModel> _defaultInitialBidders = <BidderModel>[
-    BidderModel(
-      id: 'bidder_initial_01',
-      name: 'سالم الهاشمي',
-      avatarUrl: null,
-      joinedAt: DateTime.now().subtract(const Duration(minutes: 12)),
-    ),
-    BidderModel(
-      id: 'bidder_initial_02',
-      name: 'فهد الشمري',
-      avatarUrl: null,
-      joinedAt: DateTime.now().subtract(const Duration(minutes: 8)),
-    ),
-    BidderModel(
-      id: 'bidder_initial_03',
-      name: 'نورة العتيبي',
-      avatarUrl: null,
-      joinedAt: DateTime.now().subtract(const Duration(minutes: 4)),
-    ),
-  ];
+  bool get isCurrentHighestBidder =>
+      highestBidderId.value.isNotEmpty &&
+      highestBidderId.value == currentUserId;
 
   @override
   void onInit() {
@@ -118,11 +100,10 @@ class LiveBiddingController extends GetxController {
     onlineBidders.assignAll(<BidderModel>[
       BidderModel(
         id: currentUserId,
-        name: '$currentUserName (أنت)',
+        name: '$currentUserName (${'you'.tr})',
         avatarUrl: currentUserAvatar,
         joinedAt: DateTime.now(),
       ),
-      ..._defaultInitialBidders,
     ]);
   }
 
@@ -140,52 +121,60 @@ class LiveBiddingController extends GetxController {
     super.onClose();
   }
 
+  bool _isPresenceSubscribed = false;
+  bool _isPrivateSubscribed = false;
+  bool _isPublicSubscribed = false;
+
   // ---------------------------------------------------------------------------
   // Channel Subscriptions Setup
   // ---------------------------------------------------------------------------
   Future<void> _setupPresenceAndChannels() async {
     isConnecting.value = true;
     try {
+      // 1. Listen to SDK realtime connection state stream
+      _streamSubscriptions.add(
+        Hosteday.realtime.onConnectionStateChanged.listen((connected) {
+          isConnected.value = connected;
+          if (connected) {
+            isConnecting.value = false;
+            _subscribeChannels();
+          }
+        }),
+      );
+
+      // 2. Listen to Auth State Changes (e.g. user signs in while on this screen)
+      if (Hosteday.isInitialized) {
+        _streamSubscriptions.add(
+          Hosteday.auth.authStateChanges().listen((user) {
+            _ensureSelfInBidders();
+            if (user != null && isConnected.value) {
+              _subscribeChannels();
+            }
+          }),
+        );
+      }
+
       if (!Hosteday.realtime.isConnected) {
         await Hosteday.connectRealtime();
       }
 
       isConnected.value = Hosteday.realtime.isConnected;
-
-      // 1. Setup Public Channel (Always accessible for all users & guests)
-      try {
-        await _initPublicChannel();
-      } catch (e) {
-        debugPrint('[LiveBiddingController] Public channel notice: $e');
-      }
-
-      // 2. Setup Presence Channel (Radar of active participants & Whisper)
-      try {
-        await _initPresenceChannel();
-      } catch (e) {
-        debugPrint('[LiveBiddingController] Presence channel notice: $e');
-      }
-
-      // 3. Setup Private Channel (Personal outbid alerts for authenticated users)
-      try {
-        await _initPrivateChannel();
-      } catch (e) {
-        debugPrint('[LiveBiddingController] Private channel notice: $e');
-      }
-
-      // Add self to online bidders as an active participant
-      _ensureSelfInBidders();
+      await _subscribeChannels();
 
       _addLog(
-        title: 'اتصال رادار المزايدة',
-        description: 'تم الاتصال بنجاح بخادم الويب سوكت (${Hosteday.config.realtimeHost}) والقنوات الحية',
+        title: 'live_bidding_log_radar_connected'.tr,
+        description: 'live_bidding_log_connected_desc'.trParams({
+          'host': Hosteday.config.realtimeHost,
+        }),
         channelType: 'Realtime',
         amount: null,
       );
     } catch (e) {
       _addLog(
-        title: 'تنبيه اتصال',
-        description: 'تعذر الاتصال بالخادم: $e',
+        title: 'live_bidding_log_connection_err'.tr,
+        description: 'live_bidding_log_connection_err_desc'.trParams({
+          'err': e.toString(),
+        }),
         channelType: 'Error',
         amount: null,
       );
@@ -195,10 +184,46 @@ class LiveBiddingController extends GetxController {
     }
   }
 
+  Future<void> _subscribeChannels() async {
+    // 1. Setup Public Channel (Always accessible for all users & guests)
+    if (!_isPublicSubscribed) {
+      try {
+        await _initPublicChannel();
+        _isPublicSubscribed = true;
+      } catch (e) {
+        debugPrint('[LiveBiddingController] Public channel notice: $e');
+      }
+    }
+
+    // 2. Setup Presence & Private Channels (Only when authenticated with user token)
+    if (isAuthenticated) {
+      if (!_isPresenceSubscribed) {
+        try {
+          await _initPresenceChannel();
+          _isPresenceSubscribed = true;
+        } catch (e) {
+          debugPrint('[LiveBiddingController] Presence channel notice: $e');
+        }
+      }
+
+      if (!_isPrivateSubscribed) {
+        try {
+          await _initPrivateChannel();
+          _isPrivateSubscribed = true;
+        } catch (e) {
+          debugPrint('[LiveBiddingController] Private channel notice: $e');
+        }
+      }
+    }
+
+    // Add self to online bidders as an active participant
+    _ensureSelfInBidders();
+  }
+
   Future<void> _initPresenceChannel() async {
     try {
       // 1. Listen for existing members present in the room (HERE / subscription_succeeded)
-      final hereSub = await Hosteday.realtime.listenPresenceHere(
+      final hereSub = await Hosteday.realtime.listenPresenceMembersList(
         channel: presenceChannelName,
         onEvent: (event) {
           _handlePresenceHere(event.data);
@@ -220,8 +245,10 @@ class LiveBiddingController extends GetxController {
             }
           }
           _addLog(
-            title: 'انضمام مزايد جديد',
-            description: '${bidder.name} انضم إلى رادار المزايدة الآن',
+            title: 'live_bidding_log_joined_title'.tr,
+            description: 'live_bidding_log_joined_desc'.trParams({
+              'name': bidder.name,
+            }),
             channelType: 'Presence',
             amount: null,
           );
@@ -241,8 +268,10 @@ class LiveBiddingController extends GetxController {
             }
             if (removed != null) {
               _addLog(
-                title: 'مغادرة مزايد',
-                description: '${removed.name} غادر غرفة المزايدة',
+                title: 'live_bidding_log_left_title'.tr,
+                description: 'live_bidding_log_left_desc'.trParams({
+                  'name': removed.name,
+                }),
                 channelType: 'Presence',
                 amount: null,
               );
@@ -306,12 +335,14 @@ class LiveBiddingController extends GetxController {
           } else if (presence['ids'] is List) {
             for (final id in (presence['ids'] as List)) {
               final idStr = id.toString();
-              hereBidders.add(BidderModel(
-                id: idStr,
-                name:
-                    'مزايد #${idStr.length > 4 ? idStr.substring(idStr.length - 4) : idStr}',
-                joinedAt: DateTime.now(),
-              ));
+              hereBidders.add(
+                BidderModel(
+                  id: idStr,
+                  name:
+                      'مزايد #${idStr.length > 4 ? idStr.substring(idStr.length - 4) : idStr}',
+                  joinedAt: DateTime.now(),
+                ),
+              );
             }
           }
         } else if (data['members'] is List) {
@@ -337,8 +368,9 @@ class LiveBiddingController extends GetxController {
       // Merge / update onlineBidders with members from 'here'
       if (hereBidders.isNotEmpty) {
         for (final bidder in hereBidders) {
-          final existingIdx =
-              onlineBidders.indexWhere((b) => b.id == bidder.id);
+          final existingIdx = onlineBidders.indexWhere(
+            (b) => b.id == bidder.id,
+          );
           if (existingIdx >= 0) {
             onlineBidders[existingIdx] = bidder;
           } else {
@@ -351,9 +383,10 @@ class LiveBiddingController extends GetxController {
       _ensureSelfInBidders();
 
       _addLog(
-        title: 'رادار المتواجدين (Here)',
-        description:
-            'تم مسح ومزامنة أعضاء الغرفة (${onlineBidders.length} متواجد متكامل)',
+        title: 'live_bidding_log_here_title'.tr,
+        description: 'live_bidding_log_here_desc'.trParams({
+          'count': onlineBidders.length.toString(),
+        }),
         channelType: 'Presence',
         amount: null,
       );
@@ -382,14 +415,24 @@ class LiveBiddingController extends GetxController {
                 int.tryParse(seconds.toString()) ?? remainingSeconds.value;
           }
           _addLog(
-            title: 'تحديث حالة المزاد',
-            description: 'تم تحديث حالة المزاد عبر القناة العامة',
+            title: 'live_bidding_log_status_updated_title'.tr,
+            description: 'live_bidding_log_status_updated_desc'.tr,
             channelType: 'Public',
             amount: null,
           );
         },
       );
       _streamSubscriptions.add(publicSub);
+
+      // Listen for public broadcast bids (allows guests to see live bids)
+      final publicBidSub = await Hosteday.realtime.listenPublic(
+        channel: publicChannelName,
+        event: 'new-bid',
+        onEvent: (event) {
+          _handleIncomingWhisperBid(event.data);
+        },
+      );
+      _streamSubscriptions.add(publicBidSub);
     } catch (e) {
       debugPrint('[LiveBiddingController] Public channel setup note: $e');
     }
@@ -404,13 +447,13 @@ class LiveBiddingController extends GetxController {
         onEvent: (event) {
           final msg =
               event.data['message']?.toString() ??
-              'تنبيه: قام شخص آخر بتجاوز عرضك الأخير في المزاد!';
+              'live_bidding_outbid_default_msg'.tr;
 
           hasOutbidNotice.value = true;
           lastOutbidMessage.value = msg;
 
           Get.snackbar(
-            '⚠️ تم تجاوز عرضك!',
+            'live_bidding_outbid_alert_title'.tr,
             msg,
             snackPosition: SnackPosition.TOP,
             backgroundColor: const Color(0xFFEF4444),
@@ -421,7 +464,7 @@ class LiveBiddingController extends GetxController {
           );
 
           _addLog(
-            title: 'تنبيه تجاوز العرض (Outbid)',
+            title: 'live_bidding_outbid_alert_title'.tr,
             description: msg,
             channelType: 'Private',
             amount: null,
@@ -439,7 +482,7 @@ class LiveBiddingController extends GetxController {
   // ---------------------------------------------------------------------------
   /// Submits an immediate bid increment using client-side Whisper.
   Future<void> submitBid(int increment) async {
-    if (isSubmittingBid.value) return;
+    if (!isConnected.value || isSubmittingBid.value) return;
     isSubmittingBid.value = true;
 
     try {
@@ -522,11 +565,13 @@ class LiveBiddingController extends GetxController {
       // If user was previously the leader and got outbid by someone else
       if (wasSelfHighest && !isNewBidFromSelf) {
         hasOutbidNotice.value = true;
-        lastOutbidMessage.value =
-            'قام ${newBid.bidderName} بتقديم عرض أعلى منك بقيمة \$${newBid.amount}!';
+        lastOutbidMessage.value = 'live_bidding_outbid_by_msg'.trParams({
+          'name': newBid.bidderName,
+          'amount': newBid.amount.toString(),
+        });
 
         Get.snackbar(
-          '⚠️ تم كسر عرضك!',
+          'live_bidding_outbid_alert_title'.tr,
           lastOutbidMessage.value,
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFFEF4444),
@@ -552,8 +597,13 @@ class LiveBiddingController extends GetxController {
     _triggerPulseAnimation();
 
     _addLog(
-      title: isSelf ? 'عرضك الجديد' : 'مزايدة جديدة (Whisper)',
-      description: '$bidderName قدّم مزايدة بقيمة \$$amount',
+      title: isSelf
+          ? 'live_bidding_log_your_bid'.tr
+          : 'live_bidding_log_whisper_bid'.tr,
+      description: 'live_bidding_log_bid_desc'.trParams({
+        'name': bidderName,
+        'amount': amount.toString(),
+      }),
       channelType: 'Presence Whisper',
       amount: amount,
     );
@@ -576,7 +626,7 @@ class LiveBiddingController extends GetxController {
         final title =
             message.notification?.title ??
             message.data['title'] ??
-            'إشعار مزاد مباشر';
+            'live_bidding_push_notification_default_title'.tr;
         final body =
             message.notification?.body ??
             message.data['body'] ??
@@ -614,7 +664,7 @@ class LiveBiddingController extends GetxController {
   void _ensureSelfInBidders() {
     final selfBidder = BidderModel(
       id: currentUserId,
-      name: '$currentUserName (أنت)',
+      name: '$currentUserName (${'you'.tr})',
       avatarUrl: currentUserAvatar,
       joinedAt: DateTime.now(),
     );

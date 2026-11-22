@@ -55,7 +55,8 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('ميزة الإشعارات الفورية غير مفعلة'), findsOneWidget);
+      expect(find.textContaining('ميزة الإشعارات الفورية غير مفعلة'),
+          findsOneWidget);
       expect(find.textContaining('Upgrade Plan'), findsOneWidget);
       expect(find.byIcon(Icons.notifications_active_rounded), findsOneWidget);
     });

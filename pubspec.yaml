@@ -1,10 +1,10 @@
 name: hosteday_flutter
 description: A lightweight Flutter SDK for connecting apps with HosteDay APIs, including authentication, user requests, custom endpoints, and realtime support.
-version: 2.3.1
+version: 2.4.0
 homepage: https://hosteday.com
 repository: https://github.com/mustafa3max/hosteday-flutter
 issue_tracker: https://github.com/mustafa3max/hosteday-flutter/issues
-documentation: https://github.com/mustafa3max/hosteday-flutter#readme
+documentation: https://hosteday.com/docs
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -19,6 +19,8 @@ dependencies:
   dart_pusher_channels: ^1.3.1
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.0
+  web: ^1.1.0
+  internet_connection_checker_plus: ^3.1.0
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +33,14 @@ topics:
   - api
   - sdk
   - realtime
+
+false_secrets:
+  - /example/android/app/google-services.json
+  - /example/android/google-services.json
+  - /example/ios/Runner/GoogleService-Info.plist
+  - /example/web/firebase-config.json
+  - /example/web/firebase-messaging-sw.js
+
+flutter:
+  assets:
+    - assets/logo.png

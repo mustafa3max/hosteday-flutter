@@ -1,5 +1,12 @@
+import 'dart:collection';
+
 /// Represents the response returned when interacting with the HosteDay notification service.
-class HosteDayNotificationResponse {
+///
+/// Implements [Map] via [MapMixin] for seamless backward compatibility
+/// with callers expecting raw [Map<String, dynamic>].
+class HosteDayNotificationResponse with MapMixin<String, dynamic> {
+  final Map<String, dynamic> _raw;
+
   /// Whether the notification operation succeeded.
   final bool success;
 
@@ -12,12 +19,20 @@ class HosteDayNotificationResponse {
   /// Additional payload data returned by the server.
   final Map<String, dynamic>? data;
 
-  const HosteDayNotificationResponse({
+  HosteDayNotificationResponse({
     required this.success,
     this.messageId,
     this.error,
     this.data,
-  });
+    Map<String, dynamic>? raw,
+  }) : _raw = raw != null
+            ? Map<String, dynamic>.unmodifiable(raw)
+            : Map<String, dynamic>.unmodifiable(<String, dynamic>{
+                'success': success,
+                if (messageId != null) 'message_id': messageId,
+                if (error != null) 'error': error,
+                if (data != null) 'data': data,
+              });
 
   /// Creates a [HosteDayNotificationResponse] from JSON.
   factory HosteDayNotificationResponse.fromJson(Map<String, dynamic> json) {
@@ -34,25 +49,46 @@ class HosteDayNotificationResponse {
         dataMap?['messageId'];
 
     final rawError = json['error'] ??
-        (!success ? (json['message'] ?? 'Notification dispatch failed.') : null);
+        (!success
+            ? (json['message'] ?? 'Notification dispatch failed.')
+            : null);
 
     return HosteDayNotificationResponse(
       success: success,
       messageId: rawMessageId?.toString(),
       error: rawError?.toString(),
       data: dataMap,
+      raw: json,
     );
   }
 
-  /// Converts the response to a JSON-compatible map.
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'success': success,
-      if (messageId != null) 'message_id': messageId,
-      if (error != null) 'error': error,
-      if (data != null) 'data': data,
-    };
+  // ---------------------------------------------------------------------------
+  // MapMixin implementation for 100% backward compatibility
+  // ---------------------------------------------------------------------------
+
+  @override
+  dynamic operator [](Object? key) => _raw[key];
+
+  @override
+  void operator []=(String key, dynamic value) {
+    throw UnsupportedError('HosteDayNotificationResponse is unmodifiable.');
   }
+
+  @override
+  void clear() {
+    throw UnsupportedError('HosteDayNotificationResponse is unmodifiable.');
+  }
+
+  @override
+  Iterable<String> get keys => _raw.keys;
+
+  @override
+  dynamic remove(Object? key) {
+    throw UnsupportedError('HosteDayNotificationResponse is unmodifiable.');
+  }
+
+  /// Converts the response to a JSON-compatible map.
+  Map<String, dynamic> toJson() => Map<String, dynamic>.from(_raw);
 
   @override
   String toString() {
@@ -67,4 +103,3 @@ class HosteDayNotificationResponse {
 
 /// Preferred spelling of [HosteDayNotificationResponse].
 typedef HostedayNotificationResponse = HosteDayNotificationResponse;
-

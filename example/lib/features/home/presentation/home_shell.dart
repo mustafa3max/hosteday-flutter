@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/localization/localization_controller.dart';
 import '../../../core/routes/go_page.dart';
-import '../../../core/theme/theme_picker_sheet.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../example/presentation/pages/example_guide_page.dart';
-import '../../notifications/presentation/pages/notifications_page.dart';
+import '../../auth/presentation/pages/forgot_password_page.dart';
+import '../../auth/presentation/pages/login_page.dart';
+import '../../auth/presentation/pages/register_page.dart';
+import '../../guide/presentation/pages/guide_page.dart';
+import '../../settings/presentation/pages/settings_page.dart';
+import '../../user/presentation/pages/password_reset_email_page.dart';
 import '../../user/presentation/pages/profile_page.dart';
+import '../../user/presentation/pages/verification_notification_page.dart';
 import '../../live_bidding/views/live_bidding_screen.dart';
 import '../controllers/home_controller.dart';
 
@@ -20,8 +24,9 @@ import '../controllers/home_controller.dart';
 class HomeShell extends StatelessWidget {
   final HostedayUser? user;
   final HomeTab? initialTab;
+  final Widget? child;
 
-  const HomeShell({this.user, this.initialTab, super.key});
+  const HomeShell({this.user, this.initialTab, this.child, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,356 +37,441 @@ class HomeShell extends StatelessWidget {
     final authController = Get.isRegistered<AuthController>()
         ? Get.find<AuthController>()
         : Get.put(AuthController(), permanent: true);
-    final localizationController = Get.isRegistered<LocalizationController>()
-        ? LocalizationController.to
-        : null;
-
-    if (initialTab != null && homeController.currentTab.value != initialTab) {
-      homeController.currentTab.value = initialTab!;
-    }
 
     return Obx(() {
       final currentUser = authController.currentUser.value ?? user;
       final isAuthenticated = currentUser != null;
-      final selectedTab = homeController.currentTab.value;
+      final selectedTab = initialTab ?? homeController.currentTab.value;
 
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final isWideScreen = constraints.maxWidth >= 768;
-          final isLargeDesktop = constraints.maxWidth >= 1100;
+      final pageTitle = () {
+        if (child is LoginPage) {
+          return '${'sign_in'.tr} | Hosteday';
+        } else if (child is RegisterPage) {
+          return '${'create_account'.tr} | Hosteday';
+        } else if (child is ForgotPasswordPage) {
+          return '${'forgot_password_app_bar_title'.tr} | Hosteday';
+        } else if (child is PasswordResetEmailPage) {
+          return '${'password_reset_email_app_bar_title'.tr} | Hosteday';
+        } else if (child is VerificationNotificationPage) {
+          return '${'verification_notification_app_bar_title'.tr} | Hosteday';
+        }
 
-          final activeTabBody = switch (selectedTab) {
-            HomeTab.example => ExampleGuidePage(
-                onNavigateToTab: homeController.setTabIndex,
-              ),
-            HomeTab.realtime => Hosteday.features.isRealtimeEnabled
-                ? const LiveBiddingScreen()
-                : FeaturePaywallPage.realtime(
-                    onBack: () => homeController.setTabIndex(0),
+        return switch (selectedTab) {
+          HomeTab.guide => '${'nav_guide'.tr} | Hosteday',
+          HomeTab.realtime => '${'live_bidding_app_bar_title'.tr} | Hosteday',
+          HomeTab.settings => '${'settings_title'.tr} | Hosteday',
+          HomeTab.profile => '${'nav_profile'.tr} | Hosteday',
+        };
+      }();
+
+      return Title(
+        title: pageTitle,
+        color: theme.colorScheme.primary,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWideScreen = constraints.maxWidth >= 768;
+            final isLargeDesktop = constraints.maxWidth >= 1100;
+
+            final activeTabBody =
+                child ??
+                switch (selectedTab) {
+                  HomeTab.guide => GuidePage(
+                    onNavigateToTab: homeController.setTabIndex,
                   ),
-            HomeTab.notifications => Hosteday.features.isNotificationsEnabled
-                ? const NotificationsPage()
-                : FeaturePaywallPage.notifications(
-                    onBack: () => homeController.setTabIndex(0),
-                  ),
-            HomeTab.profile => isAuthenticated
-                ? const ProfilePage()
-                : _buildUnauthenticatedProfileView(context, theme),
-          };
-
-          // -----------------------------------------------------------------
-          // 1. Tablet & Desktop Layout: Side NavigationRail + Main Content
-          // -----------------------------------------------------------------
-          if (isWideScreen) {
-            return Scaffold(
-              body: Row(
-                children: <Widget>[
-                  NavigationRail(
-                    extended: isLargeDesktop,
-                    selectedIndex: homeController.selectedIndex,
-                    onDestinationSelected: homeController.setTabIndex,
-                    minExtendedWidth: 200,
-                    leading: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.bolt_rounded,
-                              size: 22,
-                              color: theme.colorScheme.primary,
-                            ),
+                  HomeTab.realtime =>
+                    Hosteday.features.isRealtimeEnabled
+                        ? const LiveBiddingScreen()
+                        : FeaturePaywallPage.realtime(
+                            onBack: () => homeController.setTabIndex(0),
                           ),
-                          if (isLargeDesktop) ...<Widget>[
-                            const SizedBox(width: 10),
-                            Text(
-                              'starter_title'.tr,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 18,
-                                letterSpacing: -0.3,
+                  HomeTab.settings => const SettingsPage(),
+                  HomeTab.profile =>
+                    isAuthenticated
+                        ? const ProfilePage()
+                        : _buildUnauthenticatedProfileView(context, theme),
+                };
+
+            // -----------------------------------------------------------------
+            // 1. Tablet & Desktop Layout: Side NavigationRail + Main Content
+            // -----------------------------------------------------------------
+            if (isWideScreen) {
+              return Scaffold(
+                body: Row(
+                  children: <Widget>[
+                    LayoutBuilder(
+                      builder: (context, railConstraints) {
+                        return SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: railConstraints.maxHeight,
+                            ),
+                            child: IntrinsicHeight(
+                              child: NavigationRail(
+                                extended: isLargeDesktop,
+                                selectedIndex: child != null
+                                    ? (!isAuthenticated ? 3 : null)
+                                    : selectedTab.index,
+                                onDestinationSelected: (index) {
+                                  if (!isAuthenticated) {
+                                    if (index == 3) {
+                                      GoPage.login();
+                                      return;
+                                    }
+                                    homeController.setTabIndex(index);
+                                  } else {
+                                    if (index == 4) {
+                                      authController.signOut();
+                                      return;
+                                    }
+                                    homeController.setTabIndex(index);
+                                  }
+                                },
+                                minExtendedWidth: 200,
+                                leading: Container(
+                                  width: isLargeDesktop ? 200.0 : 72.0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  child: Row(
+                                    children: <Widget>[
+                                      SizedBox(
+                                        width: 72.0,
+                                        child: Center(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: Image.asset(
+                                              'assets/logo.png',
+                                              width: 32,
+                                              height: 32,
+                                              fit: BoxFit.contain,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => Container(
+                                                    width: 32,
+                                                    height: 32,
+                                                    decoration: BoxDecoration(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary
+                                                          .withValues(
+                                                            alpha: 0.15,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.bolt_rounded,
+                                                      size: 20,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary,
+                                                    ),
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      if (isLargeDesktop) ...<Widget>[
+                                        Expanded(
+                                          child: Text(
+                                            'starter_title'.tr,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 18,
+                                              letterSpacing: -0.3,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                trailing: Expanded(
+                                  child: Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 20,
+                                      ),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final uri = Uri.parse(
+                                            'https://hosteday.com',
+                                          );
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(
+                                              uri,
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          child: isLargeDesktop
+                                              ? Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: <Widget>[
+                                                    Text(
+                                                      'From ',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: theme
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                              alpha: 0.5,
+                                                            ),
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      'Hosteday',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: theme
+                                                            .colorScheme
+                                                            .primary,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Icon(
+                                                      Icons.open_in_new_rounded,
+                                                      size: 13,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary
+                                                          .withValues(
+                                                            alpha: 0.7,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                )
+                                              : Tooltip(
+                                                  message:
+                                                      'From Hosteday (hosteday.com)',
+                                                  child: Text(
+                                                    'HD',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary,
+                                                    ),
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                destinations: <NavigationRailDestination>[
+                                  NavigationRailDestination(
+                                    icon: const Icon(
+                                      Icons.auto_stories_outlined,
+                                    ),
+                                    selectedIcon: const Icon(
+                                      Icons.auto_stories,
+                                    ),
+                                    label: Text('nav_guide'.tr),
+                                  ),
+                                  NavigationRailDestination(
+                                    icon: const Icon(Icons.radar_outlined),
+                                    selectedIcon: const Icon(Icons.radar),
+                                    label: Text(
+                                      'live_bidding_app_bar_title'.tr,
+                                    ),
+                                  ),
+                                  NavigationRailDestination(
+                                    icon: const Icon(Icons.settings_outlined),
+                                    selectedIcon: const Icon(Icons.settings),
+                                    label: Text('nav_settings'.tr),
+                                  ),
+                                  if (!isAuthenticated)
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.login_rounded),
+                                      selectedIcon: const Icon(
+                                        Icons.login_rounded,
+                                      ),
+                                      label: Text('sign_in'.tr),
+                                    )
+                                  else ...<NavigationRailDestination>[
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.person_outline),
+                                      selectedIcon: const Icon(Icons.person),
+                                      label: Text('nav_profile'.tr),
+                                    ),
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.logout_rounded),
+                                      selectedIcon: const Icon(
+                                        Icons.logout_rounded,
+                                      ),
+                                      label: Text('sign_out'.tr),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                          ],
+                          ),
+                        );
+                      },
+                    ),
+                    const VerticalDivider(thickness: 1, width: 1),
+                    Expanded(
+                      child: Column(
+                        children: <Widget>[
+                          if (isAuthenticated && !currentUser.isEmailVerified)
+                            _buildEmailVerificationNotice(
+                              context,
+                              theme,
+                              currentUser,
+                              authController,
+                            ),
+
+                          Expanded(child: activeTabBody),
                         ],
                       ),
                     ),
-                    trailing: Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              // Language Switcher in NavigationRail
-                              if (localizationController != null)
-                                if (isLargeDesktop)
-                                  OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      visualDensity: VisualDensity.compact,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 8,
-                                      ),
-                                    ),
-                                    onPressed:
-                                        localizationController.toggleLanguage,
-                                    icon: const Icon(Icons.language_rounded,
-                                        size: 16),
-                                    label: Text(localizationController
-                                        .targetLanguageName),
-                                  )
-                                else
-                                  IconButton(
-                                    tooltip: 'switch_language'.tr,
-                                    onPressed:
-                                        localizationController.toggleLanguage,
-                                    icon: const Icon(Icons.language_rounded),
-                                  ),
-                              const SizedBox(height: 8),
+                  ],
+                ),
+              );
+            }
 
-                              // Theme Switcher in NavigationRail
-                              if (isLargeDesktop)
-                                OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    visualDensity: VisualDensity.compact,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                  onPressed: () =>
-                                      ThemePickerSheet.show(context),
-                                  icon: const Icon(Icons.palette_outlined,
-                                      size: 16),
-                                  label: Text('theme_label'.tr),
-                                )
-                              else
-                                IconButton(
-                                  tooltip: 'change_theme'.tr,
-                                  onPressed: () =>
-                                      ThemePickerSheet.show(context),
-                                  icon: const Icon(Icons.palette_outlined),
-                                ),
-                              const SizedBox(height: 10),
-
-                              // Auth Action Button
-                              if (isAuthenticated)
-                                (isLargeDesktop
-                                    ? OutlinedButton.icon(
-                                        style: OutlinedButton.styleFrom(
-                                          visualDensity: VisualDensity.compact,
-                                        ),
-                                        onPressed: authController.signOut,
-                                        icon: const Icon(Icons.logout_rounded,
-                                            size: 16),
-                                        label: Text('sign_out'.tr),
-                                      )
-                                    : IconButton(
-                                        tooltip: 'sign_out'.tr,
-                                        onPressed: authController.signOut,
-                                        icon: const Icon(Icons.logout_rounded),
-                                      ))
-                              else
-                                (isLargeDesktop
-                                    ? FilledButton.icon(
-                                        style: FilledButton.styleFrom(
-                                          visualDensity: VisualDensity.compact,
-                                        ),
-                                        onPressed: GoPage.login,
-                                        icon: const Icon(Icons.login_rounded,
-                                            size: 16),
-                                        label: Text('sign_in'.tr),
-                                      )
-                                    : IconButton(
-                                        tooltip: 'sign_in'.tr,
-                                        onPressed: GoPage.login,
-                                        icon: const Icon(Icons.login_rounded),
-                                      )),
-                            ],
+            // -----------------------------------------------------------------
+            // 2. Mobile Layout: Top AppBar + Main Content + Bottom Nav
+            // -----------------------------------------------------------------
+            return Scaffold(
+              appBar: AppBar(
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: <Widget>[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 30,
+                        height: 30,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.bolt_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                       ),
                     ),
-                    destinations: <NavigationRailDestination>[
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.auto_stories_outlined),
-                        selectedIcon: const Icon(Icons.auto_stories),
-                        label: Text('nav_guide'.tr),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'starter_title'.tr,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.radar_outlined),
-                        selectedIcon: const Icon(Icons.radar),
-                        label: const Text('رادار المزاد'),
-                      ),
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.notifications_outlined),
-                        selectedIcon: const Icon(Icons.notifications),
-                        label: Text('nav_notifications'.tr),
-                      ),
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.person_outline),
-                        selectedIcon: const Icon(Icons.person),
-                        label: Text('nav_profile'.tr),
-                      ),
-                    ],
-                  ),
-                  const VerticalDivider(thickness: 1, width: 1),
-                  Expanded(
-                    child: Column(
-                      children: <Widget>[
-                        if (isAuthenticated && !currentUser.isEmailVerified)
-                          _buildEmailVerificationNotice(
-                            context,
-                            theme,
-                            currentUser,
-                            authController,
-                          ),
-                        Expanded(child: activeTabBody),
-                      ],
                     ),
+                  ],
+                ),
+              ),
+              body: Column(
+                children: <Widget>[
+                  if (isAuthenticated && !currentUser.isEmailVerified)
+                    _buildEmailVerificationNotice(
+                      context,
+                      theme,
+                      currentUser,
+                      authController,
+                    ),
+                  Expanded(child: activeTabBody),
+                ],
+              ),
+              bottomNavigationBar: NavigationBar(
+                selectedIndex: child != null
+                    ? (!isAuthenticated ? 3 : 0)
+                    : selectedTab.index,
+                onDestinationSelected: (index) {
+                  if (!isAuthenticated) {
+                    if (index == 3) {
+                      GoPage.login();
+                      return;
+                    }
+                    homeController.setTabIndex(index);
+                  } else {
+                    if (index == 4) {
+                      authController.signOut();
+                      return;
+                    }
+                    homeController.setTabIndex(index);
+                  }
+                },
+                destinations: <NavigationDestination>[
+                  NavigationDestination(
+                    icon: const Icon(Icons.auto_stories_outlined),
+                    selectedIcon: const Icon(Icons.auto_stories),
+                    label: 'nav_guide'.tr,
                   ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.radar_outlined),
+                    selectedIcon: const Icon(Icons.radar),
+                    label: 'live_bidding_app_bar_title'.tr,
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.settings_outlined),
+                    selectedIcon: const Icon(Icons.settings),
+                    label: 'nav_settings'.tr,
+                  ),
+                  if (!isAuthenticated)
+                    NavigationDestination(
+                      icon: const Icon(Icons.login_rounded),
+                      selectedIcon: const Icon(Icons.login_rounded),
+                      label: 'sign_in'.tr,
+                    )
+                  else ...<NavigationDestination>[
+                    NavigationDestination(
+                      icon: const Icon(Icons.person_outline),
+                      selectedIcon: const Icon(Icons.person),
+                      label: 'nav_profile'.tr,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.logout_rounded),
+                      selectedIcon: const Icon(Icons.logout_rounded),
+                      label: 'sign_out'.tr,
+                    ),
+                  ],
                 ],
               ),
             );
-          }
-
-          // -----------------------------------------------------------------
-          // 2. Mobile Layout: Top AppBar + Main Content + Bottom Nav
-          // -----------------------------------------------------------------
-          return Scaffold(
-            appBar: AppBar(
-              title: Row(
-                children: <Widget>[
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color:
-                          theme.colorScheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.bolt_rounded,
-                      size: 18,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isAuthenticated
-                          ? (currentUser.displayName?.isNotEmpty == true
-                              ? currentUser.displayName!
-                              : (currentUser.email ?? 'starter_title'.tr))
-                          : 'starter_title'.tr,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: <Widget>[
-                // Live Bidding Radar Action Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: FilledButton.tonalIcon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                      foregroundColor: const Color(0xFFFBBF24),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      minimumSize: const Size(0, 34),
-                    ),
-                    onPressed: GoPage.liveBidding,
-                    icon: const Icon(Icons.radar_rounded, size: 16, color: Color(0xFFF59E0B)),
-                    label: const Text(
-                      'رادار المزاد',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                // Mobile Language Switcher Action
-                if (localizationController != null)
-                  IconButton(
-                    tooltip: 'switch_language'.tr,
-                    onPressed: localizationController.toggleLanguage,
-                    icon: const Icon(Icons.language_rounded),
-                  ),
-                // Mobile Theme Switcher Action
-                IconButton(
-                  tooltip: 'change_theme'.tr,
-                  onPressed: () => ThemePickerSheet.show(context),
-                  icon: const Icon(Icons.palette_outlined),
-                ),
-                if (!isAuthenticated) ...<Widget>[
-                  TextButton.icon(
-                    onPressed: GoPage.login,
-                    icon: const Icon(Icons.login_rounded, size: 18),
-                    label: Text('sign_in'.tr),
-                  ),
-                  const SizedBox(width: 8),
-                ] else ...<Widget>[
-                  IconButton(
-                    tooltip: 'sign_out'.tr,
-                    onPressed: authController.signOut,
-                    icon: const Icon(Icons.logout_rounded),
-                  ),
-                ],
-              ],
-            ),
-            body: Column(
-              children: <Widget>[
-                if (isAuthenticated && !currentUser.isEmailVerified)
-                  _buildEmailVerificationNotice(
-                    context,
-                    theme,
-                    currentUser,
-                    authController,
-                  ),
-                Expanded(child: activeTabBody),
-              ],
-            ),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: homeController.selectedIndex,
-              onDestinationSelected: homeController.setTabIndex,
-              destinations: <NavigationDestination>[
-                NavigationDestination(
-                  icon: const Icon(Icons.auto_stories_outlined),
-                  selectedIcon: const Icon(Icons.auto_stories),
-                  label: 'nav_guide'.tr,
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.radar_outlined),
-                  selectedIcon: const Icon(Icons.radar),
-                  label: 'رادار المزاد',
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.notifications_outlined),
-                  selectedIcon: const Icon(Icons.notifications),
-                  label: 'nav_notifications'.tr,
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.person_outline),
-                  selectedIcon: const Icon(Icons.person),
-                  label: 'nav_profile'.tr,
-                ),
-              ],
-            ),
-          );
-        },
+          },
+        ),
       );
     });
   }
@@ -435,7 +525,9 @@ class HomeShell extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'email_unverified_banner_desc'.trParams({'email': user.email ?? ''}),
+                  'email_unverified_banner_desc'.trParams({
+                    'email': user.email ?? '',
+                  }),
                   style: TextStyle(
                     fontSize: 11.5,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
@@ -503,11 +595,14 @@ class HomeShell extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'email_unverified_long_desc'.trParams({'email': user.email ?? ''}),
+                      'email_unverified_long_desc'.trParams({
+                        'email': user.email ?? '',
+                      }),
                       style: TextStyle(
                         fontSize: 11.5,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.75,
+                        ),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -518,8 +613,10 @@ class HomeShell extends StatelessWidget {
               FilledButton.tonal(
                 style: FilledButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                 ),
                 onPressed: GoPage.verificationNotification,
                 child: Text('verify_now'.tr),
@@ -539,7 +636,9 @@ class HomeShell extends StatelessWidget {
   }
 
   Widget _buildUnauthenticatedProfileView(
-      BuildContext context, ThemeData theme) {
+    BuildContext context,
+    ThemeData theme,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -552,7 +651,9 @@ class HomeShell extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 1240),
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding, vertical: 24),
+                horizontal: horizontalPadding,
+                vertical: 24,
+              ),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
@@ -568,8 +669,9 @@ class HomeShell extends StatelessWidget {
                               width: 64,
                               height: 64,
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.15),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.15,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -593,8 +695,9 @@ class HomeShell extends StatelessWidget {
                             'auth_required_desc'.tr,
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.7),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                               height: 1.5,
                             ),
                           ),

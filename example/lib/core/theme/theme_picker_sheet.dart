@@ -59,7 +59,9 @@ class ThemePickerSheet extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.15,
+                        ),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -83,8 +85,9 @@ class ThemePickerSheet extends StatelessWidget {
                           Text(
                             'theme_sheet_subtitle'.tr,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.7),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                           ),
                         ],
@@ -111,8 +114,9 @@ class ThemePickerSheet extends StatelessWidget {
                             .withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: theme.colorScheme.outlineVariant
-                              .withValues(alpha: 0.3),
+                          color: theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -148,8 +152,9 @@ class ThemePickerSheet extends StatelessWidget {
                           FilledButton.tonal(
                             style: FilledButton.styleFrom(
                               visualDensity: VisualDensity.compact,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                             ),
                             onPressed: localizationController.toggleLanguage,
                             child: Text(
@@ -174,19 +179,23 @@ class ThemePickerSheet extends StatelessWidget {
                   color: Colors.amber.shade700,
                 ),
                 const SizedBox(height: 10),
-                Obx(() => Column(
-                      children: AppThemePreset.lightPresets
-                          .map((preset) => _buildThemeTile(
-                                context,
-                                preset: preset,
-                                isSelected:
-                                    themeController.currentPreset.value == preset,
-                                onTap: () {
-                                  themeController.changeTheme(preset);
-                                },
-                              ))
-                          .toList(),
-                    )),
+                Obx(
+                  () => Column(
+                    children: AppThemePreset.lightPresets
+                        .map(
+                          (preset) => _buildThemeTile(
+                            context,
+                            preset: preset,
+                            isSelected:
+                                themeController.currentPreset.value == preset,
+                            onTap: () {
+                              themeController.changeTheme(preset);
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
                 const SizedBox(height: 16),
 
                 // Dark Themes Section
@@ -197,19 +206,23 @@ class ThemePickerSheet extends StatelessWidget {
                   color: Colors.indigo.shade400,
                 ),
                 const SizedBox(height: 10),
-                Obx(() => Column(
-                      children: AppThemePreset.darkPresets
-                          .map((preset) => _buildThemeTile(
-                                context,
-                                preset: preset,
-                                isSelected:
-                                    themeController.currentPreset.value == preset,
-                                onTap: () {
-                                  themeController.changeTheme(preset);
-                                },
-                              ))
-                          .toList(),
-                    )),
+                Obx(
+                  () => Column(
+                    children: AppThemePreset.darkPresets
+                        .map(
+                          (preset) => _buildThemeTile(
+                            context,
+                            preset: preset,
+                            isSelected:
+                                themeController.currentPreset.value == preset,
+                            onTap: () {
+                              themeController.changeTheme(preset);
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -278,10 +291,7 @@ class ThemePickerSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: preset.primaryColor,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
+                  border: Border.all(color: Colors.white, width: 2),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
                       color: preset.primaryColor.withValues(alpha: 0.4),

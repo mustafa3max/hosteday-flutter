@@ -1,3 +1,18 @@
+## 2.4.0
+
+### Added
+- **Zero-Config SDK Initialization**: Direct initialization using typed `HostedayConfig` via `Hosteday.initializeApp(config: HostedayConfig(...))` with intelligent defaults for all standard endpoints.
+- **Built-in Connectivity Monitoring**: Added `Hosteday.connectivity` and synchronous `Hosteday.isOnline` powered by `internet_connection_checker_plus` and real-time browser online/offline events via `package:web`.
+- **HostedayConnectivityBanner**: Ready-to-use reactive UI banner widget that automatically slides down during network disconnects and auto-hides upon reconnection.
+- **Typed Response Models**: Added `HostedayJobResponse` and `HostedayNotificationResponse` implementing `MapMixin` for seamless type safety and backwards-compatible key-value access.
+- **Enhanced Realtime Presence**: Added `listenPresenceMembersList` callback to simplify tracking presence member lists alongside join and leave events.
+- **Dynamic Channel Authorization**: Automatically injects dynamic authentication headers (`X-Api-Token` and `Authorization: Bearer <token>`) during private and presence channel authorization requests.
+
+### Improved
+- Cleaned root package structure from project-specific configuration files.
+- Default path resolution: automatic resolution of standard HosteDay endpoints (`/api/jobs`, `/api/broadcasting/auth-manual`, `/api/notifications/devices/*`).
+- Upgraded documentation and test suites with 100% test coverage.
+
 ## 2.3.1
 
 ### Added

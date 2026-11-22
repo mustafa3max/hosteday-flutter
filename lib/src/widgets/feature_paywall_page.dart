@@ -208,237 +208,251 @@ class FeaturePaywallPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                  // Icon badge with glowing gradient ring
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF6366F1).withValues(alpha: 0.3),
-                          const Color(0xFFEC4899).withValues(alpha: 0.2),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      border: Border.all(
-                        color: const Color(0xFF818CF8).withValues(alpha: 0.4),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6366F1).withValues(alpha: 0.35),
-                          blurRadius: 32,
-                          spreadRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        effectiveIcon,
-                        size: 46,
-                        color: const Color(0xFFC7D2FE),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Plan status pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFF334155),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF59E0B),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isArabic ? 'خطة غير مرخصة' : 'Plan Upgrade Required',
-                          style: const TextStyle(
-                            color: Color(0xFFE2E8F0),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Headline
-                  Text(
-                    effectiveTitle,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          height: 1.3,
-                        ) ??
-                        const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          height: 1.3,
-                        ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Descriptive subtitle
-                  Text(
-                    effectiveDescription,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 14,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Value highlights card
-                  if (highlights != null && highlights!.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF131A2B),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF1E293B),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isArabic ? 'ماذا ستحصل عند الترقية:' : 'What you unlock:',
-                            style: const TextStyle(
-                              color: Color(0xFFCBD5E1),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                          // Icon badge with glowing gradient ring
+                          Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFF6366F1)
+                                      .withValues(alpha: 0.3),
+                                  const Color(0xFFEC4899)
+                                      .withValues(alpha: 0.2),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              border: Border.all(
+                                color: const Color(0xFF818CF8)
+                                    .withValues(alpha: 0.4),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF6366F1)
+                                      .withValues(alpha: 0.35),
+                                  blurRadius: 32,
+                                  spreadRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                effectiveIcon,
+                                size: 46,
+                                color: const Color(0xFFC7D2FE),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          ...highlights!.map(
-                            (point) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Row(
+                          const SizedBox(height: 24),
+
+                          // Plan status pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E293B),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF334155),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF59E0B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isArabic
+                                      ? 'خطة غير مرخصة'
+                                      : 'Plan Upgrade Required',
+                                  style: const TextStyle(
+                                    color: Color(0xFFE2E8F0),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Headline
+                          Text(
+                            effectiveTitle,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.3,
+                                ) ??
+                                const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.3,
+                                ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Descriptive subtitle
+                          Text(
+                            effectiveDescription,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 14,
+                              height: 1.6,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Value highlights card
+                          if (highlights != null && highlights!.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF131A2B),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFF1E293B),
+                                ),
+                              ),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.check_circle_rounded,
-                                    size: 18,
-                                    color: Color(0xFF10B981),
+                                  Text(
+                                    isArabic
+                                        ? 'ماذا ستحصل عند الترقية:'
+                                        : 'What you unlock:',
+                                    style: const TextStyle(
+                                      color: Color(0xFFCBD5E1),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      point,
-                                      style: const TextStyle(
-                                        color: Color(0xFFE2E8F0),
-                                        fontSize: 13,
-                                        height: 1.4,
+                                  const SizedBox(height: 12),
+                                  ...highlights!.map(
+                                    (point) => Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 10),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle_rounded,
+                                            size: 18,
+                                            color: Color(0xFF10B981),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              point,
+                                              style: const TextStyle(
+                                                color: Color(0xFFE2E8F0),
+                                                fontSize: 13,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                  // CTA Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.35),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
+                          // CTA Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF6366F1),
+                                    Color(0xFF4F46E5)
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF6366F1)
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: () => _handleUpgrade(context),
+                                icon: const Icon(
+                                  Icons.rocket_launch_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                label: Text(
+                                  isArabic
+                                      ? 'ترقية الخطة الآن من لوحة تحكم HosteDay'
+                                      : 'Upgrade Plan in HosteDay Dashboard',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
+
+                          if (onBack != null || Navigator.canPop(context)) ...[
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: () {
+                                if (onBack != null) {
+                                  onBack!();
+                                } else if (Navigator.canPop(context)) {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              child: Text(
+                                isArabic ? 'العودة للخلف' : 'Go Back',
+                                style: const TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ),
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        onPressed: () => _handleUpgrade(context),
-                        icon: const Icon(
-                          Icons.rocket_launch_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        label: Text(
-                          isArabic
-                              ? 'ترقية الخطة الآن من لوحة تحكم HosteDay'
-                              : 'Upgrade Plan in HosteDay Dashboard',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
                       ),
                     ),
                   ),
-
-                  if (onBack != null || Navigator.canPop(context)) ...[
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () {
-                        if (onBack != null) {
-                          onBack!();
-                        } else if (Navigator.canPop(context)) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: Text(
-                        isArabic ? 'العودة للخلف' : 'Go Back',
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
-  },
-),
-),
-);
   }
 }

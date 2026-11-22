@@ -26,7 +26,8 @@ class BidderModel {
   factory BidderModel.fromJson(Map<String, dynamic> json) {
     return BidderModel(
       id: json['id']?.toString() ?? json['user_id']?.toString() ?? '',
-      name: json['name']?.toString() ??
+      name:
+          json['name']?.toString() ??
           json['user_name']?.toString() ??
           'مزايد نشط',
       avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString(),
@@ -39,7 +40,8 @@ class BidderModel {
   /// Parses presence event member payloads from Pusher / Reverb.
   factory BidderModel.fromPresenceMap(dynamic data) {
     if (data is Map) {
-      final id = data['id']?.toString() ??
+      final id =
+          data['id']?.toString() ??
           data['user_id']?.toString() ??
           data['userId']?.toString() ??
           '';
@@ -47,7 +49,8 @@ class BidderModel {
       final dynamic rawInfo = data['info'] ?? data['user_info'] ?? data;
       final info = rawInfo is Map ? rawInfo : <String, dynamic>{};
 
-      final name = info['name']?.toString() ??
+      final name =
+          info['name']?.toString() ??
           info['user_name']?.toString() ??
           (id.isNotEmpty
               ? 'مزايد #${id.length > 4 ? id.substring(id.length - 4) : id}'
@@ -112,4 +115,3 @@ class BidderModel {
   @override
   int get hashCode => id.hashCode;
 }
-

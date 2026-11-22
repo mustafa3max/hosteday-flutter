@@ -9,4 +9,3 @@ class UserBinding extends Bindings {
     Get.lazyPut<UserController>(() => UserController(), fenix: true);
   }
 }
-

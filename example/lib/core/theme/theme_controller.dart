@@ -9,8 +9,7 @@ import 'app_theme_preset.dart';
 class ThemeController extends GetxController {
   static const String _storageKey = 'hosteday_selected_theme_preset';
 
-  final Rx<AppThemePreset> currentPreset =
-      AppThemePreset.cyberMidnightDark.obs;
+  final Rx<AppThemePreset> currentPreset = AppThemePreset.cyberMidnightDark.obs;
 
   bool get isDark => currentPreset.value.isDark;
 
@@ -29,7 +28,9 @@ class ThemeController extends GetxController {
       if (savedId != null && savedId.isNotEmpty) {
         final preset = AppThemePreset.fromId(savedId);
         currentPreset.value = preset;
-        Get.changeTheme(AppThemeFactory.build(preset));
+        final newTheme = AppThemeFactory.build(preset);
+        Get.changeTheme(newTheme);
+        Get.changeThemeMode(preset.isDark ? ThemeMode.dark : ThemeMode.light);
       }
     } catch (_) {
       // Gracefully fall back to default cyberMidnightDark
@@ -40,7 +41,9 @@ class ThemeController extends GetxController {
     if (currentPreset.value == preset) return;
 
     currentPreset.value = preset;
-    Get.changeTheme(AppThemeFactory.build(preset));
+    final newTheme = AppThemeFactory.build(preset);
+    Get.changeTheme(newTheme);
+    Get.changeThemeMode(preset.isDark ? ThemeMode.dark : ThemeMode.light);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -48,4 +51,3 @@ class ThemeController extends GetxController {
     } catch (_) {}
   }
 }
-

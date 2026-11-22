@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'features/hosteday_features.dart';
 import 'responses/hosteday_page.dart';
 import 'responses/hosteday_response_reader.dart';
@@ -10,8 +12,10 @@ import 'auth/hosteday_auth_storage.dart';
 import 'auth/hosteday_auth_token_provider.dart';
 import 'auth/hosteday_token_provider.dart';
 import 'config/hosteday_config.dart';
+import 'connectivity/hosteday_connectivity.dart';
 import 'http/hosteday_http_client.dart';
 import 'jobs/hosteday_jobs_client.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'notifications/hosteday_notification_client.dart';
 import 'realtime/hosteday_realtime_client.dart';
 
@@ -47,6 +51,9 @@ class HostedayClient {
   /// The HTTP client responsible for executing API requests.
   late final HostedayHttpClient http;
 
+  /// The connectivity service responsible for monitoring network and backend reachability.
+  late final HostedayConnectivity connectivity;
+
   /// The realtime client responsible for managing live connections.
   late final HostedayRealtimeClient realtime;
 
@@ -72,6 +79,8 @@ class HostedayClient {
     transport.Client? httpClient,
     HostedayAuthStorage? authStorage,
     HostedayFeatures? features,
+    InternetConnection? internetConnection,
+    HostedayConnectivity? connectivity,
   }) : authStorage = authStorage ?? MemoryHostedayAuthStorage() {
     this.features = features ?? config.features;
     final authTokenProvider = HostedayAuthTokenProvider(
@@ -83,15 +92,53 @@ class HostedayClient {
       fallback: tokenProvider,
     );
 
+    this.connectivity = connectivity ??
+        HostedayConnectivity(
+          config: config,
+          checker: internetConnection,
+        );
+
     http = HostedayHttpClient(
       client: httpClient,
       config: config,
       tokenProvider: effectiveTokenProvider,
+      onNetworkResult: (isOnline) {
+        if (isOnline) {
+          this.connectivity.reportSuccess();
+        } else {
+          this.connectivity.reportFailure();
+        }
+      },
     );
 
     realtime = HostedayRealtimeClient(
       config: config,
       tokenProvider: effectiveTokenProvider,
+      authStorage: this.authStorage,
+      headersCallback: () async {
+        final currentToken = await effectiveTokenProvider.getToken() ??
+            await this.authStorage.read(HostedayAuthStorageKeys.accessToken);
+        final cleanToken = currentToken?.trim();
+
+        final headers = <String, String>{
+          'Accept': 'application/json',
+          ...config.defaultHeaders,
+        };
+
+        final apiToken = config.apiToken?.trim();
+        if (apiToken != null && apiToken.isNotEmpty) {
+          headers['X-Api-Token'] = apiToken;
+          if (config.apiTokenHeader.isNotEmpty) {
+            headers[config.apiTokenHeader] = apiToken;
+          }
+        }
+
+        if (cleanToken != null && cleanToken.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $cleanToken';
+        }
+
+        return headers;
+      },
     );
 
     notifications = HostedayNotificationClient(
@@ -115,8 +162,10 @@ class HostedayClient {
         final currentToken = notifications.currentToken;
         if (currentToken != null && currentToken.isNotEmpty) {
           try {
-            await notifications.registerDeviceToken(
+            final token = await auth.getAccessToken();
+            await notifications.syncDeviceToken(
               token: currentToken,
+              accessToken: token,
               deviceId: notifications.currentDeviceId,
               deviceType: notifications.currentDeviceType,
               deviceName: notifications.currentDeviceName,
@@ -128,10 +177,12 @@ class HostedayClient {
         final currentToken = notifications.currentToken;
         if (currentToken != null && currentToken.isNotEmpty) {
           try {
+            final token = await auth.getAccessToken();
             await notifications.unregisterDeviceToken(
               token: currentToken,
               deviceId: notifications.currentDeviceId,
               action: 'unlink',
+              accessToken: token,
             );
           } catch (_) {}
         }
@@ -452,6 +503,7 @@ class HostedayClient {
   ///
   /// This disconnects realtime, disposes notifications, auth streams, and closes HTTP.
   Future<void> dispose() async {
+    connectivity.dispose();
     notifications.dispose();
     await jobs.dispose();
     await realtime.disconnect();

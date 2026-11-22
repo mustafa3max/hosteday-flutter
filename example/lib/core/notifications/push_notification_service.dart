@@ -22,14 +22,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
   } catch (_) {}
   debugPrint(
-      '[PushNotificationService] Background message received: ${message.messageId}');
+    '[PushNotificationService] Background message received: ${message.messageId}',
+  );
 
   // If the message is a data-only payload, display it in the Android/iOS status bar
   if (message.notification == null && message.data.isNotEmpty) {
     try {
       final localNotifications = FlutterLocalNotificationsPlugin();
-      const androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
       const initSettings = InitializationSettings(android: androidSettings);
       await localNotifications.initialize(initSettings);
 
@@ -46,23 +48,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
       final title =
           message.data['title']?.toString() ?? 'إشعار جديد من HosteDay';
-      final body = message.data['body']?.toString() ??
+      final body =
+          message.data['body']?.toString() ??
           message.data['message']?.toString() ??
           '';
 
-      final notifId = (message.messageId?.hashCode ??
+      final notifId =
+          (message.messageId?.hashCode ??
               DateTime.now().millisecondsSinceEpoch) &
           0x7FFFFFFF;
 
-      await localNotifications.show(
-        notifId,
-        title,
-        body,
-        details,
-      );
+      await localNotifications.show(notifId, title, body, details);
     } catch (e) {
       debugPrint(
-          '[PushNotificationService] Background local notification error: $e');
+        '[PushNotificationService] Background local notification error: $e',
+      );
     }
   }
 }
@@ -162,7 +162,9 @@ class PushNotificationService extends GetxService {
 
       // 5. Register Background Handler
       if (!kIsWeb) {
-        FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+        FirebaseMessaging.onBackgroundMessage(
+          firebaseMessagingBackgroundHandler,
+        );
       }
 
       // 6. Setup Foreground and Click Listeners
@@ -171,8 +173,16 @@ class PushNotificationService extends GetxService {
       // 7. Request User Notification Permission
       await requestPermission();
 
+      // 8. Auto-sync token on startup if an active session exists
+      final savedToken = await _resolveAccessToken();
+      if (savedToken != null && savedToken.isNotEmpty) {
+        await syncDeviceToken(accessToken: savedToken);
+      }
+
       isInitialized.value = true;
-      debugPrint('[PushNotificationService] Initialized successfully on ${defaultTargetPlatform.name}');
+      debugPrint(
+        '[PushNotificationService] Initialized successfully on ${defaultTargetPlatform.name}',
+      );
     } catch (error) {
       tokenError.value = error.toString();
       debugPrint('[PushNotificationService] Initialization error: $error');
@@ -182,14 +192,20 @@ class PushNotificationService extends GetxService {
   /// Automatically loads Web Firebase configuration from `web/firebase-config.json`.
   Future<void> _loadWebConfigFile() async {
     try {
-      final jsonString = await rootBundle.loadString('web/firebase-config.json');
+      final jsonString = await rootBundle.loadString(
+        'web/firebase-config.json',
+      );
       final data = jsonDecode(jsonString);
       if (data is Map<String, dynamic>) {
         _fileWebConfig = data;
-        debugPrint('[PushNotificationService] Loaded web/firebase-config.json successfully');
+        debugPrint(
+          '[PushNotificationService] Loaded web/firebase-config.json successfully',
+        );
       }
     } catch (e) {
-      debugPrint('[PushNotificationService] Note: web/firebase-config.json not loaded from bundle ($e)');
+      debugPrint(
+        '[PushNotificationService] Note: web/firebase-config.json not loaded from bundle ($e)',
+      );
     }
   }
 
@@ -272,14 +288,11 @@ class PushNotificationService extends GetxService {
     fcmToken.value = simulated;
     tokenError.value = '';
 
-    final devId = await getDeviceId();
-    final devName = getDeviceName();
-
-    await Hosteday.notifications.registerDeviceToken(
+    final savedToken = await _resolveAccessToken();
+    await syncDeviceToken(
       token: simulated,
+      accessToken: savedToken,
       deviceType: 'web',
-      deviceId: devId,
-      deviceName: devName,
     );
 
     return simulated;
@@ -319,7 +332,9 @@ class PushNotificationService extends GetxService {
 
   /// Sets up Flutter Local Notifications for displaying foreground popups.
   Future<void> _setupLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -339,12 +354,16 @@ class PushNotificationService extends GetxService {
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) {
-        debugPrint('[PushNotificationService] User tapped notification: ${response.payload}');
+        debugPrint(
+          '[PushNotificationService] User tapped notification: ${response.payload}',
+        );
       },
     );
 
-    final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation = _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     if (androidImplementation != null) {
       await androidImplementation.createNotificationChannel(
@@ -377,7 +396,8 @@ class PushNotificationService extends GetxService {
         sound: true,
       );
 
-      final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+      final granted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
 
       isPermissionGranted.value = granted;
@@ -411,31 +431,21 @@ class PushNotificationService extends GetxService {
         tokenError.value = '';
         debugPrint('[PushNotificationService] FCM Token obtained: $token');
 
-        final deviceId = await getDeviceId();
-        final deviceName = getDeviceName();
-
-        // Automatically register with HosteDay Notification Backend
-        try {
-          await Hosteday.notifications.registerDeviceToken(
-            token: token,
-            deviceType: _resolvePlatformName(),
-            deviceId: deviceId,
-            deviceName: deviceName,
-          );
-        } catch (e) {
-          debugPrint(
-              '[PushNotificationService] Server registerDeviceToken notice: $e');
-        }
+        // Automatically sync with HosteDay Notification Backend (with accessToken if authenticated)
+        final savedToken = await _resolveAccessToken();
+        await syncDeviceToken(token: token, accessToken: savedToken);
 
         // Auto-subscribe to default topic 'all' on Native platforms (Android & iOS)
         if (!kIsWeb) {
           try {
             await messaging.subscribeToTopic('all');
             debugPrint(
-                '[PushNotificationService] Auto-subscribed to topic: all');
+              '[PushNotificationService] Auto-subscribed to topic: all',
+            );
           } catch (e) {
             debugPrint(
-                '[PushNotificationService] Topic all auto-subscribe notice: $e');
+              '[PushNotificationService] Topic all auto-subscribe notice: $e',
+            );
           }
         }
       } else if (kIsWeb && webVapidKey.value.isEmpty) {
@@ -443,21 +453,19 @@ class PushNotificationService extends GetxService {
             'يتطلب Web Push في Firebase مفتاح VAPID صالحاً و API Key من مشروع Firebase الخاص بالتطبيق.';
       }
 
-      // Listen for token refreshes
+      // Listen for token refreshes and re-sync with current credentials
       messaging.onTokenRefresh.listen((refreshedToken) async {
         fcmToken.value = refreshedToken;
-        debugPrint('[PushNotificationService] Token refreshed: $refreshedToken');
+        debugPrint(
+          '[PushNotificationService] Token refreshed: $refreshedToken',
+        );
         try {
-          final deviceId = await getDeviceId();
-          final deviceName = getDeviceName();
-          await Hosteday.notifications.registerDeviceToken(
-            token: refreshedToken,
-            deviceType: _resolvePlatformName(),
-            deviceId: deviceId,
-            deviceName: deviceName,
-          );
+          final savedToken = await _resolveAccessToken();
+          await syncDeviceToken(token: refreshedToken, accessToken: savedToken);
         } catch (e) {
-          debugPrint('[PushNotificationService] Server token refresh notice: $e');
+          debugPrint(
+            '[PushNotificationService] Server token refresh notice: $e',
+          );
         }
       });
 
@@ -469,25 +477,173 @@ class PushNotificationService extends GetxService {
     }
   }
 
+  /// Unified device token synchronization method.
+  ///
+  /// Sends the FCM token to `POST /api/device-tokens` (or configured device register path).
+  /// If [accessToken] is provided or stored in session / storage, attaches:
+  /// `Authorization: Bearer $accessToken`
+  ///
+  /// Transmits the required parameters:
+  /// - `device_token`: The FCM token
+  /// - `device_type`: 'web', 'android', 'ios', etc.
+  /// - `device_name`: Human-readable device / browser name
+  Future<bool> syncDeviceToken({
+    String? accessToken,
+    String? token,
+    String? deviceType,
+    String? deviceName,
+    String? deviceId,
+    String? endpoint,
+  }) async {
+    try {
+      // 1. Resolve FCM token
+      var cleanToken = token?.trim() ?? fcmToken.value.trim();
+      if (cleanToken.isEmpty) {
+        try {
+          final messaging = FirebaseMessaging.instance;
+          final retrieved = kIsWeb
+              ? await messaging.getToken(vapidKey: _vapidKey)
+              : await messaging.getToken();
+          if (retrieved != null && retrieved.trim().isNotEmpty) {
+            cleanToken = retrieved.trim();
+            fcmToken.value = cleanToken;
+          }
+        } catch (e) {
+          debugPrint(
+            '[PushNotificationService] syncDeviceToken: token fetch failed ($e)',
+          );
+        }
+      }
+
+      if (cleanToken.isEmpty) {
+        debugPrint(
+          '[PushNotificationService] syncDeviceToken: No valid device token available.',
+        );
+        return false;
+      }
+
+      // 2. Resolve access token
+      final effectiveAccessToken =
+          (accessToken != null && accessToken.trim().isNotEmpty)
+          ? accessToken.trim()
+          : await _resolveAccessToken();
+
+      // 3. Resolve device metadata
+      final resolvedType = deviceType ?? _resolvePlatformName();
+      final resolvedId = deviceId ?? await getDeviceId();
+      final resolvedName = deviceName ?? getDeviceName();
+
+      debugPrint(
+        '[PushNotificationService] syncDeviceToken: syncing with '
+        'hasAuth=${effectiveAccessToken != null && effectiveAccessToken.isNotEmpty}, '
+        'type=$resolvedType, name=$resolvedName',
+      );
+
+      final response = await Hosteday.notifications.syncDeviceToken(
+        token: cleanToken,
+        accessToken: effectiveAccessToken,
+        deviceType: resolvedType,
+        deviceId: resolvedId,
+        deviceName: resolvedName,
+        endpoint: endpoint,
+      );
+
+      fcmToken.value = cleanToken;
+      tokenError.value = '';
+      debugPrint(
+        '[PushNotificationService] syncDeviceToken success: $response',
+      );
+      return true;
+    } catch (e) {
+      debugPrint('[PushNotificationService] syncDeviceToken notice/error: $e');
+      return false;
+    }
+  }
+
+  /// Unregisters / unlinks the current device token from the authenticated user.
+  Future<bool> unregisterDeviceToken({
+    String? token,
+    String? accessToken,
+    String? action = 'unlink',
+    String? endpoint,
+  }) async {
+    try {
+      final cleanToken = token?.trim() ?? fcmToken.value.trim();
+      if (cleanToken.isEmpty) return false;
+
+      final effectiveAccessToken =
+          (accessToken != null && accessToken.trim().isNotEmpty)
+          ? accessToken.trim()
+          : await _resolveAccessToken();
+
+      final devId = await getDeviceId();
+      await Hosteday.notifications.unregisterDeviceToken(
+        token: cleanToken,
+        deviceId: devId,
+        action: action,
+        logoutOnly: true,
+        accessToken: effectiveAccessToken,
+        endpoint: endpoint,
+      );
+      debugPrint(
+        '[PushNotificationService] unregisterDeviceToken succeeded for token.',
+      );
+      return true;
+    } catch (e) {
+      debugPrint('[PushNotificationService] unregisterDeviceToken notice: $e');
+      return false;
+    }
+  }
+
+  /// Helper to safely resolve the current access token from Hosteday auth or SharedPreferences.
+  Future<String?> _resolveAccessToken() async {
+    if (Hosteday.isInitialized) {
+      try {
+        final token = await Hosteday.auth.getAccessToken();
+        if (token != null && token.trim().isNotEmpty) {
+          return token.trim();
+        }
+      } catch (_) {}
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storedToken =
+          prefs.getString('hosteday_flutter.hosteday.auth.access_token') ??
+          prefs.getString('access_token');
+      if (storedToken != null && storedToken.trim().isNotEmpty) {
+        return storedToken.trim();
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
   /// Sets up foreground and user tap listeners.
   void _setupMessageListeners() {
     // 1. Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('[PushNotificationService] Foreground message: ${message.messageId}');
+      debugPrint(
+        '[PushNotificationService] Foreground message: ${message.messageId}',
+      );
       _recordNotification(message);
       _showLocalNotification(message);
     });
 
     // 2. User tapped on notification when app was in background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('[PushNotificationService] Notification opened app: ${message.messageId}');
+      debugPrint(
+        '[PushNotificationService] Notification opened app: ${message.messageId}',
+      );
       _recordNotification(message);
     });
 
     // 3. App opened from terminated state via notification
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
-        debugPrint('[PushNotificationService] App launched from notification: ${message.messageId}');
+        debugPrint(
+          '[PushNotificationService] App launched from notification: ${message.messageId}',
+        );
         _recordNotification(message);
       }
     });
@@ -551,7 +707,10 @@ class PushNotificationService extends GetxService {
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFF1E1E28),
           colorText: Colors.white,
-          icon: const Icon(Icons.notifications_active_rounded, color: Color(0xFF38BDF8)),
+          icon: const Icon(
+            Icons.notifications_active_rounded,
+            color: Color(0xFF38BDF8),
+          ),
           duration: const Duration(seconds: 4),
           margin: const EdgeInsets.all(12),
         );
@@ -560,7 +719,10 @@ class PushNotificationService extends GetxService {
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
-    final title = message.notification?.title ?? message.data['title'] ?? 'Hosteday Notification';
+    final title =
+        message.notification?.title ??
+        message.data['title'] ??
+        'Hosteday Notification';
     final body = message.notification?.body ?? message.data['body'] ?? '';
 
     if (!kIsWeb) {
@@ -595,7 +757,8 @@ class PushNotificationService extends GetxService {
         );
       } catch (e) {
         debugPrint(
-            '[PushNotificationService] Local foreground notification error: $e');
+          '[PushNotificationService] Local foreground notification error: $e',
+        );
       }
     }
 
@@ -607,7 +770,10 @@ class PushNotificationService extends GetxService {
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFF1E1E28),
           colorText: Colors.white,
-          icon: const Icon(Icons.notifications_active_rounded, color: Color(0xFF38BDF8)),
+          icon: const Icon(
+            Icons.notifications_active_rounded,
+            color: Color(0xFF38BDF8),
+          ),
           duration: const Duration(seconds: 4),
           margin: const EdgeInsets.all(12),
         );
@@ -617,8 +783,12 @@ class PushNotificationService extends GetxService {
 
   void _recordNotification(RemoteMessage message) {
     final item = <String, dynamic>{
-      'id': message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': message.notification?.title ?? message.data['title'] ?? 'Notification',
+      'id':
+          message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      'title':
+          message.notification?.title ??
+          message.data['title'] ??
+          'Notification',
       'body': message.notification?.body ?? message.data['body'] ?? '',
       'data': message.data,
       'received_at': DateTime.now().toIso8601String(),
@@ -678,7 +848,8 @@ class PushNotificationService extends GetxService {
       var id = prefs.getString('hosteday_device_uuid');
       if (id == null || id.isEmpty) {
         final rand = Random().nextInt(99999999).toString().padLeft(8, '0');
-        id = '${_resolvePlatformName()}_${DateTime.now().millisecondsSinceEpoch}_$rand';
+        id =
+            '${_resolvePlatformName()}_${DateTime.now().millisecondsSinceEpoch}_$rand';
         await prefs.setString('hosteday_device_uuid', id);
       }
       return id;

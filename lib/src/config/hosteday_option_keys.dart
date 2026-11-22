@@ -90,7 +90,8 @@ abstract final class HostedayOptionKeys {
   static const String registerDeviceTokenPath = 'register_device_token_path';
 
   /// Custom endpoint path to unregister device tokens.
-  static const String unregisterDeviceTokenPath = 'unregister_device_token_path';
+  static const String unregisterDeviceTokenPath =
+      'unregister_device_token_path';
 
   /// Custom endpoint path to list registered devices.
   static const String registeredDevicesPath = 'registered_devices_path';
@@ -110,7 +111,8 @@ abstract final class HostedayOptionKeys {
   static const String fcmAppId = 'fcm_app_id';
 
   /// Firebase Messaging Sender ID.
-  static const String firebaseMessagingSenderId = 'firebase_messaging_sender_id';
+  static const String firebaseMessagingSenderId =
+      'firebase_messaging_sender_id';
   static const String fcmSenderId = 'fcm_sender_id';
 
   /// Firebase Project ID.

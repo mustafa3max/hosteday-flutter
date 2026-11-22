@@ -4,20 +4,19 @@ import 'package:get/get.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/controllers/base_hosteday_controller.dart';
 import '../../../core/errors/error_presenter.dart';
 import '../../../core/routes/go_page.dart';
 
 /// GetX controller managing user profile, password reset emails, and email verification notifications.
-class UserController extends GetxController {
+class UserController extends BaseHostedayController {
   final Rx<HostedayUser?> user = Rx<HostedayUser?>(null);
 
-  final RxBool isLoading = false.obs;
   final RxBool isUploadingAvatar = false.obs;
   final RxBool isDeletingAccount = false.obs;
   final RxBool isSendingVerification = false.obs;
 
   final RxString message = ''.obs;
-  final RxString errorMessage = ''.obs;
 
   StreamSubscription<HostedayUser?>? _userSubscription;
 
@@ -58,7 +57,9 @@ class UserController extends GetxController {
       displayNameController.text = user.value?.displayName ?? '';
       passwordResetEmailController.text = user.value?.email ?? '';
 
-      _userSubscription = Hosteday.auth.authStateChanges().listen((updatedUser) {
+      _userSubscription = Hosteday.auth.authStateChanges().listen((
+        updatedUser,
+      ) {
         user.value = updatedUser;
         if (updatedUser != null) {
           if (displayNameController.text.isEmpty &&
@@ -324,4 +325,3 @@ class UserController extends GetxController {
     }
   }
 }
-

@@ -34,6 +34,9 @@ class HostedayHttpClient {
   /// Default timeout used for all requests.
   final Duration timeout;
 
+  /// Optional callback invoked with connectivity results (true on response, false on network failure).
+  final void Function(bool isOnline)? onNetworkResult;
+
   final http.Client _client;
 
   /// Creates an HTTP client for the Hosteday API.
@@ -45,6 +48,7 @@ class HostedayHttpClient {
     this.tokenProvider,
     http.Client? client,
     this.timeout = const Duration(seconds: 30),
+    this.onNetworkResult,
   }) : _client = client ?? http.Client();
 
   /// Sends a GET request.
@@ -271,6 +275,8 @@ class HostedayHttpClient {
         body: hasJsonBody ? jsonEncode(body) : null,
       ).timeout(timeout ?? this.timeout);
 
+      onNetworkResult?.call(true);
+
       Map<String, dynamic> decoded;
       try {
         decoded = _decodeResponse(response.body);
@@ -294,16 +300,26 @@ class HostedayHttpClient {
     } on HostedayException {
       rethrow;
     } on TimeoutException catch (error) {
+      onNetworkResult?.call(false);
       throw HostedayException(
         'Hosteday request timed out.',
         error: error,
       );
     } on http.ClientException catch (error) {
+      onNetworkResult?.call(false);
       throw HostedayException('Hosteday network error: ${error.message}',
           error: error);
     } on ArgumentError {
       rethrow;
     } catch (error) {
+      final errorStr = error.toString().toLowerCase();
+      if (errorStr.contains('socket') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('clientexception')) {
+        onNetworkResult?.call(false);
+      }
       throw HostedayException(
         'Hosteday request failed: $error',
         error: error,

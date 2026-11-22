@@ -15,6 +15,9 @@ import '../../features/user/presentation/pages/verification_notification_page.da
 import 'app_routes.dart';
 
 /// Central page routes configuration for GetX navigation.
+///
+/// Page titles are dynamically managed via reactive `Title` widgets in pages
+/// and `HomeShell` so they automatically reflect language changes (Arabic <-> English).
 abstract final class AppPages {
   const AppPages._();
 
@@ -26,7 +29,7 @@ abstract final class AppPages {
     // -------------------------------------------------------------------------
     GetPage<dynamic>(
       name: AppRoutes.home,
-      page: () => const HomeShell(initialTab: HomeTab.example),
+      page: () => const HomeShell(initialTab: HomeTab.guide),
       binding: HomeBinding(),
     ),
     GetPage<dynamic>(
@@ -35,8 +38,13 @@ abstract final class AppPages {
       binding: HomeBinding(),
     ),
     GetPage<dynamic>(
+      name: AppRoutes.settings,
+      page: () => const HomeShell(initialTab: HomeTab.settings),
+      binding: HomeBinding(),
+    ),
+    GetPage<dynamic>(
       name: AppRoutes.notifications,
-      page: () => const HomeShell(initialTab: HomeTab.notifications),
+      page: () => const HomeShell(initialTab: HomeTab.settings),
       binding: HomeBinding(),
     ),
     GetPage<dynamic>(
@@ -50,17 +58,17 @@ abstract final class AppPages {
     // -------------------------------------------------------------------------
     GetPage<dynamic>(
       name: AppRoutes.login,
-      page: () => const LoginPage(),
+      page: () => const HomeShell(child: LoginPage()),
       binding: AuthBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.register,
-      page: () => const RegisterPage(),
+      page: () => const HomeShell(child: RegisterPage()),
       binding: AuthBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.forgotPassword,
-      page: () => const ForgotPasswordPage(),
+      page: () => const HomeShell(child: ForgotPasswordPage()),
       binding: AuthBinding(),
     ),
 
@@ -69,12 +77,12 @@ abstract final class AppPages {
     // -------------------------------------------------------------------------
     GetPage<dynamic>(
       name: AppRoutes.passwordResetEmail,
-      page: () => const PasswordResetEmailPage(),
+      page: () => const HomeShell(child: PasswordResetEmailPage()),
       binding: UserBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.verificationNotification,
-      page: () => const VerificationNotificationPage(),
+      page: () => const HomeShell(child: VerificationNotificationPage()),
       binding: UserBinding(),
     ),
 

@@ -89,7 +89,8 @@ class PasswordField extends StatelessWidget {
               },
             ),
           ),
-          validator: customValidator ??
+          validator:
+              customValidator ??
               (value) {
                 final text = value ?? '';
 

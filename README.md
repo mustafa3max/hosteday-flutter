@@ -107,44 +107,39 @@ flutter run
 
 ## Quick start
 
-Initialize HosteDay before running the Flutter application using the auto-generated `HosteDayConfig`:
+Initialize HosteDay before running the Flutter application using `HostedayConfig`:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
-import 'hosteday_config.dart';
-import 'core/config/hosteday_config_adapter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Zero-Config SDK initialization
   await Hosteday.initializeApp(
-    options: HosteDayConfigAdapter.toOptions(),
+    config: const HostedayConfig(
+      projectDomain: 'your-project.hosteday.com',
+      projectApiKey: 'YOUR_PROJECT_API_KEY', // optional
+      realtimeAppKey: 'YOUR_REALTIME_APP_KEY', // optional
+      realtimeHost: 'ws3.hosteday.com', // optional
+    ),
     authStorage: HostedaySharedPreferencesAuthStorage(),
   );
 
-  runApp(const App());
+  runApp(const MyApp());
 }
 ```
 
-When project-level API protection is enabled, also provide the project API key:
+When project-level API protection is enabled, provide the project API key:
 
 ```dart
-await
-HosteDay.initializeApp
-(
-options: const <String, Object?>{
-HosteDayOptionKeys.projectDomain:
-'your-project.hosteday.com',
-HosteDayOptionKeys.projectApiKey:
-'YOUR_PROJECT_API_KEY',
-},
-authStorage
-:
-HosteDaySharedPreferencesAuthStorage
-(
-)
-,
+await Hosteday.initializeApp(
+  config: const HostedayConfig(
+    projectDomain: 'your-project.hosteday.com',
+    projectApiKey: 'YOUR_PROJECT_API_KEY',
+  ),
+  authStorage: HostedaySharedPreferencesAuthStorage(),
 );
 ```
 
@@ -155,53 +150,35 @@ application. Omit `projectApiKey` when project protection is disabled.
 
 ## Configuration options
 
-`HosteDayOptionKeys` contains only values that an application developer is
-allowed to provide during SDK initialization.
-
-Authentication and user API paths are owned by HosteDay and are not
-configurable initialization options.
+`HostedayConfig` contains compile-time, type-safe settings with intelligent defaults:
 
 ### Connection options
 
-| Option                              | Description                                                              |
-|-------------------------------------|--------------------------------------------------------------------------|
-| `HosteDayOptionKeys.projectDomain`  | HosteDay project domain, for example `enterprise.hosteday.com`.          |
-| `HosteDayOptionKeys.apiBaseUrl`     | Optional complete API base URL. Usually derived from the project domain. |
-| `HosteDayOptionKeys.baseUrl`        | Alias for `apiBaseUrl`.                                                  |
-| `HosteDayOptionKeys.projectApiKey`  | Optional project API key. Null or empty values are not sent.             |
-| `HosteDayOptionKeys.apiTokenHeader` | Optional project key header name. Default: `X-Api-Token`.                |
-| `HosteDayOptionKeys.legacyApiToken` | Legacy key kept for backward compatibility.                              |
+| Option          | Description                                                              |
+|-----------------|--------------------------------------------------------------------------|
+| `projectDomain` | HosteDay project domain, for example `enterprise.hosteday.com`.          |
+| `apiBaseUrl`    | Optional complete API base URL. Usually derived from `projectDomain`.    |
+| `baseUrl`       | Alias for `apiBaseUrl`.                                                  |
+| `projectApiKey` | Optional project API key. Sent automatically as `X-Api-Token`.           |
 
 ### Realtime options
 
-| Option                                    | Description                                                                 |
-|-------------------------------------------|-----------------------------------------------------------------------------|
-| `HosteDayOptionKeys.realtimeAppKey`       | Pusher-compatible application key found after `/app/` in the WebSocket URL. |
-| `HosteDayOptionKeys.realtimeHost`         | Realtime WebSocket host, for example `ws3.hosteday.com`.                    |
-| `HosteDayOptionKeys.realtimeScheme`       | `ws` or `wss`. Default: `wss`.                                              |
-| `HosteDayOptionKeys.realtimePort`         | Realtime port. Usually `443` with `wss`.                                    |
-| `HosteDayOptionKeys.broadcastingAuthPath` | Private and presence channel authorization endpoint.                        |
-| `HosteDayOptionKeys.publicEventsPath`     | Public realtime event publishing endpoint.                                  |
-| `HosteDayOptionKeys.privateEventsPath`    | Private realtime event publishing endpoint.                                 |
-| `HosteDayOptionKeys.presenceEventsPath`   | Presence realtime event publishing endpoint.                                |
+| Option           | Description                                                                 |
+|------------------|-----------------------------------------------------------------------------|
+| `realtimeAppKey` | Pusher-compatible application key found after `/app/` in the WebSocket URL. |
+| `realtimeHost`   | Realtime WebSocket host, for example `ws3.hosteday.com`.                    |
+| `realtimeScheme` | `ws` or `wss`. Default: `wss`.                                              |
+| `realtimePort`   | Realtime port. Default: `443` for `wss`.                                    |
 
 Request values such as `search`, `id`, `relationField`, and `relationValue` are
-not initialization configuration. They are passed directly to request methods.
-The SDK writes their backend names into the URL automatically.
-
-For example, application code uses:
+passed directly to request methods. The SDK writes their backend names into the URL automatically:
 
 ```dart
-await
-HosteDay.client.get
-('/services
-'
-,search: 'booking',
-relationField: 'company_id',
-relationValue
-:
-15
-,
+await Hosteday.client.get(
+  '/services',
+  search: 'booking',
+  relationField: 'company_id',
+  relationValue: 15,
 );
 ```
 
@@ -211,60 +188,38 @@ The SDK builds a URL equivalent to:
 https://your-project.hosteday.com/api/services?search=booking&relation_field=company_id&relation_value=15
 ```
 
-The application developer does not need to type `relation_field` or
-`relation_value` manually.
-
 ---
 
 ## Initialization with realtime
 
 ```dart
-await
-HosteDay.initializeApp
-(
-options: const <String, Object?>{
-HosteDayOptionKeys.projectDomain:
-'your-project.hosteday.com',
-HosteDayOptionKeys.realtimeAppKey:
-'YOUR_REALTIME_APP_KEY',
-HosteDayOptionKeys.realtimeHost:
-'ws3.hosteday.com',
-HosteDayOptionKeys.realtimeScheme: 'wss',
-HosteDayOptionKeys.realtimePort: 443,
-},
-authStorage
-:
-HosteDaySharedPreferencesAuthStorage
-(
-)
-,
+await Hosteday.initializeApp(
+  config: const HostedayConfig(
+    projectDomain: 'your-project.hosteday.com',
+    realtimeAppKey: 'YOUR_REALTIME_APP_KEY',
+    realtimeHost: 'ws3.hosteday.com',
+  ),
+  authStorage: HostedaySharedPreferencesAuthStorage(),
 );
 ```
 
 Connect when realtime is needed:
 
 ```dart
-await
-HosteDay.connectRealtime
-();
+await Hosteday.connectRealtime();
 ```
 
 To connect immediately during initialization:
 
 ```dart
-await
-HosteDay.initializeApp
-(
-options: const <String, Object?>{
-HosteDayOptionKeys.projectDomain:
-'your-project.hosteday.com',
-HosteDayOptionKeys.realtimeAppKey:
-'YOUR_REALTIME_APP_KEY',
-HosteDayOptionKeys.realtimeHost:
-'ws3.hosteday.com',
-},
-authStorage: HosteDaySharedPreferencesAuthStorage(),
-connectRealtime: true,
+await Hosteday.initializeApp(
+  config: const HostedayConfig(
+    projectDomain: 'your-project.hosteday.com',
+    realtimeAppKey: 'YOUR_REALTIME_APP_KEY',
+    realtimeHost: 'ws3.hosteday.com',
+  ),
+  authStorage: HostedaySharedPreferencesAuthStorage(),
+  connectRealtime: true,
 );
 ```
 
@@ -344,10 +299,18 @@ To keep production credentials and Firebase configurations safe from public repo
 
 ## Public SDK architecture
 
-Use `HosteDay` and `HosteDayClient` as the public API:
+Use `Hosteday` as the static application facade:
 
 ```dart
-HosteDay.client;HosteDay.auth;HosteDay.config;HosteDay.realtime;HosteDay.isInitialized;
+Hosteday.auth;          // Authentication & user session management
+Hosteday.http;          // REST API requests, CRUD operations, & pagination
+Hosteday.realtime;      // WebSocket channels (public, private, presence)
+Hosteday.notifications; // Push notification device registration & dispatch
+Hosteday.jobs;          // Background queue jobs & task execution status
+Hosteday.connectivity;  // Internet connection monitoring service
+Hosteday.isOnline;      // Instant synchronous online status boolean
+Hosteday.features;      // Dynamic feature flags & entitlements
+Hosteday.config;        // Read-only active Hosteday configuration
 ```
 
 `HosteDayClient` is the high-level facade. It owns and coordinates:
@@ -1471,40 +1434,47 @@ The SDK adds the `private-` prefix when needed.
 Presence channels require a signed-in user:
 
 ```dart
-await
-HosteDay.connectRealtime
-();
+await Hosteday.connectRealtime();
 
-final subscription = await
-HosteDay.realtime.listenPresence
-(
-channel: 'chat.room.1',
-event: 'MessageSent',
-onEvent: (event) {
-print(event.payload);
-},
+final subscription = await Hosteday.realtime.listenPresence(
+  channel: 'chat.room.1',
+  event: 'MessageSent',
+  onEvent: (event) {
+    print(event.payload);
+  },
 );
 ```
 
 The SDK adds the `presence-` prefix when needed.
 
-Listen for members joining or leaving:
+### Listen to online member list
+
+Track the full list of members currently online in the presence channel:
 
 ```dart
-await
-HosteDay.realtime.listenPresenceMemberAdded
-(
-channel: 'chat.room.1',
-onEvent: (event) {
-print(event.payload);
-},
+await Hosteday.realtime.listenPresenceMembersList(
+  channel: 'chat.room.1',
+  onMembersList: (members) {
+    print('Current online members: $members');
+  },
+);
+```
+
+### Listen for members joining or leaving
+
+```dart
+await Hosteday.realtime.listenPresenceMemberAdded(
+  channel: 'chat.room.1',
+  onEvent: (event) {
+    print('Member joined: ${event.payload}');
+  },
 );
 
-await HosteDay.realtime.listenPresenceMemberRemoved(
-channel: 'chat.room.1',
-onEvent: (event) {
-print(event.payload);
-},
+await Hosteday.realtime.listenPresenceMemberRemoved(
+  channel: 'chat.room.1',
+  onEvent: (event) {
+    print('Member left: ${event.payload}');
+  },
 );
 ```
 
@@ -1716,10 +1686,75 @@ print(response.messageId);
 
 ```dart
 ValueListenableBuilder<String?>(
-  valueListenable: HosteDay.notifications.tokenNotifier,
+  valueListenable: Hosteday.notifications.tokenNotifier,
   builder: (context, token, child) {
     return Text('Active token: ${token ?? "None"}');
   },
+);
+```
+
+---
+
+# Background jobs
+
+HosteDay provides asynchronous background job dispatching and execution status monitoring via `Hosteday.jobs`.
+
+```dart
+// Dispatch a background job
+final HostedayJobResponse job = await Hosteday.jobs.dispatch(
+  name: 'App\\Jobs\\ProcessDataJob',
+  payload: <String, dynamic>{
+    'order_id': 1234,
+  },
+);
+
+print('Dispatched Job ID: ${job.jobId}');
+print('Initial Status: ${job.status}'); // pending
+
+// Check job execution status
+final HostedayJobResponse status = await Hosteday.jobs.status(job.jobId!);
+if (status.isCompleted) {
+  print('Job finished successfully: ${status.message}');
+} else if (status.isFailed) {
+  print('Job failed: ${status.message}');
+}
+```
+
+The response model `HostedayJobResponse` implements `Map<String, dynamic>` for seamless backwards compatibility.
+
+---
+
+# Connectivity monitoring
+
+HosteDay includes a built-in connectivity service powered by `internet_connection_checker_plus` and real-time browser online/offline events via `package:web`.
+
+### Synchronous and asynchronous status
+
+```dart
+// Instant synchronous status check
+final bool isOnline = Hosteday.isOnline;
+
+// Reactive stream subscription (boolean)
+Hosteday.connectivity.onStatusChange.listen((bool isConnected) {
+  print('Internet connectivity: $isConnected');
+});
+
+// Detailed InternetStatus stream (connected / disconnected)
+Hosteday.connectivity.onInternetStatusChange.listen((InternetStatus status) {
+  print('Network status: $status');
+});
+```
+
+### Drop-in UI Banner (`HostedayConnectivityBanner`)
+
+Wrap your application's root widget (such as in `MaterialApp.builder` or `GetMaterialApp.builder`) to automatically show an animated top notification banner whenever the device loses connection, auto-hiding when connection is restored:
+
+```dart
+MaterialApp(
+  builder: (context, child) => HostedayConnectivityBanner(
+    child: child ?? const SizedBox.shrink(),
+  ),
+  home: const HomeScreen(),
 );
 ```
 

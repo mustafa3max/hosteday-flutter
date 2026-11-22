@@ -2,11 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
 import '../../hosteday_config.dart';
-import '../config/hosteday_config_adapter.dart';
 
 /// Initializes the Hosteday SDK before the Flutter app starts.
 ///
-/// Uses the strongly-typed Dart configuration defined in `lib/hosteday_config.dart`,
+/// Uses direct strongly-typed [HostedayConfig] configuration,
 /// eliminating any need for manual assets loading or JSON decoding.
 class HostedayInitializer {
   const HostedayInitializer._();
@@ -18,13 +17,20 @@ class HostedayInitializer {
     );
 
     await Hosteday.initializeApp(
-      options: HosteDayConfigAdapter.toOptions(
-        overrides: const {
-          'jobs_enabled': true,
-          'jobs_path': '/api/jobs',
-        },
+      config: const HostedayConfig(
+        baseUrl: HosteDayConfig.baseUrl,
+        pusherKey: HosteDayConfig.wsKey,
+        realtimeHost: HosteDayConfig.wsHost,
+        firebaseProjectId: HosteDayConfig.firebaseProjectId,
+        notificationsEnabled: HosteDayConfig.pushNotificationsEnabled,
+        jobsEnabled: true,
+        features: HostedayFeatures({
+          'push_notifications': HosteDayConfig.pushNotificationsEnabled,
+          'realtime_websockets': HosteDayConfig.realtimeWebsocketsEnabled,
+        }),
       ),
       connectRealtime: false,
+      jobsEnabled: true,
       authStorage: HostedaySharedPreferencesAuthStorage(),
     );
 

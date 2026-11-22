@@ -6,7 +6,10 @@ import 'auth/hosteday_auth.dart';
 import 'auth/hosteday_auth_storage.dart';
 import 'auth/hosteday_token_provider.dart';
 import 'config/hosteday_config.dart';
+import 'config/hosteday_option_keys.dart';
+import 'connectivity/hosteday_connectivity.dart';
 import 'exceptions/hosteday_exception.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'features/hosteday_features.dart';
 import 'hosteday_client.dart';
 import 'http/hosteday_http_client.dart';
@@ -82,21 +85,39 @@ abstract final class Hosteday {
   /// Returns the feature flags and plan entitlements for the initialized app.
   static HostedayFeatures get features => client.features;
 
+  /// Returns the connectivity monitoring service for the initialized app.
+  static HostedayConnectivity get connectivity => client.connectivity;
+
+  /// Returns whether the device currently has connectivity to Hosteday services.
+  static bool get isOnline => client.connectivity.isConnected;
+
   /// Initializes the Hosteday SDK.
   ///
-  /// [options] must include the Hosteday project domain.
+  /// Either [config] or [options] must be provided.
   ///
   /// [authStorage] is used to persist and restore the authenticated session.
   /// When omitted, the SDK uses temporary in-memory storage.
   ///
   /// Set [connectRealtime] to true only when the app should open the realtime
   /// connection immediately during startup.
+  ///
+  /// Set [jobsEnabled] to control whether background task queues and jobs are enabled.
   static Future<HostedayClient> initializeApp({
-    required Map<String, Object?> options,
+    HostedayConfig? config,
+    Map<String, Object?>? options,
     HostedayTokenProvider? tokenProvider,
     HostedayAuthStorage? authStorage,
     bool connectRealtime = false,
+    bool jobsEnabled = true,
+    InternetConnection? internetConnection,
+    HostedayConnectivity? connectivity,
   }) {
+    if (config == null && options == null) {
+      throw ArgumentError(
+        'Either "config" or "options" must be provided to Hosteday.initializeApp().',
+      );
+    }
+
     final currentClient = _client;
 
     if (currentClient != null) {
@@ -113,10 +134,14 @@ abstract final class Hosteday {
     }
 
     final initialization = _initializeApp(
+      config: config,
       options: options,
       tokenProvider: tokenProvider,
       authStorage: authStorage,
       connectRealtime: connectRealtime,
+      jobsEnabled: jobsEnabled,
+      internetConnection: internetConnection,
+      connectivity: connectivity,
     );
 
     _initializing = initialization;
@@ -136,6 +161,7 @@ abstract final class Hosteday {
     HostedayTokenProvider? tokenProvider,
     HostedayAuthStorage? authStorage,
     bool connectRealtime = false,
+    bool jobsEnabled = true,
   }) async {
     final Object? decoded;
     try {
@@ -153,21 +179,43 @@ abstract final class Hosteday {
       tokenProvider: tokenProvider,
       authStorage: authStorage,
       connectRealtime: connectRealtime,
+      jobsEnabled: jobsEnabled,
     );
   }
 
   static Future<HostedayClient> _initializeApp({
-    required Map<String, Object?> options,
+    HostedayConfig? config,
+    Map<String, Object?>? options,
     HostedayTokenProvider? tokenProvider,
     HostedayAuthStorage? authStorage,
     bool connectRealtime = false,
+    bool jobsEnabled = true,
+    InternetConnection? internetConnection,
+    HostedayConnectivity? connectivity,
   }) async {
-    final appConfig = HostedayConfig.fromOptions(options);
+    final HostedayConfig appConfig;
+
+    if (config != null) {
+      appConfig = config;
+    } else {
+      final effectiveOptions = <String, Object?>{
+        HostedayOptionKeys.jobsPath: '/api/jobs',
+        ...?options,
+      };
+      if (!effectiveOptions.containsKey(HostedayOptionKeys.jobsEnabled) &&
+          !effectiveOptions
+              .containsKey(HostedayOptionKeys.backgroundJobsEnabled)) {
+        effectiveOptions[HostedayOptionKeys.jobsEnabled] = jobsEnabled;
+      }
+      appConfig = HostedayConfig.fromOptions(effectiveOptions);
+    }
 
     final appClient = HostedayClient(
       config: appConfig,
       tokenProvider: tokenProvider,
       authStorage: authStorage,
+      internetConnection: internetConnection,
+      connectivity: connectivity,
     );
 
     try {
@@ -245,17 +293,25 @@ abstract final class HosteDay {
 
   static HostedayFeatures get features => Hosteday.features;
 
+  static HostedayConnectivity get connectivity => Hosteday.connectivity;
+
+  static bool get isOnline => Hosteday.isOnline;
+
   static Future<HostedayClient> initializeApp({
-    required Map<String, Object?> options,
+    HostedayConfig? config,
+    Map<String, Object?>? options,
     HostedayTokenProvider? tokenProvider,
     HostedayAuthStorage? authStorage,
     bool connectRealtime = false,
+    bool jobsEnabled = true,
   }) {
     return Hosteday.initializeApp(
+      config: config,
       options: options,
       tokenProvider: tokenProvider,
       authStorage: authStorage,
       connectRealtime: connectRealtime,
+      jobsEnabled: jobsEnabled,
     );
   }
 

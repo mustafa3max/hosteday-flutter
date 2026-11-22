@@ -66,15 +66,41 @@ class HosteDayNotificationClient {
   Set<String> get subscribedTopics =>
       Set<String>.unmodifiable(_subscribedTopics);
 
-  /// Registers or updates a device token on the HosteDay server.
+  /// Synchronizes or registers a device token with the HosteDay server.
   ///
-  /// When a user is signed in, the token is linked to the authenticated user.
-  /// Otherwise, it is stored for anonymous/guest device notifications.
-  Future<Map<String, dynamic>> registerDeviceToken({
+  /// Sends `device_token`, `device_type`, `device_name`, and optional `device_id`.
+  /// When [accessToken] is provided or an authenticated session exists,
+  /// the request includes `Authorization: Bearer $accessToken`.
+  Future<Map<String, dynamic>> syncDeviceToken({
     required String token,
+    String? accessToken,
     String? deviceType,
     String? deviceId,
     String? deviceName,
+    String? endpoint,
+  }) async {
+    return registerDeviceToken(
+      token: token,
+      accessToken: accessToken,
+      deviceType: deviceType,
+      deviceId: deviceId,
+      deviceName: deviceName,
+      endpoint: endpoint,
+    );
+  }
+
+  /// Registers or updates a device token on the HosteDay server.
+  ///
+  /// When a user is signed in (or [accessToken] is supplied), the token is
+  /// linked to the authenticated user.
+  /// Otherwise, it is stored for anonymous/guest device notifications.
+  Future<Map<String, dynamic>> registerDeviceToken({
+    required String token,
+    String? accessToken,
+    String? deviceType,
+    String? deviceId,
+    String? deviceName,
+    String? endpoint,
   }) async {
     _ensureNotDisposed();
 
@@ -83,7 +109,10 @@ class HosteDayNotificationClient {
       throw const HosteDayException('A valid device token is required.');
     }
 
-    final hasAuth = await _hasAuthenticatedUser();
+    final cleanAccessToken = accessToken?.trim();
+    final hasExplicitAuth =
+        cleanAccessToken != null && cleanAccessToken.isNotEmpty;
+    final hasAuth = hasExplicitAuth || await _hasAuthenticatedUser();
 
     final body = <String, dynamic>{
       'device_token': cleanToken,
@@ -95,11 +124,39 @@ class HosteDayNotificationClient {
         'device_name': deviceName,
     };
 
-    final response = await http.post(
-      config.registerDeviceTokenPath,
-      body: body,
-      withAuth: hasAuth,
-    );
+    final headers = <String, String>{
+      if (hasExplicitAuth) 'Authorization': 'Bearer $cleanAccessToken',
+    };
+
+    final targetPath = endpoint ?? config.registerDeviceTokenPath;
+
+    Map<String, dynamic> response;
+    try {
+      response = await http.post(
+        targetPath,
+        body: body,
+        headers: headers.isNotEmpty ? headers : null,
+        withAuth: !hasExplicitAuth && hasAuth,
+      );
+    } on HostedayException catch (e) {
+      if (e.statusCode == 404) {
+        final alternative = targetPath == '/api/device-tokens'
+            ? '/api/notifications/devices/register'
+            : '/api/device-tokens';
+        try {
+          response = await http.post(
+            alternative,
+            body: body,
+            headers: headers.isNotEmpty ? headers : null,
+            withAuth: !hasExplicitAuth && hasAuth,
+          );
+        } catch (_) {
+          rethrow;
+        }
+      } else {
+        rethrow;
+      }
+    }
 
     _currentTokenNotifier.value = cleanToken;
     currentDeviceId = deviceId;
@@ -119,6 +176,8 @@ class HosteDayNotificationClient {
     String? deviceId,
     String? action = 'unlink',
     bool? logoutOnly,
+    String? accessToken,
+    String? endpoint,
   }) async {
     _ensureNotDisposed();
 
@@ -127,7 +186,10 @@ class HosteDayNotificationClient {
       return <String, dynamic>{};
     }
 
-    final hasAuth = await _hasAuthenticatedUser();
+    final cleanAccessToken = accessToken?.trim();
+    final hasExplicitAuth =
+        cleanAccessToken != null && cleanAccessToken.isNotEmpty;
+    final hasAuth = hasExplicitAuth || await _hasAuthenticatedUser();
 
     final body = <String, dynamic>{
       'device_token': cleanToken,
@@ -137,11 +199,39 @@ class HosteDayNotificationClient {
       if (logoutOnly != null) 'logout_only': logoutOnly,
     };
 
-    final response = await http.post(
-      config.unregisterDeviceTokenPath,
-      body: body,
-      withAuth: hasAuth,
-    );
+    final headers = <String, String>{
+      if (hasExplicitAuth) 'Authorization': 'Bearer $cleanAccessToken',
+    };
+
+    final targetPath = endpoint ?? config.unregisterDeviceTokenPath;
+
+    Map<String, dynamic> response;
+    try {
+      response = await http.post(
+        targetPath,
+        body: body,
+        headers: headers.isNotEmpty ? headers : null,
+        withAuth: !hasExplicitAuth && hasAuth,
+      );
+    } on HostedayException catch (e) {
+      if (e.statusCode == 404) {
+        final alternative = targetPath == '/api/device-tokens'
+            ? '/api/notifications/devices/unregister'
+            : '/api/device-tokens';
+        try {
+          response = await http.post(
+            alternative,
+            body: body,
+            headers: headers.isNotEmpty ? headers : null,
+            withAuth: !hasExplicitAuth && hasAuth,
+          );
+        } catch (_) {
+          rethrow;
+        }
+      } else {
+        rethrow;
+      }
+    }
 
     if (_currentTokenNotifier.value == cleanToken) {
       _currentTokenNotifier.value = null;
@@ -212,8 +302,7 @@ class HosteDayNotificationClient {
         'recipient_user_id': recipientUserId,
       if (recipientToken != null && recipientToken.isNotEmpty)
         'recipient_token': recipientToken,
-      if (targetTopic != null && targetTopic.isNotEmpty)
-        'topic': targetTopic,
+      if (targetTopic != null && targetTopic.isNotEmpty) 'topic': targetTopic,
       if (data != null && data.isNotEmpty) 'data': data,
       if (provider != null && provider.isNotEmpty) 'provider': provider,
     };
@@ -270,4 +359,3 @@ class HosteDayNotificationClient {
 
 /// Preferred spelling of [HosteDayNotificationClient].
 typedef HostedayNotificationClient = HosteDayNotificationClient;
-

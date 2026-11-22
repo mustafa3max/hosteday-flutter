@@ -134,4 +134,3 @@ enum AppThemePreset {
   static List<AppThemePreset> get darkPresets =>
       AppThemePreset.values.where((p) => p.isDark).toList();
 }
-

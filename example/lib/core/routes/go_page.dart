@@ -104,7 +104,7 @@ abstract final class GoPage {
   static Future<dynamic> home({bool offAll = false}) {
     return _navigate<dynamic>(
       routeName: AppRoutes.home,
-      pageBuilder: () => const HomeShell(initialTab: HomeTab.example),
+      pageBuilder: () => const HomeShell(initialTab: HomeTab.guide),
       binding: HomeBinding(),
       offAll: offAll,
       transition: Transition.fadeIn,
@@ -119,7 +119,7 @@ abstract final class GoPage {
   static Future<dynamic> login({bool off = false, bool offAll = false}) {
     return _navigate<dynamic>(
       routeName: AppRoutes.login,
-      pageBuilder: () => const LoginPage(),
+      pageBuilder: () => const HomeShell(child: LoginPage()),
       binding: AuthBinding(),
       off: off,
       offAll: offAll,
@@ -134,7 +134,7 @@ abstract final class GoPage {
   static Future<dynamic> register({bool off = false}) {
     return _navigate<dynamic>(
       routeName: AppRoutes.register,
-      pageBuilder: () => const RegisterPage(),
+      pageBuilder: () => const HomeShell(child: RegisterPage()),
       binding: AuthBinding(),
       off: off,
     );
@@ -144,7 +144,7 @@ abstract final class GoPage {
   static Future<dynamic> forgotPassword() {
     return _navigate<dynamic>(
       routeName: AppRoutes.forgotPassword,
-      pageBuilder: () => const ForgotPasswordPage(),
+      pageBuilder: () => const HomeShell(child: ForgotPasswordPage()),
       binding: AuthBinding(),
     );
   }
@@ -167,7 +167,7 @@ abstract final class GoPage {
   static Future<dynamic> passwordResetEmail() {
     return _navigate<dynamic>(
       routeName: AppRoutes.passwordResetEmail,
-      pageBuilder: () => const PasswordResetEmailPage(),
+      pageBuilder: () => const HomeShell(child: PasswordResetEmailPage()),
       binding: UserBinding(),
     );
   }
@@ -176,7 +176,7 @@ abstract final class GoPage {
   static Future<dynamic> verificationNotification() {
     return _navigate<dynamic>(
       routeName: AppRoutes.verificationNotification,
-      pageBuilder: () => const VerificationNotificationPage(),
+      pageBuilder: () => const HomeShell(child: VerificationNotificationPage()),
       binding: UserBinding(),
     );
   }
@@ -198,15 +198,19 @@ abstract final class GoPage {
     );
   }
 
-  /// Navigate to Smart Push Notifications page.
-  static Future<dynamic> notifications({bool off = false}) {
+  /// Navigate to General Settings page.
+  static Future<dynamic> settings({bool off = false}) {
     return _navigate<dynamic>(
-      routeName: AppRoutes.notifications,
-      pageBuilder: () => const HomeShell(initialTab: HomeTab.notifications),
+      routeName: AppRoutes.settings,
+      pageBuilder: () => const HomeShell(initialTab: HomeTab.settings),
       binding: HomeBinding(),
       off: off,
     );
   }
+
+  /// Backward-compatible alias for [settings].
+  static Future<dynamic> notifications({bool off = false}) =>
+      settings(off: off);
 
   /// Navigate to Live Bidding Radar (Pluggable Feature).
   static Future<dynamic> liveBidding() {

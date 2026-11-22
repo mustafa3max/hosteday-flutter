@@ -2,11 +2,11 @@ import 'package:get/get.dart';
 
 import '../../../core/routes/app_routes.dart';
 
-enum HomeTab { example, realtime, notifications, profile }
+enum HomeTab { guide, realtime, settings, profile }
 
 /// Reactive GetX controller for the main shell navigation and tabs.
 class HomeController extends GetxController {
-  final Rx<HomeTab> currentTab = HomeTab.example.obs;
+  final Rx<HomeTab> currentTab = HomeTab.guide.obs;
 
   int get selectedIndex => currentTab.value.index;
 
@@ -19,9 +19,9 @@ class HomeController extends GetxController {
   void setTab(HomeTab tab) {
     currentTab.value = tab;
     final targetRoute = switch (tab) {
-      HomeTab.example => AppRoutes.home,
+      HomeTab.guide => AppRoutes.home,
       HomeTab.realtime => AppRoutes.realtime,
-      HomeTab.notifications => AppRoutes.notifications,
+      HomeTab.settings => AppRoutes.settings,
       HomeTab.profile => AppRoutes.profile,
     };
     if (Get.currentRoute != targetRoute) {
@@ -29,4 +29,3 @@ class HomeController extends GetxController {
     }
   }
 }
-

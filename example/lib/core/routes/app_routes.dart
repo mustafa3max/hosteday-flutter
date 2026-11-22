@@ -21,13 +21,16 @@ abstract final class AppRoutes {
   static const String profile = '/user/profile';
   static const String userProfile = '/user/profile'; // Alias
   static const String passwordResetEmail = '/user/password-reset-email';
-  static const String verificationNotification = '/user/verification-notification';
-  static const String emailVerification = '/user/verification-notification'; // Backward-compatible alias
+  static const String verificationNotification =
+      '/user/verification-notification';
+  static const String emailVerification =
+      '/user/verification-notification'; // Backward-compatible alias
 
   // ---------------------------------------------------------------------------
   // Additional Features
   // ---------------------------------------------------------------------------
-  static const String notifications = '/notifications';
+  static const String settings = '/settings';
+  static const String notifications = '/settings'; // Backward-compatible alias
   static const String realtime = '/realtime';
   static const String liveBidding = '/live-bidding';
 }

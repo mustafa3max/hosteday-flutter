@@ -4,6 +4,7 @@ import '../auth/hosteday_token_provider.dart';
 import '../config/hosteday_config.dart';
 import '../exceptions/hosteday_exception.dart';
 import '../http/hosteday_http_client.dart';
+import 'hosteday_job_response.dart';
 
 /// Manages Hosteday smart background jobs, queues, and task dispatching.
 class HostedayJobsClient {
@@ -29,7 +30,7 @@ class HostedayJobsClient {
   bool get isEnabled => config.jobsEnabled;
 
   /// Dispatches a background job to the Hosteday queue.
-  Future<Map<String, dynamic>> dispatch({
+  Future<HostedayJobResponse> dispatch({
     required String name,
     Map<String, dynamic>? payload,
     int? delaySeconds,
@@ -54,11 +55,11 @@ class HostedayJobsClient {
       withAuth: withAuth,
     );
 
-    return response;
+    return HostedayJobResponse.fromJson(response);
   }
 
   /// Retrieves the execution status or details of a queued job.
-  Future<Map<String, dynamic>> getStatus(
+  Future<HostedayJobResponse> getStatus(
     String jobId, {
     bool withAuth = true,
   }) async {
@@ -74,7 +75,7 @@ class HostedayJobsClient {
       withAuth: withAuth,
     );
 
-    return response;
+    return HostedayJobResponse.fromJson(response);
   }
 
   /// Lists scheduled or completed background jobs.
@@ -116,4 +117,3 @@ class HostedayJobsClient {
     _disposed = true;
   }
 }
-

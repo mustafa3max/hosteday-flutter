@@ -55,4 +55,37 @@ void main() {
     expect(Hosteday.client.apiBaseUrl, 'https://max.hosteday.com/api');
     expect(Hosteday.config.hasRealtime, isFalse);
   });
+
+  test('initializes with direct typed HostedayConfig', () async {
+    final client = await Hosteday.initializeApp(
+      config: const HostedayConfig(
+        baseUrl: 'https://direct.hosteday.com',
+        pusherKey: 'app-key',
+        realtimeHost: 'ws.hosteday.com',
+      ),
+    );
+    expect(Hosteday.client, same(client));
+    expect(client.config.baseUrl, 'https://direct.hosteday.com');
+    expect(client.config.hasRealtime, isTrue);
+    expect(client.config.jobsEnabled, isTrue);
+    expect(client.config.jobsPath, '/api/jobs');
+  });
+
+  test('initializes with zero-config options using only baseUrl', () async {
+    final client = await Hosteday.initializeApp(options: {
+      HostedayOptionKeys.baseUrl: 'https://minimal.hosteday.com',
+    });
+    expect(Hosteday.client, same(client));
+    expect(client.config.projectDomain, 'minimal.hosteday.com');
+    expect(client.config.jobsPath, '/api/jobs');
+    expect(client.config.realtimePort, 443);
+    expect(client.config.realtimeScheme, 'wss');
+  });
+
+  test('throws ArgumentError if neither config nor options provided', () async {
+    expect(
+      () => Hosteday.initializeApp(),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
 }

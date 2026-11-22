@@ -1,8 +1,8 @@
 {
-  "apiKey": "AIzaSy_YOUR_DUMMY_WEB_API_KEY_HERE",
-  "authDomain": "example-app.firebaseapp.com",
-  "projectId": "example-firebase-project",
-  "storageBucket": "example-firebase-project.firebasestorage.app",
-  "messagingSenderId": "000000000000",
-  "appId": "1:000000000000:web:0000000000000000000000"
+  "apiKey": "AIzaSyAAiOSB-eenkgFmRkbR_XkIRwqw4d7nZ2g",
+  "authDomain": "flutter-hosteday-xdqb.firebaseapp.com",
+  "projectId": "flutter-hosteday-xdqb",
+  "storageBucket": "flutter-hosteday-xdqb.firebasestorage.app",
+  "messagingSenderId": "418691683006",
+  "appId": "1:418691683006:web:e4a04e82d160181acf44ef"
 }

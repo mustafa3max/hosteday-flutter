@@ -10,37 +10,54 @@ class BiddingControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LiveBiddingController>();
+    final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF13131A),
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF262636),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
           width: 1,
         ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.25 : 0.04,
+            ),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(
-                Icons.bolt_rounded,
-                color: Color(0xFFF59E0B),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'المزايدة السريعة بالهمس (Instant Whisper Bids)',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: Color(0xFFF59E0B),
+                  size: 18,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'live_bidding_instant_whisper'.tr,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
               Obx(() {
                 if (controller.isSubmittingBid.value) {
                   return const SizedBox(
@@ -52,24 +69,78 @@ class BiddingControls extends StatelessWidget {
                     ),
                   );
                 }
-                return const Text(
-                  'بدون حفظ في DB',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 11,
+                if (!controller.isConnected.value) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Color(0xFFEF4444),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'live_bidding_ws_connecting'.tr,
+                          style: const TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'live_bidding_no_db_persistence'.tr,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 );
               }),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             children: <Widget>[
               Expanded(
                 child: _buildBidButton(
                   context,
                   increment: 10,
-                  label: '+10 \$',
+                  label: 'live_bidding_bid_increment'.trParams({
+                    'amount': '10',
+                  }),
                   gradient: const <Color>[Color(0xFF2563EB), Color(0xFF1D4ED8)],
                   onTap: () => controller.submitBid(10),
                 ),
@@ -79,7 +150,9 @@ class BiddingControls extends StatelessWidget {
                 child: _buildBidButton(
                   context,
                   increment: 50,
-                  label: '+50 \$',
+                  label: 'live_bidding_bid_increment'.trParams({
+                    'amount': '50',
+                  }),
                   gradient: const <Color>[Color(0xFF7C3AED), Color(0xFF6D28D9)],
                   onTap: () => controller.submitBid(50),
                 ),
@@ -89,7 +162,9 @@ class BiddingControls extends StatelessWidget {
                 child: _buildBidButton(
                   context,
                   increment: 100,
-                  label: '+100 \$',
+                  label: 'live_bidding_bid_increment'.trParams({
+                    'amount': '100',
+                  }),
                   gradient: const <Color>[Color(0xFFD97706), Color(0xFFB45309)],
                   onTap: () => controller.submitBid(100),
                 ),
@@ -109,9 +184,13 @@ class BiddingControls extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final controller = Get.find<LiveBiddingController>();
+    final theme = Theme.of(context);
 
     return Obx(() {
-      final disabled = controller.isSubmittingBid.value ||
+      final isConnected = controller.isConnected.value;
+      final disabled =
+          !isConnected ||
+          controller.isSubmittingBid.value ||
           controller.auctionStatus.value == 'ended';
 
       return Material(
@@ -125,8 +204,8 @@ class BiddingControls extends StatelessWidget {
               gradient: disabled
                   ? LinearGradient(
                       colors: <Color>[
-                        Colors.grey.shade800,
-                        Colors.grey.shade900,
+                        theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                        theme.colorScheme.onSurface.withValues(alpha: 0.2),
                       ],
                     )
                   : LinearGradient(colors: gradient),
@@ -142,13 +221,38 @@ class BiddingControls extends StatelessWidget {
                     ],
             ),
             child: Center(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  letterSpacing: 0.5,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (!isConnected) ...<Widget>[
+                        Icon(
+                          Icons.lock_clock_rounded,
+                          size: 15,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.4,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: disabled
+                              ? theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.4,
+                                )
+                              : Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -158,4 +262,3 @@ class BiddingControls extends StatelessWidget {
     });
   }
 }
-

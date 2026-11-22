@@ -15,14 +15,23 @@ class ActiveBiddersBar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF13131A),
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF262636),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
           width: 1,
         ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.25 : 0.04,
+            ),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,17 +56,16 @@ class ActiveBiddersBar extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'رادار المتواجدين (Presence Radar)',
+                'live_bidding_presence_title'.tr,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   letterSpacing: 0.2,
                 ),
               ),
               const Spacer(),
-              Obx(() {
-                final count = controller.onlineBidders.length;
-                return Container(
+              Obx(
+                () => Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 3,
@@ -70,15 +78,17 @@ class ActiveBiddersBar extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    '$count متصل الآن',
+                    'live_bidding_online_count'.trParams({
+                      'count': controller.onlineBidders.length.toString(),
+                    }),
                     style: const TextStyle(
-                      color: Color(0xFF34D399),
+                      color: Color(0xFF10B981),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                );
-              }),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -89,15 +99,14 @@ class ActiveBiddersBar extends StatelessWidget {
               if (bidders.isEmpty) {
                 return Center(
                   child: Text(
-                    'جاري مسح المتواجدين في الغرفة...',
+                    'live_bidding_waiting_events'.tr,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       fontSize: 13,
                     ),
                   ),
                 );
               }
-
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: bidders.length,
@@ -151,24 +160,24 @@ class ActiveBiddersBar extends StatelessWidget {
                               ],
                             )
                           : (isSelf
-                              ? const LinearGradient(
-                                  colors: <Color>[
-                                    Color(0xFF06B6D4),
-                                    Color(0xFF3B82F6),
-                                  ],
-                                )
-                              : const LinearGradient(
-                                  colors: <Color>[
-                                    Color(0xFF4F46E5),
-                                    Color(0xFF9333EA),
-                                  ],
-                                )),
+                                ? const LinearGradient(
+                                    colors: <Color>[
+                                      Color(0xFF06B6D4),
+                                      Color(0xFF3B82F6),
+                                    ],
+                                  )
+                                : const LinearGradient(
+                                    colors: <Color>[
+                                      Color(0xFF4F46E5),
+                                      Color(0xFF9333EA),
+                                    ],
+                                  )),
                       border: Border.all(
                         color: isLeader
                             ? const Color(0xFFFBBF24)
                             : (isSelf
-                                ? const Color(0xFF38BDF8)
-                                : const Color(0xFF6366F1)),
+                                  ? const Color(0xFF38BDF8)
+                                  : const Color(0xFF6366F1)),
                         width: isLeader ? 2.2 : 1.5,
                       ),
                     ),
@@ -194,7 +203,7 @@ class ActiveBiddersBar extends StatelessWidget {
                         color: const Color(0xFF10B981),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xFF13131A),
+                          color: Theme.of(context).colorScheme.surface,
                           width: 2,
                         ),
                       ),
@@ -204,10 +213,7 @@ class ActiveBiddersBar extends StatelessWidget {
                     const Positioned(
                       top: -7,
                       right: -4,
-                      child: Text(
-                        '👑',
-                        style: TextStyle(fontSize: 15),
-                      ),
+                      child: Text('👑', style: TextStyle(fontSize: 15)),
                     ),
                 ],
               ),
@@ -215,7 +221,7 @@ class ActiveBiddersBar extends StatelessWidget {
               SizedBox(
                 width: 68,
                 child: Text(
-                  isSelf ? 'أنت' : bidder.name,
+                  isSelf ? 'you'.tr : bidder.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -223,8 +229,10 @@ class ActiveBiddersBar extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: isSelf ? FontWeight.bold : FontWeight.w500,
                     color: isSelf
-                        ? const Color(0xFF38BDF8)
-                        : Colors.white.withValues(alpha: 0.9),
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -256,12 +264,13 @@ class ActiveBiddersBar extends StatelessWidget {
     BidderModel bidder,
     LiveBiddingController controller,
   ) {
+    final theme = Theme.of(context);
     final isLeader = bidder.id == controller.highestBidderId.value;
     final isSelf = bidder.id == controller.currentUserId;
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF161624),
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -278,7 +287,7 @@ class ActiveBiddersBar extends StatelessWidget {
                     radius: 24,
                     backgroundColor: isLeader
                         ? const Color(0xFFF59E0B)
-                        : const Color(0xFF3B82F6),
+                        : theme.colorScheme.primary,
                     child: Text(
                       bidder.name.isNotEmpty
                           ? bidder.name.trim()[0].toUpperCase()
@@ -297,8 +306,8 @@ class ActiveBiddersBar extends StatelessWidget {
                       children: <Widget>[
                         Text(
                           bidder.name,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -306,8 +315,10 @@ class ActiveBiddersBar extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           'المعرف (ID): ${bidder.id}',
-                          style: const TextStyle(
-                            color: Color(0xFF94A3B8),
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.65,
+                            ),
                             fontSize: 12,
                           ),
                         ),
@@ -338,20 +349,26 @@ class ActiveBiddersBar extends StatelessWidget {
                     ),
                 ],
               ),
-              const Divider(color: Color(0xFF262636), height: 28),
+              Divider(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                height: 28,
+              ),
               _buildDetailRow(
+                context,
                 Icons.radar_rounded,
                 'قناة التواجد',
                 'presence-${LiveBiddingController.presenceChannelName}',
               ),
               const SizedBox(height: 10),
               _buildDetailRow(
+                context,
                 Icons.access_time_rounded,
                 'وقت الانضمام للرادار',
                 controller.formatTime(bidder.joinedAt),
               ),
               const SizedBox(height: 10),
               _buildDetailRow(
+                context,
                 Icons.verified_user_rounded,
                 'حالة العضو',
                 isSelf ? 'أنت (الجلسة الحالية)' : 'مزايد نشط في الغرفة (Here)',
@@ -364,22 +381,28 @@ class ActiveBiddersBar extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _buildDetailRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    final theme = Theme.of(context);
     return Row(
       children: <Widget>[
-        Icon(icon, size: 16, color: const Color(0xFF818CF8)),
+        Icon(icon, size: 16, color: theme.colorScheme.primary),
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: const TextStyle(
-            color: Color(0xFF94A3B8),
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             fontSize: 12,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),

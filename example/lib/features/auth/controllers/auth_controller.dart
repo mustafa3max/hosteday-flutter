@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
+import '../../../core/controllers/base_hosteday_controller.dart';
 import '../../../core/errors/error_presenter.dart';
+import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/routes/go_page.dart';
 
 /// GetX reactive controller for Hosteday authentication, sessions, and forms.
-class AuthController extends GetxController {
+class AuthController extends BaseHostedayController {
   final Rx<HostedayUser?> currentUser = Rx<HostedayUser?>(null);
-  final RxBool isLoading = false.obs;
-  final RxString errorMessage = ''.obs;
 
   StreamSubscription<HostedayUser?>? _authSubscription;
 
@@ -34,8 +34,10 @@ class AuthController extends GetxController {
   final GlobalKey<FormState> registerFormKey = GlobalKey<FormState>();
   final TextEditingController registerNameController = TextEditingController();
   final TextEditingController registerEmailController = TextEditingController();
-  final TextEditingController registerPasswordController = TextEditingController();
-  final TextEditingController registerConfirmPasswordController = TextEditingController();
+  final TextEditingController registerPasswordController =
+      TextEditingController();
+  final TextEditingController registerConfirmPasswordController =
+      TextEditingController();
   final RxBool isRegisterPasswordObscured = true.obs;
   final RxBool isRegisterConfirmObscured = true.obs;
 
@@ -51,7 +53,8 @@ class AuthController extends GetxController {
   // Forgot Password Form State
   // ---------------------------------------------------------------------------
   final GlobalKey<FormState> forgotPasswordFormKey = GlobalKey<FormState>();
-  final TextEditingController forgotPasswordEmailController = TextEditingController();
+  final TextEditingController forgotPasswordEmailController =
+      TextEditingController();
   final RxBool forgotPasswordSent = false.obs;
 
   @override
@@ -82,6 +85,7 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
+  @override
   void clearError() {
     errorMessage.value = '';
   }
@@ -102,10 +106,7 @@ class AuthController extends GetxController {
   }
 
   /// Sign in with email and password.
-  Future<bool> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signIn({required String email, required String password}) async {
     isLoading.value = true;
     clearError();
 
@@ -115,6 +116,18 @@ class AuthController extends GetxController {
         password: password,
       );
       currentUser.value = credential.user;
+
+      // Sync device token immediately with accessToken before navigating home
+      final accessToken = credential.session.accessToken;
+      if (Get.isRegistered<PushNotificationService>()) {
+        try {
+          await PushNotificationService.to.syncDeviceToken(
+            accessToken: accessToken,
+          );
+        } catch (e) {
+          debugPrint('[AuthController] syncDeviceToken after login notice: $e');
+        }
+      }
 
       Get.snackbar(
         'login_success_title'.tr,
@@ -144,7 +157,8 @@ class AuthController extends GetxController {
       return false;
     }
 
-    if (registerPasswordController.text != registerConfirmPasswordController.text) {
+    if (registerPasswordController.text !=
+        registerConfirmPasswordController.text) {
       errorMessage.value = 'passwords_dont_match'.tr;
       return false;
     }
@@ -174,6 +188,20 @@ class AuthController extends GetxController {
             : const <String, dynamic>{},
       );
       currentUser.value = credential.user;
+
+      // Sync device token immediately with accessToken before navigating home
+      final accessToken = credential.session.accessToken;
+      if (Get.isRegistered<PushNotificationService>()) {
+        try {
+          await PushNotificationService.to.syncDeviceToken(
+            accessToken: accessToken,
+          );
+        } catch (e) {
+          debugPrint(
+            '[AuthController] syncDeviceToken after register notice: $e',
+          );
+        }
+      }
 
       Get.snackbar(
         'register_success_title'.tr,
@@ -232,6 +260,13 @@ class AuthController extends GetxController {
   /// Sign out current user.
   Future<void> signOut() async {
     try {
+      if (Get.isRegistered<PushNotificationService>()) {
+        try {
+          await PushNotificationService.to.unregisterDeviceToken();
+        } catch (e) {
+          debugPrint('[AuthController] unregisterDeviceToken notice: $e');
+        }
+      }
       await Hosteday.auth.signOut();
       currentUser.value = null;
 

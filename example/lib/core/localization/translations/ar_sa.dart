@@ -1,8 +1,8 @@
 /// Arabic (ar_SA) translations for Hosteday App
 const Map<String, String> arSA = {
   // Common / General
-  'app_title': 'منصة Hosteday',
-  'starter_title': 'تطبيق Hosteday',
+  'app_title': 'Hosteday',
+  'starter_title': 'Hosteday',
   'home': 'الرئيسية',
   'back': 'رجوع',
   'cancel': 'إلغاء',
@@ -29,8 +29,37 @@ const Map<String, String> arSA = {
   'nav_guide': 'الدليل والأكواد',
   'nav_realtime': 'البث المباشر',
   'nav_notifications': 'الإشعارات',
+  'nav_settings': 'الإعدادات',
   'nav_profile': 'الملف الشخصي',
   'account_menu': 'قائمة الحساب',
+  'settings_title': 'الإعدادات العامة',
+  'settings_subtitle': 'تخصيص الإشعارات، التنبيهات، المظهر، ولغة التطبيق',
+  'settings_section_notifications': 'الإشعارات والتنبيهات',
+  'settings_push_title': 'الإشعارات الفورية (Push)',
+  'settings_push_desc':
+      'استقبال تنبيهات المزاد والأحداث المباشرة على هذا الجهاز',
+  'settings_push_enabled': 'مفعلة',
+  'settings_push_disabled': 'معطلة',
+  'settings_auction_alerts_title': 'تنبيهات المزايدة والتخطي (Outbid)',
+  'settings_auction_alerts_desc':
+      'تنبيهك فوراً عند قيام مزايد آخر برفع السعر وتخطي عرضك',
+  'settings_sound_title': 'الأصوات والاهتزازات التفاعلية',
+  'settings_sound_desc':
+      'تشغيل مؤثر صوتي واهتزاز تفاعلي عند حدوث مزايدة أو تنبيه',
+  'settings_announcements_title': 'الإعلانات وتحديثات المنصة',
+  'settings_announcements_desc':
+      'استلام العروض والأخبار العامة من إدارة المنصة',
+  'settings_section_theme': 'المظهر والألوان',
+  'settings_theme_desc': 'اختر السمة التي تفضلها (3 سمات فاتحة و 3 سمات داكنة)',
+  'settings_section_language': 'اللغة والتنسيق',
+  'settings_language_desc': 'اختر لغة واجهة التطبيق المفضلة',
+  'settings_section_about': 'معلومات التطبيق',
+  'settings_app_version': 'إصدار التطبيق',
+  'settings_environment': 'البيئة المتصلة',
+  'settings_permission_request':
+      'تفعيل إذن الإشعارات من نظام التشغيل لاستقبال التنبيهات المباشرة',
+  'settings_permission_granted': 'تم تفعيل إذن الإشعارات بنجاح',
+  'settings_permission_denied': 'تم رفض إذن الإشعارات أو لم يُمنح بعد',
   'theme_label': 'المظهر',
   'change_theme': 'تغيير المظهر',
   'language_label': 'اللغة',
@@ -44,17 +73,20 @@ const Map<String, String> arSA = {
   'sign_out_failed': 'فشل تسجيل الخروج: @error',
   'create_account': 'إنشاء حساب جديد',
   'auth_required_title': 'تسجيل الدخول مطلوب',
-  'auth_required_desc': 'لعرض وتعديل الملف الشخصي، وإدارة الصورة الشخصية، يُرجى تسجيل الدخول أو إنشاء حساب جديد في مشروعك.',
+  'auth_required_desc':
+      'لعرض وتعديل الملف الشخصي، وإدارة الصورة الشخصية، يُرجى تسجيل الدخول أو إنشاء حساب جديد في مشروعك.',
   'email_unverified_banner_title': 'بريدك غير مؤكد',
-  'email_unverified_banner_desc': 'يرجى تأكيد بريدك (@email) لتأمين حسابك والوصول لكامل الميزات.',
+  'email_unverified_banner_desc':
+      'يرجى تأكيد بريدك (@email) لتأمين حسابك والوصول لكامل الميزات.',
   'email_unverified_long_title': 'تنبيه: بريدك الإلكتروني غير مفعّل بعد',
-  'email_unverified_long_desc': 'يرجى تأكيد بريدك (@email) للاستفادة الكاملة من ميزات الحساب.',
+  'email_unverified_long_desc':
+      'يرجى تأكيد بريدك (@email) للاستفادة الكاملة من ميزات الحساب.',
   'verify_now': 'تأكيد الآن',
   'reload_status': 'تحديث الحالة',
 
   // Form Fields & Validation
   'email_label': 'البريد الإلكتروني',
-  'email_hint': 'name@example.com',
+  'email_hint': 'name@domain.com',
   'email_required': 'البريد الإلكتروني مطلوب.',
   'email_invalid': 'يرجى إدخال بريد إلكتروني صحيح.',
   'password_label': 'كلمة المرور',
@@ -76,8 +108,9 @@ const Map<String, String> arSA = {
   'login_success_title': 'تم تسجيل الدخول بنجاح',
   'welcome_back_user': 'مرحباً بك مجدداً @name!',
   'register_success_title': 'تم إنشاء الحساب بنجاح',
-  'register_success_desc': 'مرحباً بك في منصة Hosteday!',
-  'check_inbox_reset_desc': 'تحقق من صندوق بريدك الإلكتروني لإعادة تعيين كلمة المرور.',
+  'register_success_desc': 'مرحباً بك! تم إنشاء حسابك بنجاح.',
+  'check_inbox_reset_desc':
+      'تحقق من صندوق بريدك الإلكتروني لإعادة تعيين كلمة المرور.',
   'sign_out_success_title': 'تم تسجيل الخروج',
   'sign_out_success_desc': 'تم إنهاء جلسة العمل بأمان.',
   'profile_reloaded': 'تم تحديث الملف الشخصي بنجاح.',
@@ -85,22 +118,26 @@ const Map<String, String> arSA = {
   'name_updated_desc': 'تم حفظ الاسم الجديد بنجاح.',
   'empty_image_error': 'الصورة المختارة فارغة.',
   'invalid_image_ext': 'الملف المحدد لا يحتوي على امتداد صحيح.',
-  'unsupported_image_ext': 'الامتداد @ext غير مدعوم. الامتدادات المدعومة هي: jpg, jpeg, png, webp',
+  'unsupported_image_ext':
+      'الامتداد @ext غير مدعوم. الامتدادات المدعومة هي: jpg, jpeg, png, webp',
   'avatar_updated_title': 'تم تحديث الصورة',
   'avatar_updated_desc': 'تم حفظ الصورة الشخصية الجديدة.',
   'account_deleted_title': 'تم حذف الحساب',
   'account_deleted_desc': 'تم حذف بيانات حسابك نهائياً.',
   'reset_email_sent_to': 'تم إرسال رابط استعادة كلمة المرور إلى @email',
-  'check_inbox_reset_email': 'راجع صندوق الوارد في بريدك @email لإعادة تعيين كلمة المرور.',
+  'check_inbox_reset_email':
+      'راجع صندوق الوارد في بريدك @email لإعادة تعيين كلمة المرور.',
   'verification_sent_title': 'تم إرسال الإشعار',
   'verification_sent_desc': 'تم إرسال رابط تأكيد الحساب إلى بريدك الإلكتروني.',
   'verification_congrats_title': 'تهانينا!',
-  'verification_congrats_desc': 'تم تأكيد بريدك الإلكتروني بنجاح وهو موثق الآن.',
+  'verification_congrats_desc':
+      'تم تأكيد بريدك الإلكتروني بنجاح وهو موثق الآن.',
   'verification_pending_title': 'قيد الانتظار',
-  'verification_pending_desc': 'لم يتم تأكيد البريد بعد. يرجى النقر على الرابط المرسل إلى بريدك أولاً.',
+  'verification_pending_desc':
+      'لم يتم تأكيد البريد بعد. يرجى النقر على الرابط المرسل إلى بريدك أولاً.',
   'login_app_bar_title': 'تسجيل الدخول',
   'login_header_title': 'مرحباً بك مجدداً',
-  'login_header_subtitle': 'سجّل الدخول لمتابعة العمل على تطبيقك عبر Hosteday',
+  'login_header_subtitle': 'سجّل الدخول للوصول إلى حسابك ومتابعة نشاطك',
   'login_button': 'دخول',
   'forgot_password_link': 'نسيت كلمة المرور؟',
   'no_account_text': 'ليس لديك حساب؟',
@@ -108,16 +145,20 @@ const Map<String, String> arSA = {
 
   // Authentication - Register
   'register_app_bar_title': 'إنشاء حساب جديد',
-  'register_header_title': 'انضم إلى منصة Hosteday',
-  'register_header_subtitle': 'أنشئ حسابك لبدء بناء وتطوير تطبيقات Flutter متكاملة',
+  'register_header_title': 'إنشاء حساب جديد',
+  'register_header_subtitle': 'أدخل بياناتك لإنشاء حساب جديد والبدء فوراً',
   'register_button': 'إنشاء الحساب',
   'have_account_text': 'لديك حساب بالفعل؟',
   'login_link': 'تسجيل الدخول',
 
   // Authentication - Forgot Password
+  'forgot_password_title': 'استعادة كلمة المرور',
+  'reset_password': 'إعادة تعيين كلمة المرور',
+  'verification_notice_title': 'إشعار التحقق من البريد',
   'forgot_password_app_bar_title': 'استعادة كلمة المرور',
   'forgot_password_header_title': 'استعادة كلمة المرور',
-  'forgot_password_header_subtitle': 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور فوراً.',
+  'forgot_password_header_subtitle':
+      'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور فوراً.',
   'send_reset_link_button': 'إرسال رابط الاستعادة',
   'reset_link_sent_title': 'تم إرسال رابط الاستعادة بنجاح!',
   'reset_link_sent_desc': 'يرجى تفقد بريدك الوارد @email والنقر على الرابط.',
@@ -130,7 +171,8 @@ const Map<String, String> arSA = {
   'choose_from_gallery': 'اختيار من المعرض',
   'take_a_photo': 'التقاط صورة',
   'delete_account_title': 'تأكيد حذف الحساب',
-  'delete_account_message': 'هل أنت متأكد من رغبتك في حذف الحساب نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.',
+  'delete_account_message':
+      'هل أنت متأكد من رغبتك في حذف الحساب نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.',
   'no_active_session': 'لا توجد جلسة مستخدم نشطة',
   'account_created_at': 'تاريخ الانضمام: @date',
   'email_status_verified': 'بريد موثق ومؤكد',
@@ -153,7 +195,8 @@ const Map<String, String> arSA = {
   'send_password_reset_email_action': 'إرسال بريد إعادة تعيين كلمة المرور',
   'send_password_reset_email_desc': 'رابط آمن لتحديث كلمة مرورك عبر البريد',
   'send_verification_notification_action': 'إرسال رابط تأكيد وتفعيل البريد',
-  'send_verification_notification_desc': 'رسالة بريد إلكتروني للتحقق من ملكية الحساب',
+  'send_verification_notification_desc':
+      'رسالة بريد إلكتروني للتحقق من ملكية الحساب',
   'delete_account_action': 'حذف الحساب نهائياً',
   'delete_account_desc': 'إزالة كافة بيانات الحساب والجلسات المسجلة',
   'avatar_uploaded_success': 'تم تحديث الصورة الشخصية بنجاح!',
@@ -166,9 +209,11 @@ const Map<String, String> arSA = {
   // Password Reset Email Page
   'password_reset_email_app_bar_title': 'إعادة تعيين كلمة المرور',
   'password_reset_email_header_title': 'إعادة تعيين كلمة المرور بالبريد',
-  'password_reset_email_header_subtitle': 'سنرسل لك رابطاً مشفراً إلى بريدك الإلكتروني لإعادة تعيين وتحديث كلمة المرور الخاصة بحسابك في Hosteday.',
+  'password_reset_email_header_subtitle':
+      'سنرسل لك رابطاً آمناً إلى بريدك الإلكتروني لإعادة تعيين وتحديث كلمة المرور الخاصة بحسابك.',
   'password_reset_email_sent_title': 'تم إرسال رابط التعيين بنجاح!',
-  'password_reset_email_sent_desc': 'أرسلنا رسالة إلى @email.\nيُرجى مراجعة صندوق الوارد (أو مجلد الرسائل غير المرغوب فيها Spam) والنقر على الرابط لإتمام التعيين.',
+  'password_reset_email_sent_desc':
+      'أرسلنا رسالة إلى @email.\nيُرجى مراجعة صندوق الوارد (أو مجلد الرسائل غير المرغوب فيها Spam) والنقر على الرابط لإتمام التعيين.',
   'send_reset_email_button': 'إرسال بريد إعادة التعيين',
   'resend_button': 'إعادة إرسال',
   'back_to_profile': 'العودة إلى الملف الشخصي',
@@ -177,8 +222,10 @@ const Map<String, String> arSA = {
   'verification_notification_app_bar_title': 'إشعار التحقق من البريد',
   'verification_verified_title': 'تم التحقق من البريد بنجاح!',
   'verification_unverified_title': 'إشعار التحقق من البريد',
-  'verification_verified_desc': 'بريدك الإلكتروني موثق وحسابك نشط بالكامل للوصول لكافة ميزات منصة Hosteday وقواعد البيانات.',
-  'verification_unverified_desc': 'أرسلنا رسالة تحقق إلى عنوان بريدك الإلكتروني:\n@email\nيُرجى النقر على الرابط الموجود في الرسالة لتأكيد الحساب.',
+  'verification_verified_desc':
+      'بريدك الإلكتروني موثق وحسابك نشط بالكامل للوصول لكافة ميزات التطبيق.',
+  'verification_unverified_desc':
+      'أرسلنا رسالة تحقق إلى عنوان بريدك الإلكتروني:\n@email\nيُرجى النقر على الرابط الموجود في الرسالة لتأكيد الحساب.',
   'verification_status_label': 'حالة الحساب الحالية:',
   'status_verified_badge': 'مؤكد وموثق',
   'status_unverified_badge': 'بانتظار التأكيد',
@@ -186,11 +233,13 @@ const Map<String, String> arSA = {
   'status_verified_long': 'الحالة: بريد إلكتروني مؤكّد وموثق',
   'status_unverified_long': 'الحالة: قيد الانتظار - لم يتم التحقق بعد',
   'check_status_now': 'تحقق من الحالة الآن',
-  'verification_sent_success': 'تم إرسال رابط التحقق بنجاح إلى بريدك الإلكتروني!',
+  'verification_sent_success':
+      'تم إرسال رابط التحقق بنجاح إلى بريدك الإلكتروني!',
 
   // Realtime Page
   'realtime_header_title': 'البث المباشر (WebSockets)',
-  'realtime_header_subtitle': 'الاتصال بخدمة البث اللحظي في Hosteday واستقبال الأحداث المباشرة.',
+  'realtime_header_subtitle':
+      'الاتصال بخدمة البث اللحظي واستقبال الأحداث المباشرة.',
   'realtime_host_label': 'مضيف البث (Host)',
   'realtime_url_label': 'رابط البث (URL)',
   'realtime_client_status_label': 'حالة العميل المباشر',
@@ -198,24 +247,30 @@ const Map<String, String> arSA = {
   'realtime_disconnected': 'لا (غير متصل)',
   'connect_realtime_button': 'اتصال بالبث المباشر',
   'disconnect_button': 'قطع الاتصال',
-  'realtime_info_text': 'تستخدم ميزة البث المباشر في Hosteday بروتوكول WebSockets المتوافق مع Pusher، وتتيح الاستماع للقنوات العامة والخاصة وقنوات التواجد مع مصادقة تلقائية بالتوكن.',
+  'realtime_info_text':
+      'تستخدم ميزة البث المباشر بروتوكول WebSockets، وتتيح الاستماع للقنوات العامة والخاصة وقنوات التواجد مع مصادقة تلقائية بالتوكن.',
 
   // Notifications Page
   'notifications_page_title': 'الإشعارات والتنبيهات',
-  'notifications_page_subtitle': 'تخصيص تفضيلات التنبيهات ومتابعة الإشعارات الواردة على هذا الجهاز.',
+  'notifications_page_subtitle':
+      'تخصيص تفضيلات التنبيهات ومتابعة الإشعارات الواردة على هذا الجهاز.',
   'notifications_status_enabled': 'مفعلة',
   'notifications_status_disabled': 'متوقفة',
   'notifications_settings_title': 'تفضيلات الإشعارات',
   'push_notifications_toggle_title': 'إشعارات الجهاز الفورية (Push)',
   'push_notifications_toggle_subtitle': 'استقبال التنبيهات المباشرة فور صدورها',
   'general_announcements_toggle_title': 'الإعلانات والميزات العامة',
-  'general_announcements_toggle_subtitle': 'تنبيهات التحديثات العامة والأخبار الهامة',
+  'general_announcements_toggle_subtitle':
+      'تنبيهات التحديثات العامة والأخبار الهامة',
   'send_test_push_button': 'إرسال تنبيه تجريبي 🔔',
   'copy_fcm_token_button': 'نسخ رمز الجهاز (FCM Token) للاختبار',
   'how_to_send_from_dashboard_title': 'لإرسال إشعار من لوحة تحكم HosteDay:',
-  'how_to_send_from_dashboard_step1': '1. المزود: Firebase Cloud Messaging (FCM v1).',
-  'how_to_send_from_dashboard_step2': '2. نوع المستهدف: "رمز جهاز محدد" أو "قناة Topic: all" للأندرويد.',
-  'how_to_send_from_dashboard_step3': '3. لا تختر Amazon SNS لأنه يتطلب صيغة ARN خاصة بأمازون.',
+  'how_to_send_from_dashboard_step1':
+      '1. المزود: Firebase Cloud Messaging (FCM v1).',
+  'how_to_send_from_dashboard_step2':
+      '2. نوع المستهدف: "رمز جهاز محدد" أو "قناة Topic: all" للأندرويد.',
+  'how_to_send_from_dashboard_step3':
+      '3. لا تختر Amazon SNS لأنه يتطلب صيغة ARN خاصة بأمازون.',
   'device_registration_title': 'تسجيل الجهاز في HosteDay',
   'refresh_device_list_tooltip': 'تحديث قائمة الأجهزة المسجلة',
   'sync_status_label': 'حالة المزامنة:',
@@ -229,19 +284,25 @@ const Map<String, String> arSA = {
   'notifications_inbox_title': 'صندوق الإشعارات',
   'clear_notifications_button': 'مسح',
   'no_notifications_title': 'لا توجد إشعارات جديدة حالياً',
-  'no_notifications_subtitle': 'ستظهر الإشعارات والتنبيهات المباشرة فور وصولها إلى هذا الجهاز هنا.',
+  'no_notifications_subtitle':
+      'ستظهر الإشعارات والتنبيهات المباشرة فور وصولها إلى هذا الجهاز هنا.',
   'default_notification_title': 'إشعار',
-  'fcm_token_empty_error': 'لم يتم استخراج رمز FCM للجهاز بعد. يرجى تفعيل الإشعارات أولاً.',
-  'fcm_token_copied': 'تم نسخ رمز الجهاز (FCM Token) بنجاح! الصقه في لوحة تحكم HosteDay.',
+  'fcm_token_empty_error':
+      'لم يتم استخراج رمز FCM للجهاز بعد. يرجى تفعيل الإشعارات أولاً.',
+  'fcm_token_copied':
+      'تم نسخ رمز الجهاز (FCM Token) بنجاح! الصقه في لوحة تحكم HosteDay.',
   'push_disabled_msg': 'تم إيقاف استلام الإشعارات على هذا الجهاز.',
   'subscribed_announcements_msg': 'تم الاشتراك في قناة الإعلانات العامة بنجاح.',
-  'unsubscribed_announcements_msg': 'تم إلغاء الاشتراك في قناة الإعلانات العامة.',
+  'unsubscribed_announcements_msg':
+      'تم إلغاء الاشتراك في قناة الإعلانات العامة.',
   'test_push_title': 'تنبيه تجريبي من HosteDay 🔔',
-  'test_push_body': 'تم استلام الإشعار بنجاح! جهازك متصل الآن وجاهز لاستقبال التنبيهات المباشرة.',
+  'test_push_body':
+      'تم استلام الإشعار بنجاح! جهازك متصل الآن وجاهز لاستقبال التنبيهات المباشرة.',
 
   // Theme Picker Sheet
   'theme_sheet_title': 'تخصيص المظهر والثيم',
-  'theme_sheet_subtitle': 'اختر من بين 6 خيارات ألوان متناسقة (3 فاتحة و 3 داكنة)',
+  'theme_sheet_subtitle':
+      'اختر من بين 6 خيارات ألوان متناسقة (3 فاتحة و 3 داكنة)',
   'light_themes_section': 'السمات الفاتحة (3)',
   'dark_themes_section': 'السمات الداكنة (3)',
   'theme_ocean_blue_light': 'أزرق المحيط (فاتح)',
@@ -266,7 +327,8 @@ const Map<String, String> arSA = {
   // Guide Page Hero & Overview
   'guide_hero_badge': 'مشروع Flutter الرسمي المتكامل',
   'guide_hero_title': 'دليل وحزمة أدوات Hosteday SDK',
-  'guide_hero_subtitle': 'قالب عمل متقدم جاهز للإنتاج يوضح التهيئة والمصادقة وإدارة الملف الشخصي والبث اللحظي ونظام الإشعارات.',
+  'guide_hero_subtitle':
+      'قالب عمل متقدم جاهز للإنتاج يوضح التهيئة والمصادقة وإدارة الملف الشخصي والبث اللحظي ونظام الإشعارات.',
   'guide_switch_to_en': 'English',
   'guide_switch_to_ar': 'العربية',
   'cap_starter_title': 'قالب موديل جاهز',
@@ -281,5 +343,85 @@ const Map<String, String> arSA = {
   'cap_notifications_subtitle': 'تنبيهات فورية Push عبر FCM وخدمات الخلفية',
   'interactive_status_title': 'الحالة التفاعلية للمستخدم والاتصال',
   'interactive_status_authenticated': 'المستخدم مسجل دخوله حالياً (@email)',
-  'interactive_status_guest': 'تصفح كزائر (Guest) - يمكنك تسجيل الدخول للوصول لكامل الميزات',
+  'interactive_status_guest':
+      'تصفح كزائر (Guest) - يمكنك تسجيل الدخول للوصول لكامل الميزات',
+
+  // Live Bidding Radar & Real-Time Arena
+  'live_bidding_app_bar_title': 'رادار المزاد المباشر',
+  'live_bidding_hero_title': 'رادار المزايدة الحية والتحدي الصامت',
+  'live_bidding_hero_desc':
+      'بيئة تفاعلية لاختبار قنوات البث المباشر (WebSockets)، رادار المتواجدين، وتنبيهات كسر العرض اللحظية.',
+  'live_bidding_ws_connected': 'الويب سوكت متصل',
+  'live_bidding_ws_connecting': 'جاري الاتصال...',
+  'live_bidding_ws_disconnected': 'غير متصل',
+  'live_bidding_outbid_alert_title': 'تنبيه: تم كسر عرضك!',
+  'live_bidding_regain_lead': 'استعد الصدارة (+50\$)',
+  'live_bidding_silent_whisper_badge': 'تحدي المزايدة الصامت (Live Whisper)',
+  'live_bidding_ends_in': 'ينتهي خلال: @time',
+  'live_bidding_highest_bid_label': 'أعلى عرض حالي',
+  'live_bidding_you_are_leading': '👑 أنت متصدر المزاد حالياً',
+  'live_bidding_current_leader': 'المتصدر الحالي: @name',
+  'live_bidding_presence_title': 'رادار المتواجدين (Presence Radar)',
+  'live_bidding_online_count': '@count متصل الآن',
+  'live_bidding_instant_whisper': 'المزايدة السريعة بالهمس (Instant Whisper)',
+  'live_bidding_no_db_persistence': 'بدون حفظ في DB',
+  'live_bidding_activity_feed_title': 'سجل الأنشطة اللحظية (3 Channels + FCM)',
+  'live_bidding_events_count': '@count حدث',
+  'live_bidding_waiting_events': 'في انتظار أول نشاط أو مزايدة...',
+  'live_bidding_lab_title': 'منصة اختبار الاتصال المباشر (Real-Time Lab)',
+  'live_bidding_lab_subtitle':
+      'اختبار القنوات الثلاث (العامة، الخاصة، التواجد) وتجربة الإشعارات الفورية',
+  'live_bidding_guest_badge': 'وضع الزائر (غير مسجل)',
+  'live_bidding_logged_in_badge': 'مسجل دخول: @name',
+  'live_bidding_intro_desc':
+      'توضح هذه الصفحة كيفية عمل وتبادل البيانات لحظياً عبر قنوات البث المباشر (WebSockets)، وتوفر بيئة حية لفحص القنوات واستقبال تنبيهات الـ Push:',
+  'live_bidding_ch_public_title': '1. القنوات العامة (Public Channels)',
+  'live_bidding_ch_public_badge': 'مفتوحة للجميع',
+  'live_bidding_ch_public_desc':
+      'تعمل تلقائياً لجميع المستخدمين والزوار دون الحاجة لتسجيل دخول. تُبث عبرها إعلانات حالة المزاد والتحديثات الجماعية.',
+  'live_bidding_ch_presence_title': '2. قنوات التواجد (Presence Channels)',
+  'live_bidding_ch_presence_badge': 'تتطلب تسجيل الدخول ⚠️',
+  'live_bidding_ch_presence_desc':
+      'يجب تسجيل الدخول أولاً لتوقيع طلب الانضمام والمصادقة على هويتك لدى السيرفر. تُستخدم لرادار المتواجدين والهمس المباشر.',
+  'live_bidding_ch_private_title': '3. القنوات الخاصة (Private Channels)',
+  'live_bidding_ch_private_badge': 'تتطلب تسجيل الدخول ⚠️',
+  'live_bidding_ch_private_desc':
+      'تتطلب توثيق المستخدم وتوكن معتمد لاستقبال تنبيهات كسر العرض (Outbid) والأحداث الموجهة لشخصك حصراً وبأمان.',
+  'live_bidding_ch_fcm_title': '4. تجربة الإشعارات (FCM Push)',
+  'live_bidding_ch_fcm_badge': 'تنبيهات فورية',
+  'live_bidding_ch_fcm_desc':
+      'اختبار استقبال إشعارات الـ Push في الواجهة (Foreground) والخلفية (Background) عند كسر المزايدة أو الفوز.',
+  'live_bidding_anonymous_bidder': 'مزايد مجهول',
+  'live_bidding_no_bids_yet': 'لا توجد مزايدات بعد',
+  'live_bidding_be_first_bidder': 'كن أول من يقدم عرضاً في المزاد',
+  'live_bidding_bid_increment': '+@amount \$',
+  'live_bidding_signin_prompt':
+      'تنبيه: لتفعيل ظهورك في رادار المتواجدين واستقبال إشعارات كسر المزايدة الخاصة بك، يرجى تسجيل الدخول أولاً.',
+  'you': 'أنت',
+  'live_bidding_default_item_title':
+      'ساعة رولكس دايتونا النادرة - إصدار خاص 2024',
+  'live_bidding_bidder_prefix': 'مزايد @id',
+  'live_bidding_log_radar_connected': 'اتصال رادار المزايدة',
+  'live_bidding_log_connected_desc':
+      'تم الاتصال بنجاح بخادم الويب سوكت (@host) والقنوات الحية',
+  'live_bidding_log_connection_err': 'تنبيه اتصال',
+  'live_bidding_log_connection_err_desc': 'تعذر الاتصال بالخادم: @err',
+  'live_bidding_log_joined_title': 'انضمام مزايد جديد',
+  'live_bidding_log_joined_desc': '@name انضم إلى رادار المزايدة الآن',
+  'live_bidding_log_left_title': 'مغادرة مزايد',
+  'live_bidding_log_left_desc': '@name غادر غرفة المزايدة',
+  'live_bidding_log_here_title': 'رادار المتواجدين (Here)',
+  'live_bidding_log_here_desc':
+      'تم مسح ومزامنة أعضاء الغرفة (@count متواجد متكامل)',
+  'live_bidding_log_status_updated_title': 'تحديث حالة المزاد',
+  'live_bidding_log_status_updated_desc':
+      'تم تحديث حالة المزاد عبر القناة العامة',
+  'live_bidding_outbid_default_msg':
+      'تنبيه: قام شخص آخر بتجاوز عرضك الأخير في المزاد!',
+  'live_bidding_outbid_by_msg':
+      'قام @name بتقديم عرض أعلى منك بقيمة \$@amount!',
+  'live_bidding_log_your_bid': 'عرضك الجديد',
+  'live_bidding_log_whisper_bid': 'مزايدة جديدة (Whisper)',
+  'live_bidding_log_bid_desc': '@name قدّم مزايدة بقيمة \$@amount',
+  'live_bidding_push_notification_default_title': 'إشعار مزاد مباشر',
 };

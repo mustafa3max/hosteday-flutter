@@ -48,7 +48,9 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('sign_out_failed'.trParams({'error': error.toString()})),
+          content: Text(
+            'sign_out_failed'.trParams({'error': error.toString()}),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -111,7 +113,7 @@ class AppBarMy extends StatelessWidget implements PreferredSizeWidget {
       PopupMenuItem<_AccountAction>(
         value: _AccountAction.login,
         child: Row(
-            children: <Widget>[
+          children: <Widget>[
             const Icon(Icons.login),
             const SizedBox(width: 12),
             Text('sign_in'.tr),

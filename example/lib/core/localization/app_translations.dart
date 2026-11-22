@@ -8,9 +8,5 @@ import 'translations/en_us.dart';
 /// Provides Arabic (`ar_SA`) and English (`en_US`) dictionary mappings.
 class AppTranslations extends Translations {
   @override
-  Map<String, Map<String, String>> get keys => {
-        'ar_SA': arSA,
-        'en_US': enUS,
-      };
+  Map<String, Map<String, String>> get keys => {'ar_SA': arSA, 'en_US': enUS};
 }
-

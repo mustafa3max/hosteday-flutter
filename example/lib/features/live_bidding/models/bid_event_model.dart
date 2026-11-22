@@ -25,10 +25,12 @@ class BidEventModel {
   /// Constructs a [BidEventModel] from a decoded JSON or Whisper map.
   factory BidEventModel.fromJson(Map<String, dynamic> json) {
     return BidEventModel(
-      bidderId: json['bidder_id']?.toString() ??
+      bidderId:
+          json['bidder_id']?.toString() ??
           json['user_id']?.toString() ??
           'anonymous',
-      bidderName: json['bidder_name']?.toString() ??
+      bidderName:
+          json['bidder_name']?.toString() ??
           json['user_name']?.toString() ??
           'مزايد غير معروف',
       amount: int.tryParse(json['amount']?.toString() ?? '0') ?? 0,
@@ -48,4 +50,3 @@ class BidEventModel {
     };
   }
 }
-

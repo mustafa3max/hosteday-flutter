@@ -1,16 +1,39 @@
+# Dart / Flutter build artifacts
 .dart_tool/
 .packages
 build/
 coverage/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
 
+# Example build artifacts
 example/.dart_tool/
 example/build/
 example/.flutter-plugins
 example/.flutter-plugins-dependencies
 example/pubspec.lock
+example/ios/Pods/
+example/ios/.symlinks/
+example/android/.gradle/
 
+# IDE & Editor files
 *.iml
 .idea/
 .vscode/
 
+# OS files
 .DS_Store
+Thumbs.db
+
+# Secrets & Local overrides
+.local_secrets/
+*.local.dart
+*.local.json
+*.local.plist
+*.log
+
+# Internal dev scripts
+release.sh
+scripts/
+tool/

@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dart_pusher_channels/dart_pusher_channels.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
+import '../auth/hosteday_auth_storage.dart';
 import '../auth/hosteday_token_provider.dart';
 import '../config/hosteday_config.dart';
 import '../exceptions/hosteday_exception.dart';
+import 'hosteday_channel_authorization_delegate.dart';
 import 'hosteday_channel_type.dart';
 import 'hosteday_realtime_event.dart';
 
@@ -29,6 +34,12 @@ class HostedayRealtimeClient {
   /// A token is required for private, presence, and private encrypted channels.
   final HostedayTokenProvider? tokenProvider;
 
+  /// Optional storage used to retrieve active auth tokens.
+  final HostedayAuthStorage? authStorage;
+
+  /// Optional callback to build HTTP headers dynamically for channel authorization.
+  final FutureOr<Map<String, String>> Function()? headersCallback;
+
   PusherChannelsClient? _client;
 
   /// Stores channels by their normalized Pusher channel names.
@@ -47,11 +58,18 @@ class HostedayRealtimeClient {
       <String, List<StreamSubscription<dynamic>>>{};
 
   StreamSubscription<dynamic>? _connectionSubscription;
+  StreamSubscription<dynamic>? _lifecycleSubscription;
+
+  bool _isConnected = false;
+  final StreamController<bool> _connectionStateController =
+      StreamController<bool>.broadcast();
 
   /// Creates a realtime client using the specified [config].
   HostedayRealtimeClient({
     required this.config,
     this.tokenProvider,
+    this.authStorage,
+    this.headersCallback,
   });
 
   /// Returns the active Pusher-compatible client.
@@ -70,11 +88,12 @@ class HostedayRealtimeClient {
     return value;
   }
 
-  /// Returns whether the realtime client has been initialized.
-  ///
-  /// This means the WebSocket client object exists. It does not necessarily
-  /// guarantee that the socket is currently connected at this exact moment.
-  bool get isConnected => _client != null;
+  /// Returns whether the realtime WebSocket connection is currently active and established.
+  bool get isConnected => _isConnected;
+
+  /// Stream of connection state changes (true = connected, false = disconnected).
+  Stream<bool> get onConnectionStateChanged =>
+      _connectionStateController.stream;
 
   /// Connects to the configured Hosteday Pusher-compatible WebSocket server.
   ///
@@ -88,13 +107,18 @@ class HostedayRealtimeClient {
       return;
     }
 
-    final realtimeHost = config.realtimeHost.trim();
+    var realtimeHost = config.realtimeHost.trim();
     final pusherKey = config.pusherKey.trim();
 
     if (realtimeHost.isEmpty) {
       throw const HostedayException(
         'Missing realtime host. Configure realtime_host before connecting realtime.',
       );
+    }
+
+    // Automatically normalize legacy ws3 node if configured
+    if (realtimeHost == 'ws3.hosteday.com') {
+      realtimeHost = 'ws.hosteday.com';
     }
 
     if (pusherKey.isEmpty) {
@@ -123,6 +147,16 @@ class HostedayRealtimeClient {
     );
 
     _client = realtimeClient;
+
+    /// Listens for connection state lifecycle changes.
+    _lifecycleSubscription = realtimeClient.lifecycleStream.listen((state) {
+      final isEstablished =
+          state == PusherChannelsClientLifeCycleState.establishedConnection;
+      if (_isConnected != isEstablished) {
+        _isConnected = isEstablished;
+        _connectionStateController.add(isEstablished);
+      }
+    });
 
     /// Re-subscribes tracked channels after a reconnect.
     _connectionSubscription =
@@ -166,17 +200,19 @@ class HostedayRealtimeClient {
       return existingChannel;
     }
 
-    final token = await _requiredToken(
-      channelType: 'private channel',
-    );
-
     final channel = client.privateChannel(
       normalizedChannel,
       authorizationDelegate:
-          EndpointAuthorizableChannelTokenAuthorizationDelegate
-              .forPrivateChannel(
+          HostedayChannelAuthorizationDelegate.forPrivateChannel(
         authorizationEndpoint: config.uri(config.broadcastingAuthPath),
-        headers: _authorizationHeaders(token),
+        headersBuilder: buildAuthorizationHeaders,
+        parser: _parsePrivateAuthResponse,
+        onAuthFailed: (exception, trace) {
+          debugPrint(
+            '[HostedayRealtimeClient] Private channel auth failed for '
+            '"$normalizedChannel": $exception',
+          );
+        },
       ),
     );
 
@@ -204,17 +240,19 @@ class HostedayRealtimeClient {
       );
     }
 
-    final token = await _requiredToken(
-      channelType: 'presence channel',
-    );
-
     final channel = client.presenceChannel(
       normalizedChannel,
       authorizationDelegate:
-          EndpointAuthorizableChannelTokenAuthorizationDelegate
-              .forPresenceChannel(
+          HostedayChannelAuthorizationDelegate.forPresenceChannel(
         authorizationEndpoint: config.uri(config.broadcastingAuthPath),
-        headers: _authorizationHeaders(token),
+        headersBuilder: buildAuthorizationHeaders,
+        parser: _parsePresenceAuthResponse,
+        onAuthFailed: (exception, trace) {
+          debugPrint(
+            '[HostedayRealtimeClient] Presence channel auth failed for '
+            '"$normalizedChannel": $exception',
+          );
+        },
       ),
     );
 
@@ -237,17 +275,18 @@ class HostedayRealtimeClient {
       return existingChannel;
     }
 
-    final token = await _requiredToken(
-      channelType: 'private encrypted channel',
-    );
-
     final channel = client.privateEncryptedChannel(
       normalizedChannel,
       authorizationDelegate:
-          EndpointAuthorizableChannelTokenAuthorizationDelegate
-              .forPrivateEncryptedChannel(
+          HostedayChannelAuthorizationDelegate.forPrivateEncryptedChannel(
         authorizationEndpoint: config.uri(config.broadcastingAuthPath),
-        headers: _authorizationHeaders(token),
+        headersBuilder: buildAuthorizationHeaders,
+        onAuthFailed: (exception, trace) {
+          debugPrint(
+            '[HostedayRealtimeClient] Private encrypted channel auth failed for '
+            '"$normalizedChannel": $exception',
+          );
+        },
       ),
     );
 
@@ -371,6 +410,14 @@ class HostedayRealtimeClient {
   }
 
   /// Listens for initial members already present in a presence channel ('here' / subscription_succeeded).
+  Future<StreamSubscription<dynamic>> listenPresenceMembersList({
+    required String channel,
+    required HostedayRealtimeCallback onEvent,
+  }) =>
+      listenPresenceHere(channel: channel, onEvent: onEvent);
+
+  /// Listens for initial members already present in a presence channel ('here' / subscription_succeeded).
+  @Deprecated('Use listenPresenceMembersList instead.')
   Future<StreamSubscription<dynamic>> listenPresenceHere({
     required String channel,
     required HostedayRealtimeCallback onEvent,
@@ -521,6 +568,14 @@ class HostedayRealtimeClient {
     await _connectionSubscription?.cancel();
     _connectionSubscription = null;
 
+    await _lifecycleSubscription?.cancel();
+    _lifecycleSubscription = null;
+
+    if (_isConnected) {
+      _isConnected = false;
+      _connectionStateController.add(false);
+    }
+
     for (final subscriptions in _subscriptions.values) {
       for (final subscription in subscriptions) {
         await subscription.cancel();
@@ -551,28 +606,56 @@ class HostedayRealtimeClient {
     channelSubscriptions.add(subscription);
   }
 
-  Future<String> _requiredToken({
-    required String channelType,
-  }) async {
-    final token = await tokenProvider?.getToken();
-    final cleanToken = token?.trim();
-
-    if (cleanToken == null || cleanToken.isEmpty) {
-      throw HostedayException(
-        'Missing authentication token for $channelType.',
-        statusCode: 401,
-      );
+  /// Asynchronously builds the dynamic authorization headers for broadcasting requests.
+  ///
+  /// Always returns:
+  /// - `Accept: application/json`
+  /// - `X-Api-Token: config.apiToken` (when configured)
+  /// - `Authorization: Bearer $currentToken` (dynamically fetched from tokenProvider or authStorage)
+  Future<Map<String, String>> buildAuthorizationHeaders() async {
+    if (headersCallback != null) {
+      return await headersCallback!();
     }
 
-    return cleanToken;
-  }
+    String? currentToken = await tokenProvider?.getToken();
+    if ((currentToken == null || currentToken.trim().isEmpty) &&
+        authStorage != null) {
+      currentToken =
+          await authStorage!.read(HostedayAuthStorageKeys.accessToken);
+      if (currentToken == null || currentToken.trim().isEmpty) {
+        final session =
+            await authStorage!.read(HostedayAuthStorageKeys.session);
+        if (session != null && session.trim().isNotEmpty) {
+          try {
+            final decoded = jsonDecode(session);
+            if (decoded is Map) {
+              currentToken = decoded['access_token']?.toString();
+            }
+          } catch (_) {}
+        }
+      }
+    }
 
-  Map<String, String> _authorizationHeaders(String token) {
-    return <String, String>{
+    final cleanToken = currentToken?.trim();
+
+    final headers = <String, String>{
       'Accept': 'application/json',
       ...config.defaultHeaders,
-      'Authorization': 'Bearer $token',
     };
+
+    final apiToken = config.apiToken?.trim();
+    if (apiToken != null && apiToken.isNotEmpty) {
+      headers['X-Api-Token'] = apiToken;
+      if (config.apiTokenHeader.isNotEmpty) {
+        headers[config.apiTokenHeader] = apiToken;
+      }
+    }
+
+    if (cleanToken != null && cleanToken.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $cleanToken';
+    }
+
+    return headers;
   }
 
   String _normalizeChannelName(
@@ -690,6 +773,96 @@ class HostedayRealtimeClient {
     }
 
     return normalized;
+  }
+
+  static PrivateChannelAuthorizationData _parsePrivateAuthResponse(
+    http.Response response,
+  ) {
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (_) {
+      throw const FormatException(
+        'Invalid JSON returned by broadcasting auth endpoint',
+      );
+    }
+
+    Map<dynamic, dynamic>? payload;
+    if (decoded is Map) {
+      if (decoded.containsKey('auth')) {
+        payload = decoded;
+      } else if (decoded['data'] is Map &&
+          (decoded['data'] as Map).containsKey('auth')) {
+        payload = decoded['data'] as Map;
+      }
+    }
+
+    if (payload == null) {
+      throw FormatException(
+        'Broadcasting auth endpoint returned payload without "auth" key: '
+        '${response.body}',
+      );
+    }
+
+    final auth = payload['auth']?.toString();
+    if (auth == null || auth.isEmpty) {
+      throw const FormatException(
+        'Broadcasting auth endpoint returned empty "auth" key',
+      );
+    }
+
+    return PrivateChannelAuthorizationData(authKey: auth);
+  }
+
+  static PresenceChannelAuthorizationData _parsePresenceAuthResponse(
+    http.Response response,
+  ) {
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (_) {
+      throw const FormatException(
+        'Invalid JSON returned by broadcasting auth endpoint',
+      );
+    }
+
+    Map<dynamic, dynamic>? payload;
+    if (decoded is Map) {
+      if (decoded.containsKey('auth')) {
+        payload = decoded;
+      } else if (decoded['data'] is Map &&
+          (decoded['data'] as Map).containsKey('auth')) {
+        payload = decoded['data'] as Map;
+      }
+    }
+
+    if (payload == null) {
+      throw FormatException(
+        'Broadcasting auth endpoint returned payload without "auth" key: '
+        '${response.body}',
+      );
+    }
+
+    final auth = payload['auth']?.toString();
+    final rawChannelData = payload['channel_data'];
+
+    if (auth == null || auth.isEmpty) {
+      throw const FormatException(
+        'Broadcasting auth endpoint returned empty "auth" key',
+      );
+    }
+
+    String? channelDataEncoded;
+    if (rawChannelData is String) {
+      channelDataEncoded = rawChannelData;
+    } else if (rawChannelData != null) {
+      channelDataEncoded = jsonEncode(rawChannelData);
+    }
+
+    return PresenceChannelAuthorizationData(
+      authKey: auth,
+      channelDataEncoded: channelDataEncoded ?? '{}',
+    );
   }
 }
 

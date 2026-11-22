@@ -9,4 +9,3 @@ class LiveBiddingBinding extends Bindings {
     Get.lazyPut<LiveBiddingController>(() => LiveBiddingController());
   }
 }
-
