@@ -1,3 +1,14 @@
+## 2.5.0
+
+### Added
+- **Unified Asset Initialization**: Streamlined single-source initialization from `assets/hosteday_config.json` via `await Hosteday.initializeApp()`.
+- **Per-Auction Presence Rooms & Channel Switching**: Added `subscribePrivate`, prefix-aware `unsubscribe` across `presence-` / `private-` / `private-encrypted-` channels, and immediate re-authorization when switching between live presence channels.
+- **Upgraded Live Auction Reference App**: Refactored `example/` Live Bidding screen into a consumer-facing auction hall with an auction selector dropdown, independent per-auction presence rooms (`auction.{id}`), official `publishPresenceEvent` broadcasting, and resilient nested payload decoding.
+
+### Improved
+- Sanitized example configuration files to placeholder demo values and removed temporary debug logging.
+- Updated documentation with the official HosteDay Flutter SDK portal link (`https://hosteday.com/sdks/hosteday-flutter`).
+
 ## 2.4.0
 
 ### Added

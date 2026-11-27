@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
-import '../../../../hosteday_config.dart';
 import 'settings_section_title.dart';
 
 /// App and environment information section.
@@ -68,7 +67,7 @@ class SettingsAboutSection extends StatelessWidget {
                 leading: const Icon(Icons.cloud_outlined),
                 title: Text('settings_environment'.tr),
                 trailing: SelectableText(
-                  HosteDayConfig.baseUrl,
+                  Hosteday.isInitialized ? Hosteday.config.baseUrl : '-',
                   style: TextStyle(
                     fontSize: 12,
                     color: theme.colorScheme.primary,

@@ -11,8 +11,6 @@ import 'package:get/get.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../hosteday_config.dart';
-
 /// Top-level background message handler required by Firebase Messaging.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -91,7 +89,7 @@ class PushNotificationService extends GetxService {
 
   Map<String, dynamic>? _fileWebConfig;
 
-  // Resolved credentials from HosteDayConfig, falling back to Hosteday.config or web file
+  // Resolved credentials from web config file or Hosteday.config (assets/hosteday_config.json)
   String get _apiKey =>
       _fileWebConfig?['apiKey']?.toString() ??
       (Hosteday.isInitialized ? (Hosteday.config.firebaseApiKey ?? '') : '');
@@ -108,10 +106,7 @@ class PushNotificationService extends GetxService {
 
   String get _projectId =>
       _fileWebConfig?['projectId']?.toString() ??
-      (Hosteday.isInitialized &&
-              (Hosteday.config.firebaseProjectId?.isNotEmpty ?? false)
-          ? Hosteday.config.firebaseProjectId!
-          : (HosteDayConfig.firebaseProjectId ?? ''));
+      (Hosteday.isInitialized ? (Hosteday.config.firebaseProjectId ?? '') : '');
 
   String get _vapidKey =>
       _fileWebConfig?['vapidKey']?.toString() ??

@@ -12,12 +12,12 @@ self.addEventListener('activate', function (event) {
 
 // 2. Synchronous Firebase initialization (Prevents push event drop race condition)
 const firebaseConfig = {
-  apiKey: "AIzaSyARUVChu-F1H0gFKTFwAGpWBA6PQBnKcdk",
-  authDomain: "flutter-hosteday-yohz.firebaseapp.com",
-  projectId: "flutter-hosteday-yohz",
-  storageBucket: "flutter-hosteday-yohz.firebasestorage.app",
-  messagingSenderId: "339680491563",
-  appId: "1:339680491563:web:8270324ff193f341ed926e"
+  apiKey: "YOUR_FIREBASE_WEB_API_KEY",
+  authDomain: "your-firebase-project.firebaseapp.com",
+  projectId: "your-firebase-project",
+  storageBucket: "your-firebase-project.firebasestorage.app",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:0000000000000000000000"
 };
 
 let messaging = null;

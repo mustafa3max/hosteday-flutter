@@ -150,12 +150,28 @@ class HostedayConfig {
   /// Fetches registered devices for the current user.
   final String registeredDevicesPath;
 
+  /// Optional application name from `assets/hosteday_config.json`.
+  final String? appName;
+
+  /// Optional project slug from `assets/hosteday_config.json`.
+  final String? slug;
+
+  /// Optional environment ID from `assets/hosteday_config.json`.
+  final String? environmentId;
+
+  /// Optional default realtime channel name from `assets/hosteday_config.json`.
+  final String? realtimeChannel;
+
   /// Feature flags and plan entitlements.
   final HostedayFeatures features;
 
   const HostedayConfig({
     required this.baseUrl,
     this.projectDomain = '',
+    this.appName,
+    this.slug,
+    this.environmentId,
+    this.realtimeChannel,
     this.apiToken,
     this.apiTokenHeader = 'X-Api-Token',
     this.pusherKey = '',
@@ -260,6 +276,19 @@ class HostedayConfig {
     return HostedayConfig(
       projectDomain: projectDomain,
       baseUrl: baseUrl,
+      appName: _stringOption(
+        options,
+        const ['app_name', 'appName', 'project_name'],
+      ),
+      slug: _stringOption(options, const ['slug']),
+      environmentId: _stringOption(
+        options,
+        const ['environment_id', 'environmentId'],
+      ),
+      realtimeChannel: _stringOption(
+        options,
+        const ['realtime_channel', 'ws_channel', 'wsChannel'],
+      ),
       apiToken: _stringOption(
         options,
         const [

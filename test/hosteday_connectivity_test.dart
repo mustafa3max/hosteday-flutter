@@ -1,11 +1,24 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 import 'package:hosteday_flutter/src/connectivity/platform/connectivity_platform.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
+class _ConnectivityConfigBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async {
+    expect(key, 'assets/hosteday_config.json');
+    final bytes = Uint8List.fromList(
+      utf8.encode('{"base_url":"https://api.example.com"}'),
+    );
+    return ByteData.sublistView(bytes);
+  }
+}
 
 class MockConnectivityPlatform implements ConnectivityPlatform {
   bool _online;
@@ -262,7 +275,7 @@ void main() {
 
       final mockChecker = MockInternetConnection(initialAccess: true);
       final client = await Hosteday.initializeApp(
-        config: testConfig,
+        bundle: _ConnectivityConfigBundle(),
         internetConnection: mockChecker,
       );
 
@@ -290,7 +303,7 @@ void main() {
 
       final mockChecker = MockInternetConnection(initialAccess: true);
       final client = await Hosteday.initializeApp(
-        config: testConfig,
+        bundle: _ConnectivityConfigBundle(),
         internetConnection: mockChecker,
       );
 

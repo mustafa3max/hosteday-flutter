@@ -136,23 +136,13 @@ ThemePickerSheet.show(context);''',
       titleEn: '1. Initialize Hosteday in main()',
       titleAr: '١. تهيئة مكتبة Hosteday في دالة main()',
       descriptionEn:
-          'Initialize the SDK before calling runApp. Provide your project domain from app.hosteday.com, API key, and optional realtime & notification settings.',
+          'Download hosteday_config.json from your Hosteday dashboard, place it at assets/hosteday_config.json, register it in pubspec.yaml, and call Hosteday.initializeApp() with zero manual options.',
       descriptionAr:
-          'قم بتهيئة الـ SDK قبل استدعاء runApp. مرر نطاق مشروعك من app.hosteday.com، ومفتاح الـ API، وإعدادات الوقت الفعلي والإشعارات.',
+          'حمّل ملف hosteday_config.json من لوحة تحكم Hosteday وضعه في assets/hosteday_config.json وسجّله في pubspec.yaml، ثم استدعِ Hosteday.initializeApp() مباشرة دون أي إعدادات يدوية.',
       code: '''void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Hosteday.initializeApp(
-    options: {
-      HostedayOptionKeys.projectDomain: 'your-project.hosteday.com',
-      HostedayOptionKeys.projectApiKey: 'your_optional_api_key',
-      HostedayOptionKeys.realtimeAppKey: 'YOUR_REALTIME_KEY',
-      HostedayOptionKeys.realtimeHost: 'ws3.hosteday.com',
-      HostedayOptionKeys.notificationsEnabled: true,
-      HostedayOptionKeys.defaultNotificationTopic: 'general_announcements',
-    },
-    authStorage: HostedaySharedPreferencesAuthStorage(),
-  );
+  await Hosteday.initializeApp();
 
   runApp(const MyApp());
 }''',
@@ -162,23 +152,19 @@ ThemePickerSheet.show(context);''',
       categoryEn: 'Setup & Config',
       categoryAr: 'التهيئة والإعداد',
       icon: Icons.tune_rounded,
-      titleEn: '2. Official Control Plane CLI Setup',
-      titleAr: '٢. التهيئة التلقائية عبر CLI المنصة الرسمي',
+      titleEn: '2. Register assets/hosteday_config.json',
+      titleAr: '٢. تسجيل ملف assets/hosteday_config.json',
       descriptionEn:
-          'Bootstrap and configure your application with a single command from dash.hosteday.com, generating lib/hosteday_config.dart automatically.',
+          'Register the single-source JSON configuration file in your pubspec.yaml so the SDK automatically parses API, realtime, notifications, Firebase, and feature flags.',
       descriptionAr:
-          'تهيئة وإعداد مشروعك بالكامل بأمر واحد رسمي من منصة HosteDay، يولد ملف lib/hosteday_config.dart تلقائياً دون أي إعداد يدوي.',
-      code: '''// Run in terminal:
-curl -fsSL https://dash.hosteday.com/cli/setup.sh | bash -s -- --project=<slug> --token='<token>' --clone
+          'سجّل ملف الإعدادات الموحد في pubspec.yaml لتتولى الحزمة تلقائياً قراءة وتحليل إعدادات الـ API والبث الفوري والإشعارات وFirebase وأعلام الميزات.',
+      code: '''# pubspec.yaml
+flutter:
+  assets:
+    - assets/hosteday_config.json
 
-// Auto-generated lib/hosteday_config.dart:
-import 'hosteday_config.dart';
-import 'core/config/hosteday_config_adapter.dart';
-
-await Hosteday.initializeApp(
-  options: HosteDayConfigAdapter.toOptions(),
-  authStorage: HostedaySharedPreferencesAuthStorage(),
-);''',
+# main.dart
+await Hosteday.initializeApp();''',
     ),
   ];
 

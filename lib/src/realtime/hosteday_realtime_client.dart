@@ -59,10 +59,15 @@ class HostedayRealtimeClient {
 
   StreamSubscription<dynamic>? _connectionSubscription;
   StreamSubscription<dynamic>? _lifecycleSubscription;
+  StreamSubscription<dynamic>? _eventSubscription;
 
   bool _isConnected = false;
+  String? _socketId;
+  String? _lastError;
   final StreamController<bool> _connectionStateController =
       StreamController<bool>.broadcast();
+  final StreamController<String> _errorController =
+      StreamController<String>.broadcast();
 
   /// Creates a realtime client using the specified [config].
   HostedayRealtimeClient({
@@ -91,54 +96,107 @@ class HostedayRealtimeClient {
   /// Returns whether the realtime WebSocket connection is currently active and established.
   bool get isConnected => _isConnected;
 
+  /// Returns the Pusher/Reverb socket ID assigned upon `pusher:connection_established`.
+  String? get socketId => _socketId;
+
+  /// Returns the most recent WebSocket or channel authorization error, if any.
+  String? get lastError => _lastError;
+
   /// Stream of connection state changes (true = connected, false = disconnected).
   Stream<bool> get onConnectionStateChanged =>
       _connectionStateController.stream;
 
+  /// Stream of realtime connection and channel authorization errors.
+  Stream<String> get onError => _errorController.stream;
+
+  /// Resolves the normalized realtime host.
+  String get resolvedHost {
+    var host = config.realtimeHost.trim();
+    if (host == 'ws3.hosteday.com') {
+      host = 'ws.hosteday.com';
+    }
+    return host;
+  }
+
+  /// Resolves the effective WebSocket port (normalizing TLS port 8080 -> 443 on hosteday.com).
+  int get resolvedPort {
+    final scheme = config.realtimeScheme.toLowerCase();
+    final host = resolvedHost.toLowerCase();
+    if (scheme == 'wss' &&
+        host.endsWith('.hosteday.com') &&
+        config.realtimePort == 8080) {
+      return 443;
+    }
+    return config.realtimePort;
+  }
+
+  /// Builds the exact Pusher v7 / Laravel Reverb WebSocket URI.
+  Uri get resolvedWebsocketUri {
+    final scheme = config.realtimeScheme.toLowerCase();
+    final host = resolvedHost;
+    final port = resolvedPort;
+    final key = config.pusherKey.trim();
+    return Uri(
+      scheme: scheme,
+      host: host,
+      port: port,
+      path: '/app/$key',
+      queryParameters: const <String, String>{
+        'protocol': '7',
+        'client': 'dart',
+        'version': '2.4.0',
+        'flash': 'false',
+      },
+    );
+  }
+
   /// Connects to the configured Hosteday Pusher-compatible WebSocket server.
   ///
   /// Example generated URL:
-  /// `wss://ws3.hosteday.com:443/app/YOUR_PUSHER_KEY`
-  ///
-  /// The package adds the `/app/{pusherKey}` path automatically when
-  /// [PusherChannelsOptions.fromHost] is used.
+  /// `wss://ws1.hosteday.com:443/app/YOUR_PUSHER_KEY?protocol=7&client=dart&version=2.4.0&flash=false`
   Future<void> connect() async {
     if (_client != null) {
       return;
     }
 
-    var realtimeHost = config.realtimeHost.trim();
+    final realtimeHost = resolvedHost;
     final pusherKey = config.pusherKey.trim();
 
     if (realtimeHost.isEmpty) {
-      throw const HostedayException(
-        'Missing realtime host. Configure realtime_host before connecting realtime.',
-      );
-    }
-
-    // Automatically normalize legacy ws3 node if configured
-    if (realtimeHost == 'ws3.hosteday.com') {
-      realtimeHost = 'ws.hosteday.com';
+      const msg =
+          'Missing realtime host. Configure realtime_host before connecting realtime.';
+      _reportError(msg);
+      throw const HostedayException(msg);
     }
 
     if (pusherKey.isEmpty) {
-      throw const HostedayException(
-        'Missing Pusher key. Configure realtime_app_key before connecting realtime.',
-      );
+      const msg =
+          'Missing Pusher key. Configure realtime_app_key before connecting realtime.';
+      _reportError(msg);
+      throw const HostedayException(msg);
     }
 
     final options = PusherChannelsOptions.fromHost(
       host: realtimeHost,
       key: pusherKey,
-      port: config.realtimePort,
+      port: resolvedPort,
       scheme: config.realtimeScheme,
       shouldSupplyMetadataQueries: true,
-      metadata: PusherChannelsOptionsMetadata.byDefault(),
+      metadata: const PusherChannelsOptionsMetadata(
+        client: 'dart',
+        protocol: 7,
+        version: '2.4.0',
+      ),
     );
 
     final realtimeClient = PusherChannelsClient.websocket(
       options: options,
       connectionErrorHandler: (exception, trace, refresh) {
+        _reportError('WebSocket connection error (${resolvedWebsocketUri.host}:${resolvedWebsocketUri.port}): $exception');
+        if (_isConnected) {
+          _isConnected = false;
+          _connectionStateController.add(false);
+        }
         refresh();
       },
       minimumReconnectDelayDuration: const Duration(seconds: 1),
@@ -152,21 +210,83 @@ class HostedayRealtimeClient {
     _lifecycleSubscription = realtimeClient.lifecycleStream.listen((state) {
       final isEstablished =
           state == PusherChannelsClientLifeCycleState.establishedConnection;
+      if (isEstablished) {
+        _lastError = null;
+      }
       if (_isConnected != isEstablished) {
         _isConnected = isEstablished;
         _connectionStateController.add(isEstablished);
       }
     });
 
-    /// Re-subscribes tracked channels after a reconnect.
-    _connectionSubscription =
-        realtimeClient.onConnectionEstablished.listen((_) {
-      for (final channel in _channels.values) {
-        channel.subscribeIfNotUnsubscribed();
+    /// Listens for raw Pusher/Reverb protocol events such as `pusher:connection_established`.
+    _eventSubscription = realtimeClient.eventStream.listen((event) {
+      if (event.name == 'pusher:connection_established') {
+        handleConnectionEstablished(event.data);
+      } else if (event.name == 'pusher:error') {
+        _reportError('Pusher/Reverb server error: ${event.data}');
       }
     });
 
+    /// Re-subscribes tracked channels after a connect or reconnect.
+    _connectionSubscription =
+        realtimeClient.onConnectionEstablished.listen((_) {
+      _markConnectedAndResubscribe();
+    });
+
     realtimeClient.connect();
+  }
+
+  /// Processes a `pusher:connection_established` payload from Pusher v7 / Laravel Reverb.
+  ///
+  /// Accepts either a raw Pusher event envelope (`{"event":"pusher:connection_established","data":"{\"socket_id\":\"...\"}"}`)
+  /// or the `data` field directly (JSON string or decoded map).
+  void handleConnectionEstablished(dynamic rawPayload) {
+    dynamic payload = rawPayload;
+    if (payload is String) {
+      try {
+        payload = jsonDecode(payload);
+      } catch (_) {}
+    }
+
+    if (payload is Map &&
+        payload['event'] == 'pusher:connection_established' &&
+        payload.containsKey('data')) {
+      payload = payload['data'];
+      if (payload is String) {
+        try {
+          payload = jsonDecode(payload);
+        } catch (_) {}
+      }
+    }
+
+    if (payload is Map) {
+      final extractedSocketId = payload['socket_id']?.toString().trim();
+      if (extractedSocketId != null && extractedSocketId.isNotEmpty) {
+        _socketId = extractedSocketId;
+      }
+    }
+
+    _markConnectedAndResubscribe();
+  }
+
+  void _markConnectedAndResubscribe() {
+    _lastError = null;
+    if (!_isConnected) {
+      _isConnected = true;
+      _connectionStateController.add(true);
+    }
+    for (final channel in _channels.values) {
+      channel.subscribe();
+    }
+  }
+
+  void _reportError(String message) {
+    _lastError = message;
+    debugPrint('[HostedayRealtimeClient] $message');
+    if (!_errorController.isClosed) {
+      _errorController.add(message);
+    }
   }
 
   /// Creates or returns a tracked public channel.
@@ -208,9 +328,8 @@ class HostedayRealtimeClient {
         headersBuilder: buildAuthorizationHeaders,
         parser: _parsePrivateAuthResponse,
         onAuthFailed: (exception, trace) {
-          debugPrint(
-            '[HostedayRealtimeClient] Private channel auth failed for '
-            '"$normalizedChannel": $exception',
+          _reportError(
+            'Private channel auth failed for "$normalizedChannel" (${config.broadcastingAuthPath}): $exception',
           );
         },
       ),
@@ -248,9 +367,8 @@ class HostedayRealtimeClient {
         headersBuilder: buildAuthorizationHeaders,
         parser: _parsePresenceAuthResponse,
         onAuthFailed: (exception, trace) {
-          debugPrint(
-            '[HostedayRealtimeClient] Presence channel auth failed for '
-            '"$normalizedChannel": $exception',
+          _reportError(
+            'Presence channel auth failed for "$normalizedChannel" (${config.broadcastingAuthPath}): $exception',
           );
         },
       ),
@@ -258,6 +376,33 @@ class HostedayRealtimeClient {
 
     _channels[normalizedChannel] = channel;
 
+    return channel;
+  }
+
+  /// Creates (or retrieves) and subscribes to a tracked private channel.
+  ///
+  /// The `private-` prefix is added automatically when needed.
+  /// If already connected, triggers immediate channel authorization and `pusher:subscribe`.
+  Future<Channel> subscribePrivate(String channelName) async {
+    if (!_isConnected) {
+      await connect();
+    }
+    final channel = await privateChannel(channelName);
+    channel.subscribe();
+    return channel;
+  }
+
+  /// Creates (or retrieves) and subscribes to a tracked presence channel.
+  ///
+  /// The `presence-` prefix is added automatically when needed.
+  /// If already connected, triggers immediate channel authorization and `pusher:subscribe`
+  /// (even if the channel was previously unsubscribed).
+  Future<PresenceChannel> subscribePresence(String channelName) async {
+    if (!_isConnected) {
+      await connect();
+    }
+    final channel = await presenceChannel(channelName);
+    channel.subscribe();
     return channel;
   }
 
@@ -282,9 +427,8 @@ class HostedayRealtimeClient {
         authorizationEndpoint: config.uri(config.broadcastingAuthPath),
         headersBuilder: buildAuthorizationHeaders,
         onAuthFailed: (exception, trace) {
-          debugPrint(
-            '[HostedayRealtimeClient] Private encrypted channel auth failed for '
-            '"$normalizedChannel": $exception',
+          _reportError(
+            'Private encrypted channel auth failed for "$normalizedChannel" (${config.broadcastingAuthPath}): $exception',
           );
         },
       ),
@@ -538,17 +682,52 @@ class HostedayRealtimeClient {
 
   /// Unsubscribes from one channel without closing the WebSocket connection.
   ///
-  /// All listeners attached through this client for that channel are cancelled.
+  /// Resolves the tracked channel key across normalized names (`channelName`,
+  /// `presence-$channelName`, and `private-$channelName`), sends `pusher:unsubscribe`
+  /// with the full normalized channel name, and removes the channel and all its
+  /// local listeners.
   Future<void> unsubscribe(
     String channelName, {
-    HostedayChannelType type = HostedayChannelType.public,
+    HostedayChannelType? type,
   }) async {
-    final normalizedChannel = _normalizeChannelName(
-      channelName,
-      type,
-    );
+    final trimmed = channelName.trim();
+    if (trimmed.isEmpty) return;
 
-    final subscriptions = _subscriptions.remove(normalizedChannel);
+    final effectiveType = type ??
+        (trimmed.startsWith('presence-')
+            ? HostedayChannelType.presence
+            : trimmed.startsWith('private-encrypted-')
+                ? HostedayChannelType.privateEncrypted
+                : trimmed.startsWith('private-')
+                    ? HostedayChannelType.private
+                    : HostedayChannelType.public);
+
+    final primaryNormalized =
+        trimmed.startsWith('presence-') ||
+                trimmed.startsWith('private-encrypted-') ||
+                trimmed.startsWith('private-')
+            ? trimmed
+            : _normalizeChannelName(trimmed, effectiveType);
+
+    final candidates = <String>{
+      primaryNormalized,
+      trimmed,
+      if (!trimmed.startsWith('presence-') && !trimmed.startsWith('private-')) ...<String>[
+        'presence-$trimmed',
+        'private-$trimmed',
+        'private-encrypted-$trimmed',
+      ],
+    };
+
+    String resolvedKey = primaryNormalized;
+    for (final candidate in candidates) {
+      if (_channels.containsKey(candidate) || _subscriptions.containsKey(candidate)) {
+        resolvedKey = candidate;
+        break;
+      }
+    }
+
+    final subscriptions = _subscriptions.remove(resolvedKey);
 
     if (subscriptions != null) {
       for (final subscription in subscriptions) {
@@ -556,7 +735,7 @@ class HostedayRealtimeClient {
       }
     }
 
-    final channel = _channels.remove(normalizedChannel);
+    final channel = _channels.remove(resolvedKey);
 
     if (channel != null) {
       channel.unsubscribe();
@@ -570,6 +749,11 @@ class HostedayRealtimeClient {
 
     await _lifecycleSubscription?.cancel();
     _lifecycleSubscription = null;
+
+    await _eventSubscription?.cancel();
+    _eventSubscription = null;
+
+    _socketId = null;
 
     if (_isConnected) {
       _isConnected = false;

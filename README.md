@@ -4,6 +4,8 @@
 [![platform](https://img.shields.io/badge/platform-Flutter-blue.svg)](https://flutter.dev)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+Official SDK Page & Documentation: **[https://hosteday.com/sdks/hosteday-flutter](https://hosteday.com/sdks/hosteday-flutter)**
+
 A Flutter SDK for connecting applications to HosteDay authentication, custom
 APIs, persistent sessions, user management, avatar uploads, and realtime
 services.
@@ -55,6 +57,13 @@ Add the package to a Flutter application:
 
 ```bash
 flutter pub add hosteday_flutter
+```
+
+Or add it directly in your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  hosteday_flutter: ^2.5.0
 ```
 
 Import the public library:

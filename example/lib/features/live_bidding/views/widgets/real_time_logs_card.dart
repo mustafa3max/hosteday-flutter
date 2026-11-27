@@ -133,24 +133,23 @@ class RealTimeLogsCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // Channel Type Badge
+          // Consumer-friendly Event Icon
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: badgeColor.withValues(alpha: 0.35),
-                width: 1,
-              ),
+              color: badgeColor.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
             ),
-            child: Text(
-              channelType,
-              style: TextStyle(
-                color: badgeColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(
+              amount != null
+                  ? Icons.gavel_rounded
+                  : (channelType.contains('Push') ||
+                            channelType.contains('Private')
+                        ? Icons.notifications_active_rounded
+                        : Icons.person_outline_rounded),
+              color: badgeColor,
+              size: 15,
             ),
           ),
           const SizedBox(width: 10),
@@ -173,10 +172,10 @@ class RealTimeLogsCard extends StatelessWidget {
                     ),
                     if (amount != null)
                       Text(
-                        '+$amount\$',
+                        '\$$amount',
                         style: const TextStyle(
                           color: Color(0xFF10B981),
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

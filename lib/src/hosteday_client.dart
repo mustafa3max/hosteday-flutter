@@ -116,8 +116,11 @@ class HostedayClient {
       tokenProvider: effectiveTokenProvider,
       authStorage: this.authStorage,
       headersCallback: () async {
-        final currentToken = await effectiveTokenProvider.getToken() ??
-            await this.authStorage.read(HostedayAuthStorageKeys.accessToken);
+        final sessionToken = auth.currentSession?.accessToken.trim();
+        final currentToken = (sessionToken != null && sessionToken.isNotEmpty)
+            ? sessionToken
+            : (await effectiveTokenProvider.getToken() ??
+                await this.authStorage.read(HostedayAuthStorageKeys.accessToken));
         final cleanToken = currentToken?.trim();
 
         final headers = <String, String>{
@@ -170,6 +173,13 @@ class HostedayClient {
               deviceType: notifications.currentDeviceType,
               deviceName: notifications.currentDeviceName,
             );
+          } catch (_) {}
+        }
+        if (config.hasRealtime &&
+            config.features.isRealtimeEnabled &&
+            !realtime.isConnected) {
+          try {
+            await realtime.connect();
           } catch (_) {}
         }
       },
@@ -535,7 +545,3 @@ class HostedayClient {
     return 'presence-$value';
   }
 }
-
-/// Deprecated spelling of [HostedayClient].
-@Deprecated('Use HostedayClient instead.')
-typedef HosteDayClient = HostedayClient;

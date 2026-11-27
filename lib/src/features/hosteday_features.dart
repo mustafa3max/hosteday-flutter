@@ -1,8 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/services.dart';
-
 /// Represents feature flags and entitlements for a Hosteday application.
 class HostedayFeatures {
   final Map<String, bool> _features;
@@ -56,41 +51,6 @@ class HostedayFeatures {
 
   /// Returns an unmodifiable map of all registered feature flags.
   Map<String, bool> toMap() => Map.unmodifiable(_features);
-
-  /// Attempts to load features from local file or Flutter asset bundle.
-  static Future<HostedayFeatures> loadFromAssetOrFile({
-    String assetPath = 'assets/config/hosteday_features.json',
-    String filePath = 'lib/hosteday_features.json',
-    AssetBundle? bundle,
-  }) async {
-    // 1. Try local file (CLI / unit tests / local environment)
-    try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        final decoded = jsonDecode(content);
-        if (decoded is Map<String, dynamic>) {
-          return HostedayFeatures.fromMap(decoded);
-        }
-      }
-    } catch (_) {
-      // Ignore and fallback to bundle/default
-    }
-
-    // 2. Try asset bundle (Flutter runtime)
-    try {
-      final b = bundle ?? rootBundle;
-      final raw = await b.loadString(assetPath);
-      final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) {
-        return HostedayFeatures.fromMap(decoded);
-      }
-    } catch (_) {
-      // Fallback
-    }
-
-    return const HostedayFeatures();
-  }
 
   @override
   String toString() => 'HostedayFeatures($_features)';

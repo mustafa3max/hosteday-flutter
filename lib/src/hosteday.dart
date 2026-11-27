@@ -28,6 +28,9 @@ abstract final class Hosteday {
   static HostedayConfig? _config;
   static Future<HostedayClient>? _initializing;
 
+  /// The sole official asset path for Hosteday runtime configuration.
+  static const String configAssetPath = 'assets/hosteday_config.json';
+
   /// Returns whether Hosteday has already been initialized.
   static bool get isInitialized => _client != null;
 
@@ -91,33 +94,25 @@ abstract final class Hosteday {
   /// Returns whether the device currently has connectivity to Hosteday services.
   static bool get isOnline => client.connectivity.isConnected;
 
-  /// Initializes the Hosteday SDK.
+  /// Initializes the Hosteday SDK exclusively from `assets/hosteday_config.json`.
   ///
-  /// Either [config] or [options] must be provided.
+  /// Place the `hosteday_config.json` file downloaded from your Hosteday
+  /// dashboard at `assets/hosteday_config.json` and register it under
+  /// `flutter.assets` in `pubspec.yaml`.
   ///
   /// [authStorage] is used to persist and restore the authenticated session.
   /// When omitted, the SDK uses temporary in-memory storage.
   ///
   /// Set [connectRealtime] to true only when the app should open the realtime
   /// connection immediately during startup.
-  ///
-  /// Set [jobsEnabled] to control whether background task queues and jobs are enabled.
   static Future<HostedayClient> initializeApp({
-    HostedayConfig? config,
-    Map<String, Object?>? options,
+    AssetBundle? bundle,
     HostedayTokenProvider? tokenProvider,
     HostedayAuthStorage? authStorage,
-    bool connectRealtime = false,
-    bool jobsEnabled = true,
+    bool connectRealtime = true,
     InternetConnection? internetConnection,
     HostedayConnectivity? connectivity,
   }) {
-    if (config == null && options == null) {
-      throw ArgumentError(
-        'Either "config" or "options" must be provided to Hosteday.initializeApp().',
-      );
-    }
-
     final currentClient = _client;
 
     if (currentClient != null) {
@@ -134,12 +129,10 @@ abstract final class Hosteday {
     }
 
     final initialization = _initializeApp(
-      config: config,
-      options: options,
+      bundle: bundle,
       tokenProvider: tokenProvider,
       authStorage: authStorage,
       connectRealtime: connectRealtime,
-      jobsEnabled: jobsEnabled,
       internetConnection: internetConnection,
       connectivity: connectivity,
     );
@@ -151,63 +144,61 @@ abstract final class Hosteday {
     });
   }
 
-  /// Initializes from the generated application's bundled runtime JSON.
-  /// Declare [assetPath] in the application's pubspec assets section.
-  /// Explicit [overrides] win over asset values; null optional values are valid.
-  static Future<HostedayClient> initializeFromAsset({
-    String assetPath = 'assets/config/hosteday.json',
-    Map<String, Object?> overrides = const {},
+  static Future<HostedayClient> _initializeApp({
     AssetBundle? bundle,
     HostedayTokenProvider? tokenProvider,
     HostedayAuthStorage? authStorage,
-    bool connectRealtime = false,
-    bool jobsEnabled = true,
-  }) async {
-    final Object? decoded;
-    try {
-      decoded = jsonDecode(await (bundle ?? rootBundle).loadString(assetPath));
-    } catch (error) {
-      throw HostedayException(
-          'Unable to read runtime config "$assetPath": $error',
-          error: error);
-    }
-    if (decoded is! Map<String, dynamic>) {
-      throw const HostedayException('Runtime config must be a JSON object.');
-    }
-    return initializeApp(
-      options: {...decoded, ...overrides},
-      tokenProvider: tokenProvider,
-      authStorage: authStorage,
-      connectRealtime: connectRealtime,
-      jobsEnabled: jobsEnabled,
-    );
-  }
-
-  static Future<HostedayClient> _initializeApp({
-    HostedayConfig? config,
-    Map<String, Object?>? options,
-    HostedayTokenProvider? tokenProvider,
-    HostedayAuthStorage? authStorage,
-    bool connectRealtime = false,
-    bool jobsEnabled = true,
+    bool connectRealtime = true,
     InternetConnection? internetConnection,
     HostedayConnectivity? connectivity,
   }) async {
-    final HostedayConfig appConfig;
+    final String rawJson;
+    try {
+      rawJson = await (bundle ?? rootBundle).loadString(configAssetPath);
+    } catch (error) {
+      throw HostedayException(
+        'Missing configuration file "$configAssetPath". '
+        'Please download hosteday_config.json from your Hosteday dashboard, '
+        'place it at "$configAssetPath", and register it under flutter.assets in pubspec.yaml.',
+        error: error,
+      );
+    }
 
-    if (config != null) {
-      appConfig = config;
-    } else {
-      final effectiveOptions = <String, Object?>{
-        HostedayOptionKeys.jobsPath: '/api/jobs',
-        ...?options,
-      };
-      if (!effectiveOptions.containsKey(HostedayOptionKeys.jobsEnabled) &&
-          !effectiveOptions
-              .containsKey(HostedayOptionKeys.backgroundJobsEnabled)) {
-        effectiveOptions[HostedayOptionKeys.jobsEnabled] = jobsEnabled;
-      }
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(rawJson);
+    } catch (error) {
+      throw HostedayException(
+        'Invalid JSON in "$configAssetPath". '
+        'Please download a valid hosteday_config.json from your Hosteday dashboard '
+        'and place it at "$configAssetPath".',
+        error: error,
+      );
+    }
+
+    if (decoded is! Map<String, dynamic>) {
+      throw const HostedayException(
+        'Invalid configuration format in "$configAssetPath": expected a JSON object. '
+        'Please download a valid hosteday_config.json from your Hosteday dashboard '
+        'and place it at "$configAssetPath".',
+      );
+    }
+
+    final effectiveOptions = <String, Object?>{
+      HostedayOptionKeys.jobsPath: '/api/jobs',
+      ...decoded,
+    };
+
+    final HostedayConfig appConfig;
+    try {
       appConfig = HostedayConfig.fromOptions(effectiveOptions);
+    } on ArgumentError catch (error) {
+      throw HostedayException(
+        'Invalid or incomplete configuration in "$configAssetPath": ${error.message ?? error}. '
+        'Please download a valid hosteday_config.json from your Hosteday dashboard '
+        'and place it at "$configAssetPath".',
+        error: error,
+      );
     }
 
     final appClient = HostedayClient(
@@ -221,8 +212,15 @@ abstract final class Hosteday {
     try {
       await appClient.initialize();
 
-      if (connectRealtime) {
-        await appClient.realtime.connect();
+      if (connectRealtime &&
+          appConfig.hasRealtime &&
+          appConfig.features.isRealtimeEnabled) {
+        try {
+          await appClient.realtime.connect();
+        } catch (_) {
+          // Realtime errors are surfaced via Hosteday.realtime.onError
+          // without blocking application startup.
+        }
       }
 
       _config = appConfig;
@@ -258,72 +256,5 @@ abstract final class Hosteday {
     if (currentClient != null) {
       await currentClient.dispose();
     }
-  }
-}
-
-/// Backward-compatible alias for the old HosteDay API.
-///
-/// Deprecated: use [Hosteday] in all new code.
-@Deprecated(
-  'Use Hosteday instead. '
-  'This compatibility class will be removed in a future major version.',
-)
-abstract final class HosteDay {
-  HosteDay._();
-
-  static bool get isInitialized => Hosteday.isInitialized;
-
-  static bool get isInitializing => Hosteday.isInitializing;
-
-  static HostedayClient get instance => Hosteday.instance;
-
-  static HostedayClient get client => Hosteday.client;
-
-  static HostedayConfig get config => Hosteday.config;
-
-  static HostedayAuth get auth => Hosteday.auth;
-
-  static HostedayHttpClient get http => Hosteday.http;
-
-  static HostedayRealtimeClient get realtime => Hosteday.realtime;
-
-  static HostedayNotificationClient get notifications => Hosteday.notifications;
-
-  static HostedayJobsClient get jobs => Hosteday.jobs;
-
-  static HostedayFeatures get features => Hosteday.features;
-
-  static HostedayConnectivity get connectivity => Hosteday.connectivity;
-
-  static bool get isOnline => Hosteday.isOnline;
-
-  static Future<HostedayClient> initializeApp({
-    HostedayConfig? config,
-    Map<String, Object?>? options,
-    HostedayTokenProvider? tokenProvider,
-    HostedayAuthStorage? authStorage,
-    bool connectRealtime = false,
-    bool jobsEnabled = true,
-  }) {
-    return Hosteday.initializeApp(
-      config: config,
-      options: options,
-      tokenProvider: tokenProvider,
-      authStorage: authStorage,
-      connectRealtime: connectRealtime,
-      jobsEnabled: jobsEnabled,
-    );
-  }
-
-  static Future<void> connectRealtime() {
-    return Hosteday.connectRealtime();
-  }
-
-  static Future<void> disconnectRealtime() {
-    return Hosteday.disconnectRealtime();
-  }
-
-  static Future<void> dispose() {
-    return Hosteday.dispose();
   }
 }

@@ -1,39 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
-import '../../hosteday_config.dart';
-
 /// Initializes the Hosteday SDK before the Flutter app starts.
 ///
-/// Uses direct strongly-typed [HostedayConfig] configuration,
-/// eliminating any need for manual assets loading or JSON decoding.
+/// Reads configuration exclusively from `assets/hosteday_config.json` inside
+/// the `hosteday_flutter` package.
 class HostedayInitializer {
   const HostedayInitializer._();
 
   static Future<void> initialize() async {
+    await Hosteday.initializeApp();
     debugPrint(
-      '[HostedayInitializer] Initializing Hosteday with app "${HosteDayConfig.appName}" '
-      'at ${HosteDayConfig.baseUrl}',
+      '[HostedayInitializer] Hosteday initialized for ${Hosteday.config.baseUrl}.',
     );
-
-    await Hosteday.initializeApp(
-      config: const HostedayConfig(
-        baseUrl: HosteDayConfig.baseUrl,
-        pusherKey: HosteDayConfig.wsKey,
-        realtimeHost: HosteDayConfig.wsHost,
-        firebaseProjectId: HosteDayConfig.firebaseProjectId,
-        notificationsEnabled: HosteDayConfig.pushNotificationsEnabled,
-        jobsEnabled: true,
-        features: HostedayFeatures({
-          'push_notifications': HosteDayConfig.pushNotificationsEnabled,
-          'realtime_websockets': HosteDayConfig.realtimeWebsocketsEnabled,
-        }),
-      ),
-      connectRealtime: false,
-      jobsEnabled: true,
-      authStorage: HostedaySharedPreferencesAuthStorage(),
-    );
-
-    debugPrint('[HostedayInitializer] Hosteday initialized successfully.');
   }
 }

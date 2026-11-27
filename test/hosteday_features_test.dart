@@ -1,6 +1,28 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
+
+class _FeaturesAssetBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async {
+    expect(key, 'assets/hosteday_config.json');
+    final bytes = Uint8List.fromList(
+      utf8.encode(
+        jsonEncode({
+          'project_domain': 'test.hosteday.com',
+          'features': {
+            'push_notifications': false,
+            'realtime_websockets': true,
+          },
+        }),
+      ),
+    );
+    return ByteData.sublistView(bytes);
+  }
+}
 
 void main() {
   group('HostedayFeatures', () {
@@ -28,17 +50,10 @@ void main() {
     });
 
     test('initializes Hosteday with custom features map', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
       await Hosteday.dispose();
 
-      await Hosteday.initializeApp(
-        options: const {
-          'project_domain': 'test.hosteday.com',
-          'features': {
-            'push_notifications': false,
-            'realtime_websockets': true,
-          },
-        },
-      );
+      await Hosteday.initializeApp(bundle: _FeaturesAssetBundle());
 
       expect(Hosteday.features.isNotificationsEnabled, isFalse);
       expect(Hosteday.features.isRealtimeEnabled, isTrue);

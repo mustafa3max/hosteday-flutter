@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "418691683006",
-    "project_id": "flutter-hosteday-xdqb",
-    "storage_bucket": "flutter-hosteday-xdqb.firebasestorage.app"
+    "project_number": "000000000000",
+    "project_id": "your-firebase-project",
+    "storage_bucket": "your-firebase-project.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:418691683006:android:a8fca318605be704cf44ef",
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
         "android_client_info": {
           "package_name": "com.hosteday.flutter"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDcAmmLILP0jkjtnNy7GtFg8F3R-HtrpD8"
+          "current_key": "YOUR_FIREBASE_ANDROID_API_KEY"
         }
       ],
       "services": {

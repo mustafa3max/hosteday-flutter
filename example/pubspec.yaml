@@ -27,5 +27,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/hosteday_config.json
     - web/firebase-config.json
     - assets/logo.png

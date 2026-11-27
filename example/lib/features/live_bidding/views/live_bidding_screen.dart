@@ -36,7 +36,10 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
               children: <Widget>[
                 // 1. Hero Header Card
                 _buildHeroHeader(context, theme),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+
+                // 1b. Connection / Auth Error Banner (if any)
+                _buildConnectionErrorBanner(context, theme),
 
                 // 2. Active Bidders Presence Radar Bar
                 const ActiveBiddersBar(),
@@ -56,9 +59,6 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                 // 6. Real-Time Activity Feed
                 const RealTimeLogsCard(),
                 const SizedBox(height: 20),
-
-                // 7. Technical Lab & Channels Explanation
-                _buildIntroExplanationCard(context, theme),
               ],
             ),
           ),
@@ -113,7 +113,7 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.radar_rounded,
+                  Icons.gavel_rounded,
                   size: 26,
                   color: theme.colorScheme.primary,
                 ),
@@ -151,7 +151,7 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
-              // WebSocket Connection Status Pill
+              // Compact Connection Status Icon Badge with Tooltip
               Obx(() {
                 final isConnected = controller.isConnected.value;
                 final isConnecting = controller.isConnecting.value;
@@ -160,45 +160,43 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                     : (isConnecting
                           ? const Color(0xFFF59E0B)
                           : const Color(0xFFEF4444));
-                final statusText = isConnected
+                final tooltipText = isConnected
                     ? 'live_bidding_ws_connected'.tr
                     : (isConnecting
                           ? 'live_bidding_ws_connecting'.tr
                           : 'live_bidding_ws_disconnected'.tr);
 
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: statusColor.withValues(alpha: 0.35),
+                return Tooltip(
+                  message: tooltipText,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.45),
+                        width: 1.2,
+                      ),
+                      boxShadow: isConnected
+                          ? <BoxShadow>[
+                              BoxShadow(
+                                color: statusColor.withValues(alpha: 0.35),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : null,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        statusText,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                    child: Icon(
+                      isConnected
+                          ? Icons.wifi_tethering_rounded
+                          : (isConnecting
+                                ? Icons.sync_rounded
+                                : Icons.wifi_tethering_off_rounded),
+                      color: statusColor,
+                      size: 16,
+                    ),
                   ),
                 );
               }),
@@ -295,6 +293,54 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
         ],
       ),
     );
+  }
+
+  Widget _buildConnectionErrorBanner(BuildContext context, ThemeData theme) {
+    return Obx(() {
+      final err = controller.connectionError.value;
+      if (err.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.error.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(
+              Icons.wifi_off_rounded,
+              color: theme.colorScheme.error,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SelectableText(
+                err,
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: controller.reconnect,
+              icon: Icon(Icons.refresh_rounded, color: theme.colorScheme.error),
+              tooltip: 'retry'.tr,
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildOutbidAlertBanner(BuildContext context, ThemeData theme) {
@@ -400,6 +446,100 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
       ),
       child: Column(
         children: <Widget>[
+          // Auction Selector Dropdown (All Active Auctions)
+          Obx(() {
+            final auctionsList = controller.auctions;
+            final selected = controller.activeAuction.value;
+            if (auctionsList.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.45,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: selected?.id,
+                    isExpanded: true,
+                    icon: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                    dropdownColor: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    items: auctionsList.map((auction) {
+                      return DropdownMenuItem<int>(
+                        value: auction.id,
+                        child: Row(
+                          children: <Widget>[
+                            Icon(
+                              Icons.gavel_rounded,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                auction.title,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '\$${auction.currentPrice}',
+                                style: const TextStyle(
+                                  color: Color(0xFF10B981),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (selectedId) {
+                      if (selectedId == null) return;
+                      final target = auctionsList.firstWhereOrNull(
+                        (a) => a.id == selectedId,
+                      );
+                      if (target != null) {
+                        controller.selectAuction(target);
+                      }
+                    },
+                  ),
+                ),
+              ),
+            );
+          }),
+
           // Top Row: Status Pill and Countdown Timer
           Row(
             children: <Widget>[
@@ -419,9 +559,9 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Icon(
-                      Icons.flash_on_rounded,
+                      Icons.local_fire_department_rounded,
                       color: theme.colorScheme.primary,
-                      size: 14,
+                      size: 15,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -436,11 +576,45 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
                 ),
               ),
               const Spacer(),
-              // Countdown Timer
+              // Countdown Timer or Continuous Open Badge
               Obx(() {
-                final time = controller.formatCountdown(
-                  controller.remainingSeconds.value,
-                );
+                final seconds = controller.remainingSeconds.value;
+                if (seconds <= 0) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.all_inclusive_rounded,
+                          color: Color(0xFF10B981),
+                          size: 14,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'مفتوح للمزايدة المستمرة',
+                          style: TextStyle(
+                            color: Color(0xFF10B981),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final time = controller.formatCountdown(seconds);
                 return Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -587,319 +761,6 @@ class LiveBiddingScreen extends GetView<LiveBiddingController> {
               ),
             );
           }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIntroExplanationCard(BuildContext context, ThemeData theme) {
-    final isAuth = controller.isAuthenticated;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
-          width: 1,
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.25 : 0.04,
-            ),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          // Header Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.45,
-              ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(19),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.35,
-                  ),
-                ),
-              ),
-            ),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.cell_tower_rounded,
-                    color: theme.colorScheme.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'live_bidding_lab_title'.tr,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'live_bidding_lab_subtitle'.tr,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.65,
-                          ),
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Body Content
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'live_bidding_intro_desc'.tr,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                    fontSize: 12.5,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Channels Pillars
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isNarrow = constraints.maxWidth < 680;
-                    final items = <Widget>[
-                      _buildChannelPillar(
-                        context,
-                        icon: Icons.public_rounded,
-                        iconColor: const Color(0xFF3B82F6),
-                        title: 'live_bidding_ch_public_title'.tr,
-                        badge: 'live_bidding_ch_public_badge'.tr,
-                        badgeColor: const Color(0xFF3B82F6),
-                        description: 'live_bidding_ch_public_desc'.tr,
-                      ),
-                      _buildChannelPillar(
-                        context,
-                        icon: Icons.people_alt_rounded,
-                        iconColor: const Color(0xFF10B981),
-                        title: 'live_bidding_ch_presence_title'.tr,
-                        badge: 'live_bidding_ch_presence_badge'.tr,
-                        badgeColor: const Color(0xFFF59E0B),
-                        description: 'live_bidding_ch_presence_desc'.tr,
-                      ),
-                      _buildChannelPillar(
-                        context,
-                        icon: Icons.lock_outline_rounded,
-                        iconColor: const Color(0xFFA855F7),
-                        title: 'live_bidding_ch_private_title'.tr,
-                        badge: 'live_bidding_ch_private_badge'.tr,
-                        badgeColor: const Color(0xFFF59E0B),
-                        description: 'live_bidding_ch_private_desc'.tr,
-                      ),
-                      _buildChannelPillar(
-                        context,
-                        icon: Icons.notifications_active_rounded,
-                        iconColor: const Color(0xFFEC4899),
-                        title: 'live_bidding_ch_fcm_title'.tr,
-                        badge: 'live_bidding_ch_fcm_badge'.tr,
-                        badgeColor: const Color(0xFF10B981),
-                        description: 'live_bidding_ch_fcm_desc'.tr,
-                      ),
-                    ];
-
-                    if (isNarrow) {
-                      return Column(
-                        children: items
-                            .map(
-                              (item) => Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: item,
-                              ),
-                            )
-                            .toList(),
-                      );
-                    }
-
-                    return Column(
-                      children: <Widget>[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(child: items[0]),
-                            const SizedBox(width: 12),
-                            Expanded(child: items[1]),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(child: items[2]),
-                            const SizedBox(width: 12),
-                            Expanded(child: items[3]),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-                // Call-To-Action if user is not logged in
-                if (!isAuth) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.info_outline_rounded,
-                          color: Color(0xFFF59E0B),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'live_bidding_signin_prompt'.tr,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.85,
-                              ),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        FilledButton.tonal(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFF59E0B),
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            minimumSize: const Size(0, 36),
-                          ),
-                          onPressed: () => Get.toNamed('/login'),
-                          child: Text(
-                            'sign_in'.tr,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChannelPillar(
-    BuildContext context, {
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String badge,
-    required Color badgeColor,
-    required String description,
-  }) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, color: iconColor, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    color: badgeColor,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-              fontSize: 11.5,
-              height: 1.45,
-            ),
-          ),
         ],
       ),
     );

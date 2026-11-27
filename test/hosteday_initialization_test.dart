@@ -1,16 +1,29 @@
-// ignore_for_file: deprecated_member_use, deprecated_member_use_from_same_package
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hosteday_flutter/hosteday_flutter.dart';
 
-class _RuntimeBundle extends CachingAssetBundle {
+class _JsonAssetBundle extends CachingAssetBundle {
+  _JsonAssetBundle(this.payload);
+
+  final String payload;
+  String? lastRequestedKey;
+
   @override
   Future<ByteData> load(String key) async {
-    expect(key, 'assets/config/hosteday.json');
-    final bytes = Uint8List.fromList(utf8.encode(
-        '{"project_domain":"max.hosteday.com","project_api_key":null,"realtime_app_key":null,"realtime_host":null}'));
+    lastRequestedKey = key;
+    expect(key, 'assets/hosteday_config.json');
+    final bytes = Uint8List.fromList(utf8.encode(payload));
     return ByteData.sublistView(bytes);
+  }
+}
+
+class _MissingAssetBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async {
+    throw FlutterError('Unable to load asset: "$key".');
   }
 }
 
@@ -18,74 +31,123 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tearDown(Hosteday.dispose);
 
-  test('new API initializes without optional keys or realtime', () async {
-    final client = await Hosteday.initializeApp(options: {
-      HostedayOptionKeys.projectDomain: 'max.hosteday.com',
-      HostedayOptionKeys.projectApiKey: null,
-      HostedayOptionKeys.realtimeAppKey: null,
-      HostedayOptionKeys.realtimeHost: null,
-    });
+  test('initializes exclusively from assets/hosteday_config.json', () async {
+    final bundle = _JsonAssetBundle(jsonEncode({
+      'app_name': 'flutter',
+      'slug': 'flutter',
+      'environment_id': 'env-123',
+      'project_domain': 'flutter.hosteday.com',
+      'api_base_url': 'https://flutter.hosteday.com',
+      'project_api_key': 'secret-api-key',
+      'realtime_app_key': 'app-key',
+      'realtime_host': 'ws1.hosteday.com',
+      'realtime_port': 8080,
+      'realtime_scheme': 'wss',
+      'realtime_channel': 'environment.env-123',
+      'notifications_enabled': true,
+      'jobs_enabled': true,
+      'firebase_project_id': 'flutter-hosteday-xdqb',
+      'features': {
+        'push_notifications': true,
+        'realtime_websockets': true,
+        'database_management': false,
+      },
+    }));
+
+    final client = await Hosteday.initializeApp(bundle: bundle);
+
+    expect(bundle.lastRequestedKey, 'assets/hosteday_config.json');
+    expect(Hosteday.client, same(client));
+    expect(client.config.appName, 'flutter');
+    expect(client.config.slug, 'flutter');
+    expect(client.config.environmentId, 'env-123');
+    expect(client.config.baseUrl, 'https://flutter.hosteday.com');
+    expect(client.config.apiToken, 'secret-api-key');
+    expect(client.config.hasRealtime, isTrue);
+    expect(client.config.realtimePort, 8080);
+    expect(client.config.realtimeChannel, 'environment.env-123');
+    expect(client.config.firebaseProjectId, 'flutter-hosteday-xdqb');
+    expect(client.config.jobsEnabled, isTrue);
+    expect(client.config.jobsPath, '/api/jobs');
+    expect(Hosteday.features.isNotificationsEnabled, isTrue);
+    expect(Hosteday.features.isRealtimeEnabled, isTrue);
+    expect(Hosteday.features.isDatabaseEnabled, isFalse);
+  });
+
+  test('loads minimal assets/hosteday_config.json with optional nulls',
+      () async {
+    final bundle = _JsonAssetBundle(
+      '{"project_domain":"max.hosteday.com","project_api_key":null,"realtime_app_key":null,"realtime_host":null}',
+    );
+
+    final client = await Hosteday.initializeApp(bundle: bundle);
+
     expect(Hosteday.client, same(client));
     expect(client.config.defaultHeaders, isEmpty);
     expect(client.config.hasRealtime, isFalse);
     expect(client.host, 'https://max.hosteday.com');
+    expect(client.apiBaseUrl, 'https://max.hosteday.com/api');
     expect(client.staticPages['info'], 'https://max.hosteday.com/info');
-    expect(client.storageUrl('products/image.png'),
-        'https://max.hosteday.com/storage/products/image.png');
-  });
-  test('legacy facade shares initialization and disposal', () async {
-    await HosteDay.initializeApp(
-        options: {HosteDayOptionKeys.projectDomain: 'max.hosteday.com'});
-    expect(HosteDay.client, same(Hosteday.client));
-    const HosteDayException oldError = HosteDayException('legacy');
-    expect(oldError, isA<HostedayException>());
-    final HosteDayClient oldClient = Hosteday.client;
-    expect(oldClient, same(Hosteday.client));
-    await HosteDay.dispose();
-    expect(Hosteday.isInitialized, isFalse);
-  });
-  test('uninitialized SDK keeps its descriptive StateError', () {
     expect(
-        () => Hosteday.client,
-        throwsA(isA<StateError>()
-            .having((e) => e.message, 'message', contains('initializeApp'))));
-  });
-  test('loads actual runtime asset shape with optional nulls', () async {
-    await Hosteday.initializeFromAsset(bundle: _RuntimeBundle());
-    expect(Hosteday.client.apiBaseUrl, 'https://max.hosteday.com/api');
-    expect(Hosteday.config.hasRealtime, isFalse);
+      client.storageUrl('products/image.png'),
+      'https://max.hosteday.com/storage/products/image.png',
+    );
   });
 
-  test('initializes with direct typed HostedayConfig', () async {
-    final client = await Hosteday.initializeApp(
-      config: const HostedayConfig(
-        baseUrl: 'https://direct.hosteday.com',
-        pusherKey: 'app-key',
-        realtimeHost: 'ws.hosteday.com',
+  test('throws clear HostedayException when assets/hosteday_config.json is missing',
+      () async {
+    await expectLater(
+      () => Hosteday.initializeApp(bundle: _MissingAssetBundle()),
+      throwsA(
+        isA<HostedayException>().having(
+          (e) => e.message,
+          'message',
+          allOf(
+            contains('assets/hosteday_config.json'),
+            contains('pubspec.yaml'),
+          ),
+        ),
       ),
     );
-    expect(Hosteday.client, same(client));
-    expect(client.config.baseUrl, 'https://direct.hosteday.com');
-    expect(client.config.hasRealtime, isTrue);
-    expect(client.config.jobsEnabled, isTrue);
-    expect(client.config.jobsPath, '/api/jobs');
   });
 
-  test('initializes with zero-config options using only baseUrl', () async {
-    final client = await Hosteday.initializeApp(options: {
-      HostedayOptionKeys.baseUrl: 'https://minimal.hosteday.com',
-    });
-    expect(Hosteday.client, same(client));
-    expect(client.config.projectDomain, 'minimal.hosteday.com');
-    expect(client.config.jobsPath, '/api/jobs');
-    expect(client.config.realtimePort, 443);
-    expect(client.config.realtimeScheme, 'wss');
+  test('throws clear HostedayException when JSON is malformed', () async {
+    await expectLater(
+      () => Hosteday.initializeApp(bundle: _JsonAssetBundle('{invalid-json')),
+      throwsA(
+        isA<HostedayException>().having(
+          (e) => e.message,
+          'message',
+          contains('assets/hosteday_config.json'),
+        ),
+      ),
+    );
   });
 
-  test('throws ArgumentError if neither config nor options provided', () async {
+  test('throws clear HostedayException when required fields are missing',
+      () async {
+    await expectLater(
+      () => Hosteday.initializeApp(bundle: _JsonAssetBundle('{"app_name":"x"}')),
+      throwsA(
+        isA<HostedayException>().having(
+          (e) => e.message,
+          'message',
+          contains('assets/hosteday_config.json'),
+        ),
+      ),
+    );
+  });
+
+  test('uninitialized SDK keeps its descriptive StateError', () {
     expect(
-      () => Hosteday.initializeApp(),
-      throwsA(isA<ArgumentError>()),
+      () => Hosteday.client,
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('initializeApp'),
+        ),
+      ),
     );
   });
 }

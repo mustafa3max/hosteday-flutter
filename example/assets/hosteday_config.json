@@ -1,0 +1,21 @@
+{
+  "app_name": "hosteday_example",
+  "slug": "hosteday-example",
+  "environment_id": "YOUR_ENVIRONMENT_ID",
+  "project_domain": "your-project.hosteday.com",
+  "api_base_url": "https://your-project.hosteday.com",
+  "project_api_key": "YOUR_PROJECT_API_KEY",
+  "realtime_app_key": "YOUR_REALTIME_APP_KEY",
+  "realtime_host": "ws1.hosteday.com",
+  "realtime_port": 443,
+  "realtime_scheme": "wss",
+  "realtime_channel": "environment.YOUR_ENVIRONMENT_ID",
+  "notifications_enabled": true,
+  "jobs_enabled": true,
+  "firebase_project_id": "your-firebase-project",
+  "features": {
+    "push_notifications": true,
+    "realtime_websockets": true,
+    "database_management": true
+  }
+}
