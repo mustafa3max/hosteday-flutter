@@ -1,9 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../hosteday.dart';
 import 'hosteday_connectivity.dart';
+
+const IconData _kWifiOffIcon = IconData(0xf02bd, fontFamily: 'MaterialIcons');
+const IconData _kWifiIcon = IconData(0xf02bf, fontFamily: 'MaterialIcons');
 
 /// Position where the connectivity banner is anchored on screen.
 enum HostedayBannerPosition {
@@ -165,7 +168,7 @@ class _HostedayConnectivityBannerState
         ? const Color(0xFFDC2626) // Red-600
         : const Color(0xFF16A34A); // Green-600
 
-    final icon = !_isOnline ? Icons.wifi_off_rounded : Icons.wifi_rounded;
+    final icon = !_isOnline ? _kWifiOffIcon : _kWifiIcon;
 
     final bannerContent = Container(
       width: double.infinity,
@@ -177,14 +180,14 @@ class _HostedayConnectivityBannerState
           Icon(
             icon,
             size: 16,
-            color: Colors.white,
+            color: const Color(0xFFFFFFFF),
           ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
               text,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFFFFFFFF),
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 decoration: TextDecoration.none,
@@ -215,15 +218,12 @@ class _HostedayConnectivityBannerState
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
                 offset: Offset.zero,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: SafeArea(
-                    top: widget.position == HostedayBannerPosition.top,
-                    bottom: widget.position == HostedayBannerPosition.bottom,
-                    left: false,
-                    right: false,
-                    child: bannerContent,
-                  ),
+                child: SafeArea(
+                  top: widget.position == HostedayBannerPosition.top,
+                  bottom: widget.position == HostedayBannerPosition.bottom,
+                  left: false,
+                  right: false,
+                  child: bannerContent,
                 ),
               ),
             ),

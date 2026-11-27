@@ -1,3 +1,8 @@
+## 2.5.1
+
+### Fixed
+- Replaced `package:flutter/material.dart` imports in `HostedayConnectivityBanner` and `FeaturePaywallPage` with `package:flutter/widgets.dart` primitives to eliminate `pana` static-analysis deprecation warnings on Flutter 3.44+ while preserving full backwards compatibility with Flutter 3.22+.
+
 ## 2.5.0
 
 ### Added

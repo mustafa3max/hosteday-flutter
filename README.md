@@ -63,7 +63,7 @@ Or add it directly in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  hosteday_flutter: ^2.5.0
+  hosteday_flutter: ^2.5.1
 ```
 
 Import the public library:
